@@ -3,7 +3,7 @@ import React from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
-import Explore, { covariance, cross, curvedJacobian, curvedMap, det3, EXPERIMENTS, fitLine, hillGradient, hillHeight, solveLinear, svd2, trussForces } from './Explore.jsx'
+import Explore, { covariance, cross, curvedJacobian, curvedMap, cutStress, det3, EXPERIMENTS, fitLine, hillGradient, hillHeight, linkMatrixOf, pageRankStep, solveLinear, springModes, svd2, trussForces } from './Explore.jsx'
 import { sse } from './explore/data.jsx'
 
 afterEach(cleanup)
@@ -36,6 +36,32 @@ describe('playground experiments', () => {
 })
 
 describe('playground mathematics', () => {
+  it('puts every cut on Mohr\'s circle and finds zero shear at the principal angle', () => {
+    const [sx, sy, tau] = [80, 20, 30], c = (sx + sy) / 2, R = Math.hypot((sx - sy) / 2, tau)
+    for (const deg of [0, 17, 45, 90, 133]) {
+      const { normal, shear } = cutStress(sx, sy, tau, deg)
+      expect(Math.hypot(normal - c, shear)).toBeCloseTo(R, 9)
+    }
+    const principal = 0.5 * Math.atan2(2 * tau, sx - sy) * 180 / Math.PI
+    expect(cutStress(sx, sy, tau, principal).shear).toBeCloseTo(0, 9)
+    expect(cutStress(sx, sy, tau, principal).normal).toBeCloseTo(c + R, 9)
+    expect(cutStress(sx, sy, tau, 30).normal).toBeCloseTo(executeScript('sigma = [80 30; 30 20];\nth = 30*pi/180;\nn = [cos(th); sin(th)];\nx = dot(n, sigma*n);').workspace.find(w => w.name === 'x').value, 9)
+  })
+  it('finds the spring modes of the vibrations lesson', () => {
+    const { omega, modes } = springModes(1, 1, 1)
+    expect(omega[0]).toBeCloseTo(1, 10); expect(omega[1]).toBeCloseTo(Math.sqrt(3), 10)
+    expect(modes[0][0]).toBeCloseTo(Math.SQRT1_2, 10); expect(modes[0][1]).toBeCloseTo(Math.SQRT1_2, 10)
+    expect(Math.abs(modes[1][0] + modes[1][1])).toBeLessThan(1e-9)
+    const uneven = springModes(1, 2, 4)
+    expect(uneven.modes[0][0] * uneven.modes[1][0] + uneven.modes[0][1] * uneven.modes[1][1]).toBeCloseTo(0, 10)
+  })
+  it('reproduces the PageRank of the lesson and treats a page with no links as linking everywhere', () => {
+    const L = linkMatrixOf([[1, 2], [2], [0], [0, 2]])
+    let r = [0.25, 0.25, 0.25, 0.25]
+    for (let k = 0; k < 100; k++) r = pageRankStep(L, r, 0.85)
+    ;[0.379734, 0.198887, 0.383879, 0.0375].forEach((v, i) => expect(r[i]).toBeCloseTo(v, 5))
+    expect(linkMatrixOf([[1], []]).map(row => row[1])).toEqual([0.5, 0.5])
+  })
   it('fits least-squares lines that no other line beats', () => {
     const pts = [[0, 1], [1, 3], [2, 4], [3, 7]]
     const { slope, offset } = fitLine(pts)

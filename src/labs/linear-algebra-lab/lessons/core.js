@@ -285,98 +285,7 @@ predictions=X*beta;`,
     },
   },
   {
-    id: 'laml-eigen-iteration', module: 'Spectral thinking', title: 'Eigenpairs and repeated transformation', minutes: 30, level: 'Advanced',
-    objective: 'Use normalized power iteration to estimate a dominant eigenvector and verify its eigenvalue with a residual.',
-    prose: [
-      'Multiplying [1;1] by [2 1;1 2] gives [3;3]. Its direction stays the same while its length triples. Multiplying [1;-1] gives [1;-1], preserving that direction with a scale of 1.',
-      'An eigenvector is a nonzero direction v that a square matrix maps onto itself, scaled by an eigenvalue lambda: A*v=lambda*v. The zero vector is excluded because it satisfies that equation for every lambda and identifies no direction. Eigenvalues describe behavior under repeated transformation.',
-      'Power iteration repeatedly applies A and normalizes the result to prevent growth from overwhelming the calculation. When one eigenvalue has uniquely greatest magnitude and the starting vector has a component in its direction, that direction tends to dominate. Equal leading magnitudes, a missing starting component, or complex rotational behavior can prevent this simple method from converging as intended.',
-      'For a unit real vector v, the Rayleigh quotient v\' *A*v estimates its eigenvalue. Verify an estimated eigenpair with norm(A*v-lambda*v), the eigenpair residual. A stable-looking sequence alone is insufficient. The sign of an eigenvector is arbitrary: v and -v describe the same line.',
-      'A for loop repeats the indented statements; end closes it. history(k)=... stores one value at MATLAB index k, starting at 1. The demo plot tracks the estimated scale after each normalized step. An eigenvector may stretch or reverse; its defining feature is a preserved line, not a fixed length.',
-    ],
-    procedure: ['Choose a nonzero starting vector and normalize it.', 'Repeatedly compute A*v, then divide by the new length.', 'Estimate lambda using v\' *A*v and compute the eigenpair residual.', 'Check convergence assumptions before interpreting the result as the dominant mode.'],
-    prediction: { question: 'For A=[2 1;1 2], what happens if the starting vector is exactly [1;-1]?', answer: 'It stays in the eigenvalue-1 direction forever. It has no component along the dominant [1;1] direction, so power iteration cannot discover that missing component.' },
-    demo: {
-      code: String.raw`A=[2 1;1 2];
-v=[1;0];
-history=zeros(1,10);
-for k=1:10
-  v=A*v;
-  v=v/norm(v);
-  history(k)=v'*A*v;
-end
-lambda=v'*A*v;
-disp(v);
-disp(lambda);
-disp(norm(A*v-lambda*v));
-plot(1:10,history);
-title('Power iteration approaches the dominant scale 3');
-xlabel('Iteration');
-ylabel('Rayleigh quotient');`,
-      explain: [{ code: 'v=A*v', meaning: 'Apply the transformation again; directions with larger eigenvalue magnitude gain relative weight.' }, { code: 'v=v/norm(v)', meaning: 'Keep the vector’s length equal to 1 while retaining its direction.' }, { code: 'history(k)=v\'*A*v', meaning: 'Record the estimated scale after this iteration.' }, { code: 'norm(A*v-lambda*v)', meaning: 'Measure whether the final vector really obeys the eigenpair equation.' }],
-    },
-    challenge: {
-      prompt: 'Run 30 normalized power steps from the supplied v. Store the final vector in v, the Rayleigh quotient in lambda, and norm(A*v-lambda*v) in eigenResidual. Either overall vector sign is valid.',
-      setup: 'A=[4 1;1 4];\nv=[1;0];',
-      starter: 'v=v/norm(v);\nlambda=v\'*A*v;\neigenResidual=norm(A*v-lambda*v);',
-      solution: String.raw`for k=1:30
-  v=A*v;
-  v=v/norm(v);
-end
-lambda=v'*A*v;
-eigenResidual=norm(A*v-lambda*v);`,
-      checks: [{ name: 'v', expected: [Math.SQRT1_2, Math.SQRT1_2], kind: 'abs', tolerance: 1e-6, message: 'Repeated normalized multiplication should approach the dominant direction, not stay at the initial coordinate axis.' }, { name: 'lambda', expected: 5, tolerance: 1e-6, message: 'Compute the scale of the converged vector with its Rayleigh quotient.' }, { name: 'eigenResidual', expected: 0, tolerance: 1e-6, message: 'Check A*v against lambda*v; stop only when their difference is small.' }],
-      cases: [{ setup: 'A=[3 1;1 3];\nv=[1;0];', checks: [{ name: 'lambda', expected: 4, tolerance: 1e-6, message: 'Estimate the eigenvalue from A rather than entering a constant.' }, { name: 'eigenResidual', expected: 0, tolerance: 1e-6, message: 'The final pair must satisfy the supplied transformation.' }] }],
-      hints: ['One matrix multiplication is not enough; use a loop.', 'Normalize immediately after every A*v multiplication.', 'After 30 steps compute lambda=v\'*A*v and eigenResidual=norm(A*v-lambda*v).'],
-      transfer: 'Try A=[0 -1;1 0]. Describe the repeated rotation and explain why this real-vector power iteration does not settle onto a fixed real direction.',
-    },
-  },
-  {
-    id: 'laml-symmetric-quadratic', module: 'Spectral thinking', title: 'Symmetric matrices and quadratic energy', minutes: 30, level: 'Advanced',
-    objective: 'Diagonalize a real symmetric matrix and compute the same quadratic energy in original and eigenvector coordinates.',
-    prose: [
-      'For H=[3 1;1 3], the vector [1;1] stretches by 4, while [1;-1] stretches by 2. These two directions are perpendicular. The expression x\' *H*x assigns the vector [1;2] an energy of 19.',
-      'A real symmetric matrix equals its transpose. It has real eigenvalues and can be described using an orthonormal basis of eigenvectors. Put those unit eigenvectors in columns of Q and their eigenvalues on the diagonal of D. Then H=Q*D*Q\' and Q\' *Q=I.',
-      'A quadratic form is the scalar energy x\' *H*x. Change coordinates with z=Q\' *x. In those coordinates, energy becomes z\' *D*z: a weighted sum of squared coordinates. The eigenvectors identify the principal directions, and eigenvalues give their weights.',
-      'If every eigenvalue is positive, every nonzero vector has positive energy; the matrix is positive definite. A negative eigenvalue creates a direction of negative energy. Zero eigenvalues create flat directions. This distinction matters when a matrix describes curvature of a machine-learning loss function.',
-      'The assignment [Q,D]=eig(H) returns vectors and their matching diagonal values. An apostrophe on Q changes basis back from perpendicular coordinates. Eigenvector signs may differ between implementations, but reconstruction and energy do not. The plot compares the two energy calculations and should show equal bars.',
-    ],
-    procedure: ['Verify that H is real symmetric before using orthogonal diagonalization.', 'Compute Q,D and check both Q\' *Q=I and Q*D*Q\'=H.', 'Transform x to z=Q\' *x and compute energy in both coordinate systems.', 'Inspect eigenvalue signs to distinguish positive, flat, and negative directions.'],
-    prediction: { question: 'If one diagonal entry of D is negative, can x\' *H*x still be positive for every nonzero x?', answer: 'No. Choose x along that entry’s eigenvector; the energy is that negative eigenvalue times a positive squared length.' },
-    demo: {
-      code: String.raw`H=[3 1;1 3];
-x=[1;2];
-[Q,D]=eig(H);
-z=Q'*x;
-energy=x'*H*x;
-diagonalEnergy=z'*D*z;
-disp(D);
-disp(Q'*Q);
-disp(norm(H-Q*D*Q'));
-disp([energy diagonalEnergy]);
-bar([1 2],[energy diagonalEnergy]);
-title('Changing coordinates preserves quadratic energy');
-xlabel('1: original coordinates, 2: eigenvector coordinates');
-ylabel('Quadratic energy');`,
-      explain: [{ code: '[Q,D]=eig(H)', meaning: 'Obtain matching eigenvectors and eigenvalues of this real symmetric matrix.' }, { code: 'z=Q\'*x', meaning: 'Measure x along the perpendicular eigenvector directions.' }, { code: 'diagonalEnergy=z\'*D*z', meaning: 'Compute the weighted squared coordinates; no mixed terms remain in this basis.' }, { code: 'H-Q*D*Q\'', meaning: 'Reconstruct the original operator to verify the factorization independently of eigenvector signs.' }],
-    },
-    challenge: {
-      prompt: 'For the symmetric H, compute Q,D from eig. Store Q\' *Q in gram, norm(H-Q*D*Q\') in reconstructionError, x\' *H*x in energy, and the same energy in eigenvector coordinates in diagonalEnergy.',
-      setup: 'H=[5 2;2 2];\nx=[2;-1];',
-      starter: 'Q=eye(2);\nD=eye(2);\ngram=Q\'*Q;\nreconstructionError=norm(H-Q*D*Q\');\nenergy=0;\ndiagonalEnergy=0;',
-      solution: String.raw`[Q,D]=eig(H);
-gram=Q'*Q;
-reconstructionError=norm(H-Q*D*Q');
-energy=x'*H*x;
-z=Q'*x;
-diagonalEnergy=z'*D*z;`,
-      checks: [{ name: 'D', expected: [[1, 0], [0, 6]], tolerance: 1e-6, message: 'These eigenvalues describe the two positive principal curvatures.' }, { name: 'gram', expected: [[1, 0], [0, 1]], tolerance: 1e-6, message: 'Symmetric diagonalization uses orthonormal eigenvectors.' }, { name: 'reconstructionError', expected: 0, tolerance: 1e-6, message: 'Keep each eigenvalue paired with its eigenvector column.' }, { name: 'energy', expected: 14, tolerance: 1e-6, message: 'Compute the quadratic form using the supplied vector and original matrix.' }, { name: 'diagonalEnergy', expected: 14, tolerance: 1e-6, message: 'Transform x with Q transpose before using D.' }],
-      hints: ['Use two outputs from eig so vector columns remain paired with eigenvalues.', 'Compute z=Q\'*x; multiplying D by the original x would use the wrong coordinates.', 'Check energy=x\'*H*x and diagonalEnergy=z\'*D*z after z=Q\'*x.'],
-      transfer: 'Change H to [1 2;2 1]. Find a vector with negative quadratic energy and explain what its eigenvalue says about a minimum.',
-    },
-  },
-  {
-    id: 'laml-covariance-pca', module: 'Spectral thinking', title: 'Covariance and PCA: find the data’s main direction', minutes: 30, level: 'Advanced',
+    id: 'laml-covariance-pca', module: 'The SVD: the shape of any matrix', title: 'Covariance and PCA: find the data’s main direction', minutes: 30, level: 'Advanced',
     objective: 'Center two features, form sample covariance, and compute a one-component PCA reconstruction with a sign-invariant projector.',
     prose: [
       'The four points (-2,-1), (-1,-2), (1,2), and (2,1) vary mostly along the diagonal where both features increase together. A single coordinate along that diagonal preserves much of their spread, while the perpendicular difference varies less.',
@@ -428,7 +337,7 @@ squaredError=sum(sum((X-reconstructed).^2));`,
     },
   },
   {
-    id: 'laml-svd-low-rank', module: 'Spectral thinking', title: 'SVD: compress a matrix and measure the loss', minutes: 30, level: 'Advanced',
+    id: 'laml-svd-low-rank', module: 'The SVD: the shape of any matrix', title: 'SVD: compress a matrix and measure the loss', minutes: 30, level: 'Advanced',
     objective: 'Construct a rank-one matrix approximation from SVD and quantify discarded squared energy.',
     prose: [
       'A three-by-two data matrix [3 0;0 1;0 0] contains one strong direction of size 3 and one weaker direction of size 1. Keeping only the strong direction reconstructs [3 0;0 0;0 0], losing just the entry of size 1.',

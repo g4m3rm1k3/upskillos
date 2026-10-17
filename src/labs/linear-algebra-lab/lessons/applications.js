@@ -137,56 +137,6 @@ gradientError=abs(finiteDifference-gradW(1,1));`,
     },
   },
   {
-    id: 'laml-markov-state-vectors', module: 'Dynamic programming',
-    title: 'State vectors and the direction of a transition', minutes: 35, level: 'Advanced',
-    objective: 'Propagate state probabilities and expected future values using a consistent row-stochastic transition convention.',
-    prose: [
-      'A customer starts in state 1 with certainty. From state 1, the next state is 1 with probability 0.8 and 2 with probability 0.2. After one transition, the distribution must be [0.8;0.2]. Multiplying by the wrong orientation can produce [0.8;0.1], which has lost probability mass.',
-      'The transition matrix P uses rows for current states and columns for next states. Entry P(i,j) is the probability of moving from state i to state j. Every entry is nonnegative and every row sums to one. Such a matrix is called row-stochastic. A probability distribution p is treated as a column vector, so its next distribution is transpose(P)*p.',
-      'A value vector v has one expected future payoff for each possible next state. The vector P*v answers a different question: starting in each current state, what next payoff should we expect? No transpose is needed. The same matrix transports distributions forward and pulls future values backward; the quantities have different meanings even when their arrays have the same length.',
-      'The engine displays one-dimensional vectors compactly, so write the mathematical orientation before choosing multiplication. Check total mass with sum(p) and check transition rows explicitly. The plotted first-state probability changes with time while total probability remains one. This invariant detects many orientation errors before a control algorithm hides them.',
-    ],
-    procedure: ['List states in one fixed order and put current states on rows of P.', 'Check that each row is nonnegative and sums to one.', 'Propagate a column distribution with transpose(P)*p.', 'Compute next-value expectations with P*v and verify the interpretation using a single known starting state.'],
-    prediction: { question: 'With next-state payoffs [10;0], what payoff is expected from current state 1 in the demo?', answer: '8, because 0.8*10+0.2*0=8. It is the first entry of P*v and equals dot(transpose(P)*[1;0],v).' },
-    demo: {
-      code: `P=[0.8 0.2;0.1 0.9];
-p=[1;0];
-v=[10;0];
-expectations=P*v;
-history=zeros(21,1);
-history(1)=p(1);
-for k=1:20
-  p=transpose(P)*p;
-  history(k+1)=p(1);
-end
-disp('Next-value expectations, final distribution, total mass');
-disp(expectations);
-disp(p);
-disp(sum(p));
-plot(0:20,history,'o-');
-title('Forward distribution with conserved probability');
-xlabel('Transition');
-ylabel('Probability of state 1');`,
-      explain: [{ code: 'P*v', meaning: 'Each current-state row averages the possible next-state payoffs.' }, { code: 'transpose(P)*p', meaning: 'Redistribute current probability mass into next states.' }, { code: 'sum(p)', meaning: 'Check the invariant that total probability remains one.' }],
-    },
-    challenge: {
-      prompt: 'Advance p0 by two transitions into p2, compute mass=sum(p2), and calculate expectedNext=P*payoffs for all three starting states.',
-      setup: `P=[0.5 0.5 0;0 0.5 0.5;1 0 0];
-p0=[1;0;0];
-payoffs=[2;0;6];`,
-      starter: `p2=p0;
-mass=0;
-expectedNext=zeros(3,1);`,
-      solution: `p1=transpose(P)*p0;
-p2=transpose(P)*p1;
-mass=sum(p2);
-expectedNext=P*payoffs;`,
-      checks: [{ name: 'p2', expected: [0.25,0.5,0.25], tolerance: 1e-6, message: 'Apply the transposed row-stochastic matrix twice to the starting distribution.' }, { name: 'mass', expected: 1, tolerance: 1e-6, message: 'A valid probability transition preserves total mass.' }, { name: 'expectedNext', expected: [1,3,2], tolerance: 1e-6, message: 'Expected next payoffs use P without a transpose.' }],
-      hints: ['Rows describe where mass goes from each current state.', 'p1=transpose(P)*p0, then apply the identical operation once more.', 'Do not use the forward-distribution formula to pull next-state payoffs back.'],
-      transfer: 'Construct a three-state customer-retention model with one absorbing state. Check row sums and predict which distributions eventually concentrate in the absorbing state.',
-    },
-  },
-  {
     id: 'laml-policy-evaluation', module: 'Dynamic programming',
     title: 'Evaluate a fixed policy two ways', minutes: 35, level: 'Advanced',
     objective: 'Solve a discounted policy-value equation directly and by iteration, then certify the result with a residual.',

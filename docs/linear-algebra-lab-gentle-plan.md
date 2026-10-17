@@ -1,6 +1,6 @@
 # Linear Algebra Lab: gentle-curve redesign plan
 
-Drafted 2026-10-17. Status: Phases 1–3 done (2026-10-17); Phases 4–6 not started.
+Drafted 2026-10-17. Status: Phases 1–4 done (2026-10-17); Phases 5–6 not started.
 
 ## Goal
 
@@ -114,7 +114,11 @@ N = new lesson, E = existing lesson (reworked where noted).
    - Playgrounds: zoom to straight, hill map with gradient steps, and curved map with its Jacobian.
    - Fixed: results holding an anonymous function (`f = @(x) ...`) could not cross from the worker to the page. Worker output is now made cloneable, and a test guards it.
    - Stage 4 modules are now optional tracks with at least 2 lessons; core modules still need at least 4.
-4. **Phase 4:** Directions that don't turn, plus Tensors in the real world, including the stress / Mohr playground.
+4. **Phase 4 (done):** Directions that don't turn, plus Tensors in the real world, including the stress / Mohr playground.
+   - Built in [eigen.js](../src/labs/linear-algebra-lab/lessons/eigen.js). Six new lessons: PageRank, vibrations, stress tensor, principal stresses, Mohr's circle and inertia tensor. Three rewritten, keeping their ids: eigenvectors, Markov chains and symmetric energy. The Markov lesson moved out of the Dynamic programming track.
+   - Diagonalization and spirals joined "Directions that don't turn"; positive definite joined "Tensors in the real world". The old "Spectral thinking" and "Spectral theory" modules are gone: PCA, SVD and the spectral theorem form "The SVD: the shape of any matrix", which has 3 lessons (a test exception until Phase 5).
+   - Why stories, case studies and extra angles for all 12 lessons of the two modules, plus 36 new problem families ([practice/eigen.js](../src/labs/linear-algebra-lab/practice/eigen.js)).
+   - Playgrounds: PageRank step by step (toggle the links), vibration modes (animated), and stress on a cut with a live Mohr's circle.
 5. **Phase 5:** The SVD module, including the photo-compression playground.
 6. **Phase 6:**
    - re-sequence Stage 3;

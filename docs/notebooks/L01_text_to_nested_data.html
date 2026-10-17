@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang xml:lang>
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>L01_text_to_nested_data</title>
+  <style>
+html {
+color: #1a1a1a;
+background-color: #fdfdfd;
+}
+body {
+margin: 0 auto;
+max-width: 36em;
+padding-left: 50px;
+padding-right: 50px;
+padding-top: 50px;
+padding-bottom: 50px;
+hyphens: auto;
+overflow-wrap: break-word;
+text-rendering: optimizeLegibility;
+font-kerning: normal;
+}
+@media (max-width: 600px) {
+body {
+font-size: 0.9em;
+padding: 12px;
+}
+h1 {
+font-size: 1.8em;
+}
+}
+@media print {
+html {
+background-color: white;
+}
+body {
+background-color: transparent;
+color: black;
+font-size: 12pt;
+}
+p, h2, h3 {
+orphans: 3;
+widows: 3;
+}
+h2, h3, h4 {
+page-break-after: avoid;
+}
+}
+p {
+margin: 1em 0;
+}
+a {
+color: #1a1a1a;
+}
+a:visited {
+color: #1a1a1a;
+}
+img {
+max-width: 100%;
+}
+h1, h2, h3, h4, h5, h6 {
+margin-top: 1.4em;
+}
+h5, h6 {
+font-size: 1em;
+font-style: italic;
+}
+h6 {
+font-weight: normal;
+}
+ol, ul {
+padding-left: 1.7em;
+margin-top: 1em;
+}
+li > ol, li > ul {
+margin-top: 0;
+}
+blockquote {
+margin: 1em 0 1em 1.7em;
+padding-left: 1em;
+border-left: 2px solid #e6e6e6;
+color: #606060;
+}
+code {
+font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+font-size: 85%;
+margin: 0;
+hyphens: manual;
+}
+pre {
+margin: 1em 0;
+overflow: auto;
+}
+pre code {
+padding: 0;
+overflow: visible;
+overflow-wrap: normal;
+}
+.sourceCode {
+background-color: transparent;
+overflow: visible;
+}
+hr {
+background-color: #1a1a1a;
+border: none;
+height: 1px;
+margin: 1em 0;
+}
+table {
+margin: 1em 0;
+border-collapse: collapse;
+width: 100%;
+overflow-x: auto;
+display: block;
+font-variant-numeric: lining-nums tabular-nums;
+}
+table caption {
+margin-bottom: 0.75em;
+}
+tbody {
+margin-top: 0.5em;
+border-top: 1px solid #1a1a1a;
+border-bottom: 1px solid #1a1a1a;
+}
+th {
+border-top: 1px solid #1a1a1a;
+padding: 0.25em 0.5em 0.25em 0.5em;
+}
+td {
+padding: 0.125em 0.5em 0.25em 0.5em;
+}
+header {
+margin-bottom: 4em;
+text-align: center;
+}
+#TOC li {
+list-style: none;
+}
+#TOC ul {
+padding-left: 1.3em;
+}
+#TOC > ul {
+padding-left: 0;
+}
+#TOC a:not(:hover) {
+text-decoration: none;
+}
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+
+ul.task-list[class]{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+font-size: inherit;
+width: 0.8em;
+margin: 0 0.8em 0.2em -1.6em;
+vertical-align: middle;
+}
+.display.math{display: block; text-align: center; margin: 0.5rem auto;}
+
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+  <style>
+body { max-width: 52rem; margin: 2rem auto; padding: 0 1rem; font-family: system-ui, sans-serif; line-height: 1.6; color: #1a1a1a; }
+pre { background: #f6f8fa; padding: .8rem 1rem; border-radius: 6px; overflow-x: auto; }
+div.output pre, .output pre { background: #fff; border-left: 4px solid #8bc34a; }
+table { border-collapse: collapse; margin: 1rem 0; }
+th, td { border: 1px solid #ccc; padding: .35rem .7rem; text-align: left; vertical-align: top; }
+code { font-size: .92em; }
+h1 { border-bottom: 2px solid #ddd; padding-bottom: .3rem; }
+</style>
+</head>
+<body>
+<div id="9610e086" class="cell markdown">
+<h1 id="l01--turning-text-into-nested-data">L01 · Turning Text into
+Nested Data</h1>
+<p><em>Build-Up Series · Lab 1 of 15 · standard library only · saves the
+module file <code>grid_pieces.py</code></em></p>
+<p><strong>How to work through this notebook.</strong> Do not just run
+the cells. Type each code cell yourself, in your own notebook or in one
+growing file, run it, and compare what you see with the output printed
+under it. Every code cell is small on purpose and every one is followed
+by an explanation of what it did and why. Boxes marked <strong>Try
+it</strong> are guided experiments: copy your file, make the named
+change, look at what happens, then go back to the original.</p>
+<p>By the end you will be able to take a messy block of text, turn it
+into a nested structure of dicts, lists and tuples, and read any piece
+of that structure with a one-line path. That skill is what makes a lot
+of &quot;complicated&quot; code stop looking complicated, because most complicated
+code is just nested data being passed between small functions.</p>
+</div>
+<div id="d085c952" class="cell markdown">
+<h2 id="1--the-problem">1 · The problem</h2>
+<p>A building-design tool exports the floor plan of a small bakery as
+one block of text. Your program has to answer questions such as:</p>
+<ul>
+<li>Is the square at row 3, column 5 a wall?</li>
+<li>Where are the doors?</li>
+<li>From this square, which squares can I step to?</li>
+</ul>
+<p>Text cannot answer those questions. To a program, the floor plan is
+one long string with invisible line-break characters in it, and finding
+&quot;row 3, column 5&quot; by hand means counting characters across line breaks,
+which is exactly where off-by-one mistakes breed.</p>
+<p><strong>Analogy.</strong> A printed seating chart on a wall is easy
+for a person: you glance at it. A program cannot glance. It needs the
+seating chart turned into a database where &quot;table 3, seat 5&quot; is a
+lookup. This lab is the translation from the printed chart to the
+database.</p>
+</div>
+<div id="a1daa06d" class="cell markdown">
+<h2 id="2--tiny-version-check-it-with-a-pencil">2 · Tiny version (check
+it with a pencil)</h2>
+<p>We start with a map so small that you can verify every result on
+paper.</p>
+<p><strong>Step 1: what is this text, really?</strong></p>
+</div>
+<div id="24eb18ac" class="cell code" data-execution_count="1">
+<div class="sourceCode" id="cb1"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A tiny floor plan: &#39;#&#39; is wall, &#39;.&#39; is floor.</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>tiny_map_text <span class="op">=</span> <span class="st">&quot;&quot;&quot;####</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="st">#..#</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="st">####&quot;&quot;&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">type</span>(tiny_map_text))   <span class="co"># what kind of object is it?</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">len</span>(tiny_map_text))    <span class="co"># how many characters does it hold?</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">repr</span>(tiny_map_text))   <span class="co"># repr shows the characters a normal print hides</span></span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>&lt;class &#39;str&#39;&gt;
+14
+&#39;####\n#..#\n####&#39;
+</code></pre>
+</div>
+</div>
+<div id="225d9050" class="cell markdown">
+<p><strong>What happened.</strong> <code>type</code> says this is a
+<code>str</code>, a <em>string</em>: an ordered sequence of characters.
+<code>len</code> says it holds 14 characters. Check with a pencil: three
+lines of 4 characters is 12, plus 2 line-break characters between the
+lines is 14. <code>repr</code> makes the hidden ones visible:
+<code>\n</code> is the single character that means &quot;start a new line&quot;.
+The line break is not magic formatting, it is a character that takes up
+space like any other.</p>
+<p><strong>Step 2: cut the text into one string per line.</strong></p>
+</div>
+<div id="f636dbaf" class="cell code" data-execution_count="2">
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># splitlines() cuts the string at every line break and returns a list of strings.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>tiny_rows_as_text <span class="op">=</span> tiny_map_text.splitlines()</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tiny_rows_as_text)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">len</span>(tiny_rows_as_text))   <span class="co"># three lines, so three strings</span></span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>[&#39;####&#39;, &#39;#..#&#39;, &#39;####&#39;]
+3
+</code></pre>
+</div>
+</div>
+<div id="58ae4f92" class="cell markdown">
+<p><strong>What happened.</strong> <code>splitlines()</code> returned a
+<em>list</em> (an ordered, numbered collection) of three strings and
+threw the line-break characters away, since they were only
+separators.</p>
+<p><strong>Analogy.</strong> Picture a long paper tape with the whole
+map printed on it. <code>splitlines()</code> cuts the tape at every line
+break and gives you three strips, one per row. Each strip is still a
+string.</p>
+<p><strong>Step 3: ask for one square with two lookups.</strong></p>
+</div>
+<div id="2482bdab" class="cell code" data-execution_count="3">
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>row_index <span class="op">=</span> <span class="dv">1</span>      <span class="co"># counting starts at 0, so 1 means &quot;the second row&quot;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>column_index <span class="op">=</span> <span class="dv">2</span>   <span class="co"># and 2 means &quot;the third character across&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>one_row <span class="op">=</span> tiny_rows_as_text[row_index]     <span class="co"># first lookup: pick the strip</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>one_character <span class="op">=</span> one_row[column_index]      <span class="co"># second lookup: pick the character on it</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(one_row, one_character)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tiny_rows_as_text[<span class="dv">1</span>][<span class="dv">2</span>])             <span class="co"># the same thing as one expression</span></span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>#..# .
+.
+</code></pre>
+</div>
+</div>
+<div id="12f60029" class="cell markdown">
+<p><strong>What happened.</strong> <code>tiny_rows_as_text[1]</code>
+gave back the second strip, <code>&#39;#..#&#39;</code>, and <code>[2]</code> on
+that strip gave back its third character, <code>.</code>. Writing
+<code>tiny_rows_as_text[1][2]</code> just does both lookups left to
+right: the first brackets are evaluated first, and whatever they return
+gets the second brackets.</p>
+<p><strong>Two things to memorise now.</strong> First, the order is
+<em>(row, column)</em>: row counts down the page, column counts across
+it. That is the opposite of the <em>(x, y)</em> order from school
+graphs. Second, counting starts at 0.</p>
+<p><strong>Analogy.</strong> A filing cabinet: the first number picks
+the drawer, the second picks the folder inside the drawer.</p>
+<p><strong>Step 4: strings cannot be edited, lists can.</strong></p>
+</div>
+<div id="02eda356" class="cell code" data-execution_count="4">
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Try to change one character of a string row.</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    one_row[<span class="dv">2</span>] <span class="op">=</span> <span class="st">&quot;#&quot;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">TypeError</span> <span class="im">as</span> problem:</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;TypeError:&quot;</span>, problem)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># A list comprehension turns each row string into a list of one-character strings.</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Read it aloud as: &quot;for each row_text in tiny_rows_as_text, make list(row_text)&quot;.</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>tiny_grid <span class="op">=</span> [<span class="bu">list</span>(row_text) <span class="cf">for</span> row_text <span class="kw">in</span> tiny_rows_as_text]</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co"># The same thing written as an ordinary loop, so you can see there is no magic:</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co">#   tiny_grid = []</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a><span class="co">#   for row_text in tiny_rows_as_text:</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a><span class="co">#       tiny_grid.append(list(row_text))</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>tiny_grid[<span class="dv">1</span>][<span class="dv">2</span>] <span class="op">=</span> <span class="st">&quot;#&quot;</span>   <span class="co"># a list of characters can be edited in place</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(tiny_grid)</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>TypeError: &#39;str&#39; object does not support item assignment
+[[&#39;#&#39;, &#39;#&#39;, &#39;#&#39;, &#39;#&#39;], [&#39;#&#39;, &#39;.&#39;, &#39;#&#39;, &#39;#&#39;], [&#39;#&#39;, &#39;#&#39;, &#39;#&#39;, &#39;#&#39;]]
+</code></pre>
+</div>
+</div>
+<div id="059bdae7" class="cell markdown">
+<p><strong>What happened.</strong> Python refuses to change a character
+inside a string: strings are <em>immutable</em> (they never change after
+they are created). A list is <em>mutable</em>, so after
+<code>list(row_text)</code> turns <code>&#39;#..#&#39;</code> into
+<code>[&#39;#&#39;, &#39;.&#39;, &#39;.&#39;, &#39;#&#39;]</code>, we could overwrite a single
+character. The list of lists is called a <strong>grid</strong>, and
+<code>tiny_grid[1][2]</code> is the same two-step lookup as before, now
+usable for both reading and writing.</p>
+<p>Notice that we changed <code>tiny_grid</code> but the original
+<code>tiny_map_text</code> is untouched: <code>list(...)</code> made
+copies of the characters.</p>
+<p><strong>Pencil check.</strong> Row 1 originally read
+<code># . . #</code>. We overwrote column 2 with <code>#</code>, so row
+1 should now read <code># . # #</code>, which is exactly what the
+printed grid shows.</p>
+</div>
+<div id="5620146e" class="cell markdown">
+<h2 id="3--grow-it-the-same-idea-on-a-messy-realistic-file">3 · Grow it:
+the same idea on a messy, realistic file</h2>
+<p>Real files are never as tidy as the tiny map. Here is what the design
+tool actually exports. Look for the messes before reading on:</p>
+<ul>
+<li>a blank line at the start and at the end of the file,</li>
+<li>a <strong>header</strong> (<code>name:</code> and
+<code>legend:</code> lines) before the map itself,</li>
+<li>trailing spaces after some rows (the tool did not clean up),</li>
+<li>rows of <strong>different lengths</strong>, because the bottom-right
+corner of the building is cut away and the tool leaves that part
+blank.</li>
+</ul>
+</div>
+<div id="2a24681b" class="cell code" data-execution_count="5">
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>bakery_file_text <span class="op">=</span> <span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="st">name: Corner Bakery</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="st">legend: # wall | . floor | D door | S start | E exit</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="st">##########</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="st">#S...#...#~~~</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="st">#.##.#.#.#</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a><span class="st">#.#..D.#E#</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="st">#.#.####.#</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a><span class="st">#...D...#</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="st">#########</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Text editors love to delete trailing spaces, so the three ~ characters above stand</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co"># in for three real trailing spaces, which we put back here:</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>bakery_file_text <span class="op">=</span> bakery_file_text.replace(<span class="st">&quot;~~~&quot;</span>, <span class="st">&quot;   &quot;</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="bu">repr</span>(bakery_file_text[:<span class="dv">60</span>]))   <span class="co"># the first 60 characters, hidden ones visible</span></span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>&#39;\nname: Corner Bakery\nlegend: # wall | . floor | D door | S s&#39;
+</code></pre>
+</div>
+</div>
+<div id="7092cb10" class="cell markdown">
+<p><strong>Step 5: split the file into its header and its
+map.</strong></p>
+</div>
+<div id="40186bb5" class="cell code" data-execution_count="6">
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># partition(separator) cuts the string at the FIRST occurrence of the separator</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="co"># and returns a tuple of three pieces: (before, the separator itself, after).</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>cleaned_file_text <span class="op">=</span> bakery_file_text.strip(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>)   <span class="co"># drop blank lines at both ends</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>header_text, _, map_text <span class="op">=</span> cleaned_file_text.partition(<span class="st">&quot;</span><span class="ch">\n\n</span><span class="st">&quot;</span>)   <span class="co"># a blank line separates header and map</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;HEADER:&quot;</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(header_text)</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>()</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;MAP:&quot;</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(map_text)</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>HEADER:
+name: Corner Bakery
+legend: # wall | . floor | D door | S start | E exit
+
+MAP:
+##########
+#S...#...#   
+#.##.#.#.#
+#.#..D.#E#
+#.#.####.#
+#...D...#
+#########
+</code></pre>
+</div>
+</div>
+<div id="825abc5e" class="cell markdown">
+<p><strong>What happened.</strong> A blank line is the two characters
+<code>\n\n</code> in a row, so <code>partition(&quot;\n\n&quot;)</code> splits the
+file there. It returns a <strong>tuple</strong> of three things; we keep
+the first and the last. The middle one is the separator itself, which we
+do not need, so we name it <code>_</code>, the usual Python name for &quot;a
+value I am throwing away&quot;.</p>
+<p>A <em>tuple</em> is like a list that is fixed in size and cannot be
+changed. It is the right container for &quot;a small, fixed number of related
+values&quot;, like these three pieces. You will use tuples constantly in this
+series.</p>
+<p><strong>Step 6: turn the header lines into a dict, and the legend
+into a second dict.</strong></p>
+</div>
+<div id="a1117497" class="cell code" data-execution_count="7">
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>header <span class="op">=</span> {}</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> line <span class="kw">in</span> header_text.splitlines():</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    key, _, value <span class="op">=</span> line.partition(<span class="st">&quot;:&quot;</span>)        <span class="co"># split at the FIRST colon only</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    header[key.strip()] <span class="op">=</span> value.strip()        <span class="co"># strip() removes spaces at both ends</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(header)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># The legend text looks like &quot;# wall | . floor | D door | ...&quot;.</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Cut at &#39;|&#39;, then split each entry into its symbol and its meaning.</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>legend <span class="op">=</span> {}</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> entry <span class="kw">in</span> header[<span class="st">&quot;legend&quot;</span>].split(<span class="st">&quot;|&quot;</span>):</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    symbol, _, meaning <span class="op">=</span> entry.strip().partition(<span class="st">&quot; &quot;</span>)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>    legend[symbol] <span class="op">=</span> meaning.strip()</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(legend)</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>{&#39;name&#39;: &#39;Corner Bakery&#39;, &#39;legend&#39;: &#39;# wall | . floor | D door | S start | E exit&#39;}
+{&#39;#&#39;: &#39;wall&#39;, &#39;.&#39;: &#39;floor&#39;, &#39;D&#39;: &#39;door&#39;, &#39;S&#39;: &#39;start&#39;, &#39;E&#39;: &#39;exit&#39;}
+</code></pre>
+</div>
+</div>
+<div id="7fb530f9" class="cell markdown">
+<p><strong>What happened.</strong> A <strong>dict</strong> (dictionary)
+is a lookup by name: <code>header[&quot;legend&quot;]</code> finds the value filed
+under the key <code>&quot;legend&quot;</code>. Two dicts came out.
+<code>header</code> maps header names to text. <code>legend</code> maps
+each map symbol to its meaning, for example <code>&#39;#&#39;</code> to
+<code>&#39;wall&#39;</code>. Reading the map&#39;s meaning from a legend rather than
+hard-coding <code>&#39;#&#39;</code> in our code means the same code works for
+any map that ships with its own legend.</p>
+<p><strong>Analogy.</strong> A dict is a phone book: look up a name, get
+a number. A list is a numbered queue: look up a position, get whoever
+stands there. A tuple is a form with a fixed number of boxes.</p>
+<p><strong>Step 7: ragged rows. See the problem first, then fix
+it.</strong></p>
+</div>
+<div id="3416201a" class="cell code" data-execution_count="8">
+<div class="sourceCode" id="cb15"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ragged_rows <span class="op">=</span> map_text.splitlines()</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>([<span class="bu">len</span>(row_text) <span class="cf">for</span> row_text <span class="kw">in</span> ragged_rows])   <span class="co"># row lengths as the file has them</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Asking row 5 for column 9 fails, because that row is only 9 characters long.</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="cf">try</span>:</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(ragged_rows[<span class="dv">5</span>][<span class="dv">9</span>])</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="cf">except</span> <span class="pp">IndexError</span> <span class="im">as</span> problem:</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;IndexError:&quot;</span>, problem)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="co"># The fix, in two moves:</span></span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="co">#  1. rstrip() removes trailing spaces, which are noise from the exporting tool.</span></span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a><span class="co">#  2. ljust(width) pads every row on the right with spaces up to the widest row.</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>trimmed_rows <span class="op">=</span> [row_text.rstrip() <span class="cf">for</span> row_text <span class="kw">in</span> ragged_rows]</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>grid_width <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(row_text) <span class="cf">for</span> row_text <span class="kw">in</span> trimmed_rows)</span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>padded_rows <span class="op">=</span> [row_text.ljust(grid_width) <span class="cf">for</span> row_text <span class="kw">in</span> trimmed_rows]</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-17"><a href="#cb15-17" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>([<span class="bu">len</span>(row_text) <span class="cf">for</span> row_text <span class="kw">in</span> padded_rows])   <span class="co"># now every row is the same length</span></span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>[10, 13, 10, 10, 10, 9, 9]
+IndexError: string index out of range
+[10, 10, 10, 10, 10, 10, 10]
+</code></pre>
+</div>
+</div>
+<div id="9b0e506e" class="cell markdown">
+<p><strong>What happened.</strong> The list of lengths shows the mess:
+row 1 has 13 characters (three of them trailing spaces) and rows 5 and 6
+have only 9. Asking a short row for a column past its end raises an
+<code>IndexError</code>. After trimming noise and padding to the widest
+row, every row has 10 characters, so the text is now a perfect rectangle
+and <code>grid[row][column]</code> is safe for every row and column
+inside the rectangle.</p>
+<p>A space character in the padded area means &quot;outside the building&quot;. It
+is not in the legend, so later we will call it
+<strong>void</strong>.</p>
+<p><strong>Step 8: find the special squares and record their
+addresses.</strong></p>
+</div>
+<div id="0660e7ff" class="cell code" data-execution_count="9">
+<div class="sourceCode" id="cb17"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Build the grid of characters, then scan every square once.</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>grid <span class="op">=</span> [<span class="bu">list</span>(row_text) <span class="cf">for</span> row_text <span class="kw">in</span> padded_rows]</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>markers <span class="op">=</span> {}   <span class="co"># will map a kind such as &quot;door&quot; to a list of (row, column) tuples</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> row_number, grid_row <span class="kw">in</span> <span class="bu">enumerate</span>(grid):                 <span class="co"># enumerate gives (position, item) pairs</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> column_number, character <span class="kw">in</span> <span class="bu">enumerate</span>(grid_row):</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>        kind <span class="op">=</span> legend.get(character)                         <span class="co"># .get returns None if the symbol is unknown</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> kind <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> kind <span class="kw">not</span> <span class="kw">in</span> (<span class="st">&quot;wall&quot;</span>, <span class="st">&quot;floor&quot;</span>):</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>            <span class="co"># setdefault: if the key is missing, create it with an empty list; then hand me the list.</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>            markers.setdefault(kind, []).append((row_number, column_number))</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(markers)</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>{&#39;start&#39;: [(1, 1)], &#39;door&#39;: [(3, 5), (5, 4)], &#39;exit&#39;: [(3, 8)]}
+</code></pre>
+</div>
+</div>
+<div id="87c5c2b7" class="cell markdown">
+<p><strong>What happened.</strong> <code>enumerate</code> walks through
+a list and hands you each item together with its position, so we get
+<code>(row_number, grid_row)</code> and then
+<code>(column_number, character)</code> without writing
+<code>range(len(...))</code>. For each square whose meaning is something
+other than plain wall or floor, we recorded its
+<strong>address</strong>, the tuple <code>(row, column)</code>.</p>
+<p><code>markers</code> is the first genuinely nested value we have
+built: a <strong>dict</strong> of lists of <strong>tuples</strong>. The
+doors are at <code>(3, 5)</code> and <code>(5, 4)</code>. Check with the
+map: row 3 is <code>#.#..D.#E#</code>, and counting from 0 the
+<code>D</code> is the character at index 5. ✓</p>
+<p><strong>Analogy.</strong> A tuple like <code>(3, 5)</code> is a
+street address: house number and street, always exactly two parts, never
+edited, and usable as a name for a place. That last property matters in
+L02: tuples can be used as dict keys, lists cannot.</p>
+<p><strong>Try it (guided experiment).</strong> Copy your file. In the
+copy, replace <code>markers = {}</code> and the <code>setdefault</code>
+line with a <code>collections.defaultdict(list)</code>:
+<code>from collections import defaultdict</code>,
+<code>markers = defaultdict(list)</code>, and
+<code>markers[kind].append(...)</code>. Print the result and confirm it
+matches. Then return to the original file. You are comparing two real
+ways to say &quot;create the list the first time I see this key&quot;. Only do
+this experiment after you can explain, without looking, what
+<code>setdefault</code> did in the line above.</p>
+<p><strong>Step 9: pack Steps 5 to 8 into one function.</strong></p>
+</div>
+<div id="3ae6fc65" class="cell code" data-execution_count="10">
+<div class="sourceCode" id="cb19"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>PLAIN_KINDS <span class="op">=</span> (<span class="st">&quot;wall&quot;</span>, <span class="st">&quot;floor&quot;</span>)   <span class="co"># kinds that do not need a recorded address</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_header(header_text):</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;&#39;key: value&#39; lines  -&gt;  dict of str -&gt; str.&quot;&quot;&quot;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>    header <span class="op">=</span> {}</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> line <span class="kw">in</span> header_text.splitlines():</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>        key, _, value <span class="op">=</span> line.partition(<span class="st">&quot;:&quot;</span>)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>        header[key.strip()] <span class="op">=</span> value.strip()</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> header</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_legend(legend_text):</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;&#39;# wall | . floor | ...&#39;  -&gt;  dict of symbol -&gt; meaning.&quot;&quot;&quot;</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    legend <span class="op">=</span> {}</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> entry <span class="kw">in</span> legend_text.split(<span class="st">&quot;|&quot;</span>):</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>        symbol, _, meaning <span class="op">=</span> entry.strip().partition(<span class="st">&quot; &quot;</span>)</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>        legend[symbol] <span class="op">=</span> meaning.strip()</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> legend</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_floor_plan(text):</span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Whole exported file as one string  -&gt;  one nested &#39;plan&#39; dict.&quot;&quot;&quot;</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. Header and map are separated by the first blank line.</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>    header_text, _, map_text <span class="op">=</span> text.strip(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>).partition(<span class="st">&quot;</span><span class="ch">\n\n</span><span class="st">&quot;</span>)</span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>    header <span class="op">=</span> parse_header(header_text)</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a>    legend <span class="op">=</span> parse_legend(header[<span class="st">&quot;legend&quot;</span>])</span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. Trim noise, pad to a rectangle, turn each row into a list of characters.</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>    trimmed_rows <span class="op">=</span> [row_text.rstrip() <span class="cf">for</span> row_text <span class="kw">in</span> map_text.splitlines()]</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>    width <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(row_text) <span class="cf">for</span> row_text <span class="kw">in</span> trimmed_rows)</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>    grid <span class="op">=</span> [<span class="bu">list</span>(row_text.ljust(width)) <span class="cf">for</span> row_text <span class="kw">in</span> trimmed_rows]</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 3. Record the address of every special square, refusing symbols we do not know.</span></span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>    markers <span class="op">=</span> {}</span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> row_number, grid_row <span class="kw">in</span> <span class="bu">enumerate</span>(grid):</span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> column_number, character <span class="kw">in</span> <span class="bu">enumerate</span>(grid_row):</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> character <span class="op">==</span> <span class="st">&quot; &quot;</span>:</span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>                <span class="cf">continue</span>   <span class="co"># padding or empty space: nothing to record</span></span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> character <span class="kw">not</span> <span class="kw">in</span> legend:</span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>                <span class="cf">raise</span> <span class="pp">ValueError</span>(</span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f&quot;symbol </span><span class="sc">{</span>character<span class="sc">!r}</span><span class="ss"> at row </span><span class="sc">{</span>row_number<span class="sc">}</span><span class="ss">, column </span><span class="sc">{</span>column_number<span class="sc">}</span><span class="ss"> &quot;</span></span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>                    <span class="ss">f&quot;is not in the legend&quot;</span>)</span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>            kind <span class="op">=</span> legend[character]</span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> kind <span class="kw">not</span> <span class="kw">in</span> PLAIN_KINDS:</span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a>                markers.setdefault(kind, []).append((row_number, column_number))</span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> {<span class="st">&quot;header&quot;</span>: header, <span class="st">&quot;legend&quot;</span>: legend, <span class="st">&quot;grid&quot;</span>: grid,</span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;markers&quot;</span>: markers, <span class="st">&quot;height&quot;</span>: <span class="bu">len</span>(grid), <span class="st">&quot;width&quot;</span>: width}</span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>bakery_plan <span class="op">=</span> parse_floor_plan(bakery_file_text)</span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(bakery_plan[<span class="st">&quot;header&quot;</span>])</span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(bakery_plan[<span class="st">&quot;markers&quot;</span>])</span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(bakery_plan[<span class="st">&quot;height&quot;</span>], <span class="st">&quot;rows x&quot;</span>, bakery_plan[<span class="st">&quot;width&quot;</span>], <span class="st">&quot;columns&quot;</span>)</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>{&#39;name&#39;: &#39;Corner Bakery&#39;, &#39;legend&#39;: &#39;# wall | . floor | D door | S start | E exit&#39;}
+{&#39;start&#39;: [(1, 1)], &#39;door&#39;: [(3, 5), (5, 4)], &#39;exit&#39;: [(3, 8)]}
+7 rows x 10 columns
+</code></pre>
+</div>
+</div>
+<div id="27e9c345" class="cell markdown">
+<p><strong>What happened.</strong> We took three exploratory steps and
+made them into one function with one input (the whole file as a string)
+and one output (the plan, a single nested dict). Three small choices are
+worth noticing:</p>
+<ul>
+<li>We raise a <code>ValueError</code> for a symbol that is not in the
+legend instead of silently treating it as empty. A typo in the file now
+produces an error that names the exact row and column, instead of a
+mysterious wrong answer later.</li>
+<li>Spaces are skipped, because they are our &quot;outside the building&quot;
+padding.</li>
+<li>The docstrings (the triple-quoted text under each <code>def</code>)
+say what goes in and what comes out in one line each.</li>
+</ul>
+<p><strong>Step 10: reading squares safely, and asking about
+neighbours.</strong></p>
+</div>
+<div id="c366b8fe" class="cell code" data-execution_count="11">
+<div class="sourceCode" id="cb21"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> kind_at(plan, row, column):</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;What is at (row, column)? A kind name, or None if outside the map.&quot;&quot;&quot;</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Chained comparison: 0 &lt;= row &lt; height means &quot;row is at least 0 AND below height&quot;.</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> (<span class="dv">0</span> <span class="op">&lt;=</span> row <span class="op">&lt;</span> plan[<span class="st">&quot;height&quot;</span>] <span class="kw">and</span> <span class="dv">0</span> <span class="op">&lt;=</span> column <span class="op">&lt;</span> plan[<span class="st">&quot;width&quot;</span>]):</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">None</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>    character <span class="op">=</span> plan[<span class="st">&quot;grid&quot;</span>][row][column]</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> plan[<span class="st">&quot;legend&quot;</span>].get(character, <span class="st">&quot;void&quot;</span>)   <span class="co"># unknown symbol (the padding space) -&gt; &quot;void&quot;</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(kind_at(bakery_plan, <span class="dv">0</span>, <span class="dv">0</span>))      <span class="co"># top-left corner</span></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(kind_at(bakery_plan, <span class="dv">99</span>, <span class="dv">99</span>))    <span class="co"># far outside the map</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="co"># A Python trap: negative indexes count from the </span><span class="re">END</span><span class="co">, so they never raise an error.</span></span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;row -1 is quietly the LAST row:&quot;</span>, bakery_plan[<span class="st">&quot;grid&quot;</span>][<span class="op">-</span><span class="dv">1</span>][:<span class="dv">3</span>])</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Four directions as (row_change, column_change) tuples. Rows grow downward.</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>DIRECTION_STEPS <span class="op">=</span> {<span class="st">&quot;up&quot;</span>: (<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>), <span class="st">&quot;down&quot;</span>: (<span class="dv">1</span>, <span class="dv">0</span>), <span class="st">&quot;left&quot;</span>: (<span class="dv">0</span>, <span class="op">-</span><span class="dv">1</span>), <span class="st">&quot;right&quot;</span>: (<span class="dv">0</span>, <span class="dv">1</span>)}</span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>BLOCKED_KINDS <span class="op">=</span> (<span class="st">&quot;wall&quot;</span>, <span class="st">&quot;void&quot;</span>)</span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> neighbors_of(plan, row, column):</span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Squares you can step to from (row, column): dict of direction -&gt; (row, column).&quot;&quot;&quot;</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>    open_neighbors <span class="op">=</span> {}</span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> direction_name, (row_change, column_change) <span class="kw">in</span> DIRECTION_STEPS.items():</span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>        neighbor_row <span class="op">=</span> row <span class="op">+</span> row_change</span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a>        neighbor_column <span class="op">=</span> column <span class="op">+</span> column_change</span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a>        kind <span class="op">=</span> kind_at(plan, neighbor_row, neighbor_column)</span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> kind <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> kind <span class="kw">not</span> <span class="kw">in</span> BLOCKED_KINDS:</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>            open_neighbors[direction_name] <span class="op">=</span> (neighbor_row, neighbor_column)</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> open_neighbors</span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a>door_row, door_column <span class="op">=</span> bakery_plan[<span class="st">&quot;markers&quot;</span>][<span class="st">&quot;door&quot;</span>][<span class="dv">0</span>]   <span class="co"># unpack the first door&#39;s address</span></span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;first door is at&quot;</span>, (door_row, door_column))</span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(neighbors_of(bakery_plan, door_row, door_column))</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>wall
+None
+row -1 is quietly the LAST row: [&#39;#&#39;, &#39;#&#39;, &#39;#&#39;]
+first door is at (3, 5)
+{&#39;left&#39;: (3, 4), &#39;right&#39;: (3, 6)}
+</code></pre>
+</div>
+</div>
+<div id="c44c4dd1" class="cell markdown">
+<p><strong>What happened.</strong> <code>kind_at</code> is the safe way
+to read the grid. It checks the bounds first, because Python&#39;s negative
+indexing would otherwise answer <code>row = -1</code> with the last row
+instead of an error, and a wrong answer that looks right is worse than a
+crash. It also turns the padding space into the kind
+<code>&quot;void&quot;</code>.</p>
+<p><code>neighbors_of</code> loops over a dict of four directions. The
+loop header
+<code>for direction_name, (row_change, column_change) in ...items()</code>
+unpacks twice: <code>.items()</code> yields <code>(key, value)</code>
+pairs, and the value is itself a tuple that gets unpacked into two
+names.</p>
+<p>Check the result against the map: the door at <code>(3, 5)</code> has
+wall above and below it and floor to its left and right, so the answer
+<code>{&#39;left&#39;: (3, 4), &#39;right&#39;: (3, 6)}</code> is right. ✓</p>
+<p><strong>Reading nested data with a path.</strong> Every pair of
+brackets peels off one layer:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Path</th>
+<th>What it means</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>plan[&quot;markers&quot;]</code></td>
+<td>the dict of special squares</td>
+<td>dict</td>
+</tr>
+<tr class="even">
+<td><code>plan[&quot;markers&quot;][&quot;door&quot;]</code></td>
+<td>the list of door addresses</td>
+<td>list of tuples</td>
+</tr>
+<tr class="odd">
+<td><code>plan[&quot;markers&quot;][&quot;door&quot;][1]</code></td>
+<td>the second door&#39;s address</td>
+<td><code>(5, 4)</code></td>
+</tr>
+<tr class="even">
+<td><code>plan[&quot;markers&quot;][&quot;door&quot;][1][0]</code></td>
+<td>that address&#39;s row</td>
+<td><code>5</code></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="c28fb4e0" class="cell code" data-execution_count="12">
+<div class="sourceCode" id="cb23"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(bakery_plan[<span class="st">&quot;markers&quot;</span>][<span class="st">&quot;door&quot;</span>][<span class="dv">1</span>][<span class="dv">0</span>])   <span class="co"># the row of the second door</span></span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>5
+</code></pre>
+</div>
+</div>
+<div id="35dac91a" class="cell markdown">
+<h2 id="4--aha-every-nested-thing-is-made-of-three-layers">4 · Aha:
+every nested thing is made of three layers</h2>
+<p>All the messy structures in this series, however deep, are built from
+just three kinds of container:</p>
+<ul>
+<li>a <strong>dict</strong>: look up by name,</li>
+<li>a <strong>list</strong>: look up by position,</li>
+<li>a <strong>tuple</strong>: a small fixed-size record.</li>
+</ul>
+<p>To prove it, here is a function that <em>reads</em> any nested value
+and describes its shape. It calls itself on each layer inside (that is
+called <strong>recursion</strong>: a function solving a problem by
+solving a smaller copy of the same problem).</p>
+</div>
+<div id="afa18319" class="cell code" data-execution_count="13">
+<div class="sourceCode" id="cb25"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> describe_shape(value):</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Describe the nested shape of a value in one line of text.&quot;&quot;&quot;</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">dict</span>):</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> value:</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="st">&quot;empty dict&quot;</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>        key_shapes <span class="op">=</span> {describe_shape(key) <span class="cf">for</span> key <span class="kw">in</span> value}</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>        value_shapes <span class="op">=</span> {describe_shape(item) <span class="cf">for</span> item <span class="kw">in</span> value.values()}</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(key_shapes) <span class="op">==</span> <span class="dv">1</span> <span class="kw">and</span> <span class="bu">len</span>(value_shapes) <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>            <span class="co"># Every key looks alike and every value looks alike: a lookup table.</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="ss">f&quot;dict of </span><span class="sc">{</span>key_shapes<span class="sc">.</span>pop()<span class="sc">}</span><span class="ss"> -&gt; </span><span class="sc">{</span>value_shapes<span class="sc">.</span>pop()<span class="sc">}</span><span class="ss">&quot;</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Otherwise each key plays a different role: a &#39;record&#39; with named fields.</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>        fields <span class="op">=</span> <span class="st">&quot;, &quot;</span>.join(<span class="ss">f&quot;</span><span class="sc">{</span>key<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>describe_shape(item)<span class="sc">}</span><span class="ss">&quot;</span> <span class="cf">for</span> key, item <span class="kw">in</span> value.items())</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;record{&quot;</span> <span class="op">+</span> fields <span class="op">+</span> <span class="st">&quot;}&quot;</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">list</span>):</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> value:</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="st">&quot;empty list&quot;</span></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>        item_shapes <span class="op">=</span> {describe_shape(item) <span class="cf">for</span> item <span class="kw">in</span> value}</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(item_shapes) <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="ss">f&quot;list of </span><span class="sc">{</span>item_shapes<span class="sc">.</span>pop()<span class="sc">}</span><span class="ss">&quot;</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;list of mixed(&quot;</span> <span class="op">+</span> <span class="st">&quot; | &quot;</span>.join(<span class="bu">sorted</span>(item_shapes)) <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="bu">isinstance</span>(value, <span class="bu">tuple</span>):</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="st">&quot;(&quot;</span> <span class="op">+</span> <span class="st">&quot;, &quot;</span>.join(describe_shape(item) <span class="cf">for</span> item <span class="kw">in</span> value) <span class="op">+</span> <span class="st">&quot;)&quot;</span></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">type</span>(value).<span class="va">__name__</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(describe_shape(bakery_plan))</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>record{header: dict of str -&gt; str, legend: dict of str -&gt; str, grid: list of list of str, markers: dict of str -&gt; list of (int, int), height: int, width: int}
+</code></pre>
+</div>
+</div>
+<div id="823b61ba" class="cell markdown">
+<p><strong>The aha.</strong> The whole bakery, which looked like a wall
+of text five minutes ago, is <em>one</em> value whose shape fits in one
+line: a record with a header (dict of text to text), a legend (dict of
+text to text), a grid (list of list of text), markers (dict of text to a
+list of integer pairs), and two integers. Nothing is hidden. If you ever
+meet a nested value in someone else&#39;s code, you can answer &quot;what is its
+shape?&quot; with exactly this vocabulary, and you can read any part of it
+with a path of brackets.</p>
+<p><strong>Where else this shows up.</strong> The same move, &quot;text in,
+nested value out, then read it with a path&quot;, is how programs deal with a
+game&#39;s tile-map files, with spreadsheet and log files (a list of
+records), with configuration files (a dict of dicts), and with image
+data (a grid of pixel values). The squares change; the three layers do
+not.</p>
+<p><strong>Try it (guided experiment).</strong> Copy your file. In the
+copy, store the grid as a <strong>dict keyed by address</strong> instead
+of a list of lists:
+<code>grid = {(row_number, column_number): character, ...}</code>.
+Rewrite <code>kind_at</code> to use it:
+<code>plan[&quot;grid&quot;].get((row, column))</code> returns <code>None</code>
+for any address outside the map automatically. Run
+<code>describe_shape</code> on the new plan and compare it with the old
+shape. Write down one thing that got easier (hint: the bounds check) and
+one thing that got harder (hint: printing the map row by row). Then
+return to the original file. Do this only once the three-layers idea
+above feels solid; the experiment pays off because L02 stores whole
+worlds in exactly this kind of dict.</p>
+</div>
+<div id="4f270f6a" class="cell markdown">
+<h2 id="5--your-turn">5 · Your turn</h2>
+<p>First a tiny checker you can reuse. It runs your function on some
+cases and prints <strong>not yet</strong> until your answer is complete
+and correct, then <strong>PASS</strong>.</p>
+</div>
+<div id="e3bc2e4f" class="cell code" data-execution_count="14">
+<div class="sourceCode" id="cb27"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> check(label, function, cases):</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;cases is a list of (arguments_tuple, expected_result) pairs.&quot;&quot;&quot;</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> arguments, expected <span class="kw">in</span> cases:</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>            got <span class="op">=</span> function(<span class="op">*</span>arguments)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> problem:</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: not yet (raised </span><span class="sc">{</span><span class="bu">type</span>(problem)<span class="sc">.</span><span class="va">__name__</span><span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>problem<span class="sc">}</span><span class="ss">)&quot;</span>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> got <span class="kw">is</span> <span class="va">None</span>:</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: not yet&quot;</span>)</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> got <span class="op">!=</span> expected:</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: FAIL  arguments=</span><span class="sc">{</span>arguments<span class="sc">!r}</span><span class="ss">  expected=</span><span class="sc">{</span>expected<span class="sc">!r}</span><span class="ss">  got=</span><span class="sc">{</span>got<span class="sc">!r}</span><span class="ss">&quot;</span>)</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>label<span class="sc">}</span><span class="ss">: PASS&quot;</span>)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Two tiny maps with answers you can verify by hand (the legend line is required).</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>wall_count_plan <span class="op">=</span> parse_floor_plan(<span class="st">&quot;&quot;&quot;legend: # wall | . floor | D door</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a><span class="st">#D#</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a><span class="st">#.#</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a><span class="st">###&quot;&quot;&quot;</span>)</span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>corner_plan <span class="op">=</span> parse_floor_plan(<span class="st">&quot;&quot;&quot;legend: # wall | . floor</span></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a><span class="st">###</span></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a><span class="st">#.#</span></span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a><span class="st">#..&quot;&quot;&quot;</span>)</span></code></pre></div>
+</div>
+<div id="7e7b49fa" class="cell markdown">
+<p><strong>Challenge 1: count the squares of one kind.</strong> Write
+<code>count_cells(plan, kind_name)</code> that returns how many squares
+of that kind the plan contains. By hand, <code>wall_count_plan</code>
+has 7 walls, 1 door and 1 floor.</p>
+<p><em>Hint:</em> two nested <code>for</code> loops over
+<code>range(plan[&quot;height&quot;])</code> and
+<code>range(plan[&quot;width&quot;])</code>, and <code>kind_at</code> to read each
+square.</p>
+<p><strong>Challenge 2: count the open sides of a square.</strong> Write
+<code>number_of_open_sides(plan, row, column)</code>. By hand in
+<code>corner_plan</code>: square <code>(1, 1)</code> has 1 open side
+(only downward), <code>(2, 1)</code> has 2 (up and right), and
+<code>(2, 2)</code> has 1.</p>
+<p><em>Hint:</em> you already wrote the function that lists open
+neighbours. A dict has a length.</p>
+<p><strong>Challenge 3: a different file, the same skill.</strong> A
+spreadsheet export arrives as text. Write
+<code>parse_sales_table(text)</code> that returns a dict from each
+column name to the list of that column&#39;s values, turning cells made only
+of digits into integers. For the text below the answer is
+<code>{&#39;day&#39;: [&#39;mon&#39;, &#39;mon&#39;, &#39;tue&#39;], &#39;item&#39;: [&#39;bun&#39;, &#39;loaf&#39;, &#39;bun&#39;], &#39;count&#39;: [12, 4, 9]}</code>.</p>
+<p><em>Hint:</em> <code>split(&quot;,&quot;)</code> cuts a line into cells;
+<code>zip(names, cells)</code> pairs each name with its cell;
+<code>str.isdigit()</code> tells you whether a cell is all digits.</p>
+<p>Fill in your answers by replacing <code>pass</code> below. Do not
+scroll to the solutions before you have tried.</p>
+</div>
+<div id="e224f773" class="cell code" data-execution_count="15">
+<div class="sourceCode" id="cb28"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>sales_text <span class="op">=</span> <span class="st">&quot;&quot;&quot;day,item,count</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="st">mon,bun,12</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="st">mon,loaf,4</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a><span class="st">tue,bun,9&quot;&quot;&quot;</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> count_cells(plan, kind_name):</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">pass</span>   <span class="co"># replace this line with your answer</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> number_of_open_sides(plan, row, column):</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">pass</span>   <span class="co"># replace this line with your answer</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_sales_table(text):</span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">pass</span>   <span class="co"># replace this line with your answer</span></span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> run_all_checks():</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>    check(<span class="st">&quot;count_cells&quot;</span>, count_cells,</span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a>          [((wall_count_plan, <span class="st">&quot;wall&quot;</span>), <span class="dv">7</span>), ((wall_count_plan, <span class="st">&quot;door&quot;</span>), <span class="dv">1</span>), ((wall_count_plan, <span class="st">&quot;floor&quot;</span>), <span class="dv">1</span>)])</span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a>    check(<span class="st">&quot;number_of_open_sides&quot;</span>, number_of_open_sides,</span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a>          [((corner_plan, <span class="dv">1</span>, <span class="dv">1</span>), <span class="dv">1</span>), ((corner_plan, <span class="dv">2</span>, <span class="dv">1</span>), <span class="dv">2</span>), ((corner_plan, <span class="dv">2</span>, <span class="dv">2</span>), <span class="dv">1</span>)])</span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a>    check(<span class="st">&quot;parse_sales_table&quot;</span>, parse_sales_table,</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>          [((sales_text,), {<span class="st">&quot;day&quot;</span>: [<span class="st">&quot;mon&quot;</span>, <span class="st">&quot;mon&quot;</span>, <span class="st">&quot;tue&quot;</span>], <span class="st">&quot;item&quot;</span>: [<span class="st">&quot;bun&quot;</span>, <span class="st">&quot;loaf&quot;</span>, <span class="st">&quot;bun&quot;</span>], <span class="st">&quot;count&quot;</span>: [<span class="dv">12</span>, <span class="dv">4</span>, <span class="dv">9</span>]})])</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a>run_all_checks()</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>count_cells: not yet
+number_of_open_sides: not yet
+parse_sales_table: not yet
+</code></pre>
+</div>
+</div>
+<div id="dbad7d63" class="cell markdown">
+<h3 id="solutions-try-first">Solutions (try first)</h3>
+<p>Each of these replaces the stub of the same name. After you define
+them, run <code>run_all_checks()</code> again.</p>
+</div>
+<div id="f91c9593" class="cell code" data-execution_count="16">
+<div class="sourceCode" id="cb30"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> count_cells(plan, kind_name):</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>    count <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> row_number <span class="kw">in</span> <span class="bu">range</span>(plan[<span class="st">&quot;height&quot;</span>]):</span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> column_number <span class="kw">in</span> <span class="bu">range</span>(plan[<span class="st">&quot;width&quot;</span>]):</span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> kind_at(plan, row_number, column_number) <span class="op">==</span> kind_name:</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>                count <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> count</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> number_of_open_sides(plan, row, column):</span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a>    <span class="co"># neighbors_of already returns only the open sides, so the answer is its size.</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">len</span>(neighbors_of(plan, row, column))</span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_sales_table(text):</span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>    lines <span class="op">=</span> text.strip().splitlines()</span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>    column_names <span class="op">=</span> lines[<span class="dv">0</span>].split(<span class="st">&quot;,&quot;</span>)                       <span class="co"># first line holds the names</span></span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>    columns <span class="op">=</span> {name: [] <span class="cf">for</span> name <span class="kw">in</span> column_names}            <span class="co"># one empty list per column</span></span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> line <span class="kw">in</span> lines[<span class="dv">1</span>:]:</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> name, cell_text <span class="kw">in</span> <span class="bu">zip</span>(column_names, line.split(<span class="st">&quot;,&quot;</span>)):</span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a>            value <span class="op">=</span> <span class="bu">int</span>(cell_text) <span class="cf">if</span> cell_text.isdigit() <span class="cf">else</span> cell_text</span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a>            columns[name].append(value)</span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> columns</span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>run_all_checks()</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>count_cells: PASS
+number_of_open_sides: PASS
+parse_sales_table: PASS
+</code></pre>
+</div>
+</div>
+<div id="8c4b44b0" class="cell markdown">
+<p><strong>Why Challenge 3 matters.</strong> Look at the answer&#39;s shape:
+<code>dict of str -&gt; list of mixed</code>. A list of records and a
+dict of columns are two different shapes for the same table; which is
+better depends on what you ask of it. The lab on lookup structures (L02)
+is all about choosing the shape that makes your questions
+one-liners.</p>
+</div>
+<div id="b4ea2e8a" class="cell markdown">
+<h2 id="6--piece-card">6 · Piece card</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Field</th>
+<th>Entry</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Name</strong></td>
+<td><code>parse_floor_plan</code> (with helpers <code>kind_at</code>,
+<code>neighbors_of</code>, <code>describe_shape</code>)</td>
+</tr>
+<tr class="even">
+<td><strong>Input</strong></td>
+<td>the exported file as one string: a header with a
+<code>legend:</code> line, a blank line, then the map rows</td>
+</tr>
+<tr class="odd">
+<td><strong>Output</strong></td>
+<td>one nested dict: <code>header</code>, <code>legend</code>,
+<code>grid</code> (list of list of str), <code>markers</code> (dict of
+kind to list of <code>(row, column)</code>), <code>height</code>,
+<code>width</code></td>
+</tr>
+<tr class="even">
+<td><strong>Assumes</strong></td>
+<td>rows are separated by <code>\n</code>; every non-space symbol is in
+the legend; blank space means &quot;outside&quot;; the legend entry is
+<code>symbol meaning</code> with a one-character symbol; no tabs, no
+<code>\r\n</code> line endings (<strong>not tested here</strong>)</td>
+</tr>
+<tr class="odd">
+<td><strong>Three versions in this lab</strong></td>
+<td>index loops (A), comprehensions with <code>enumerate</code> (B), one
+pass over raw characters (C)</td>
+</tr>
+<tr class="even">
+<td><strong>Swap rule</strong></td>
+<td>any version can replace another on a valid map; all must return the
+same <code>(grid, markers)</code></td>
+</tr>
+<tr class="odd">
+<td><strong>Used later by</strong></td>
+<td>L02 (Combine), L03, L05, L07, A1, A2</td>
+</tr>
+</tbody>
+</table>
+<p>Now we save the piece as a module file so later labs can
+<code>import</code> it. In Jupyter the magic line
+<code>%%writefile grid_pieces.py</code> does this; here we use plain
+Python so the notebook runs anywhere. The file is also what you would
+type by hand into your one growing file.</p>
+</div>
+<div id="a0496935" class="cell code" data-execution_count="17">
+<div class="sourceCode" id="cb32"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>module_source <span class="op">=</span> <span class="vs">r&#39;&#39;&#39;&quot;&quot;&quot;grid_pieces.py  (L01 piece card)</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="vs">Name:        parse_floor_plan  (+ kind_at, neighbors_of, describe_shape)</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="vs">Input:       exported floor-plan text: header with a &#39;legend:&#39; line, a blank line, map rows</span></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="vs">Output:      nested dict: header, legend, grid (list of list of str),</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a><span class="vs">             markers (dict of kind -&gt; list of (row, column)), height, width</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a><span class="vs">Assumes:     rows split on &#39;\n&#39;; every non-space symbol is in the legend; blank = outside;</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a><span class="vs">             one-character symbols; no tabs or &#39;\r\n&#39; (not tested)</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a><span class="vs">Versions:    index loops / comprehensions + enumerate / single pass over characters</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="vs">Swap rule:   any version may replace another; same (grid, markers) on a valid map</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a><span class="vs">Used later:  L02, L03, L05, L07, A1, A2</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a><span class="vs">&quot;&quot;&quot;</span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a><span class="vs">PLAIN_KINDS = (&quot;wall&quot;, &quot;floor&quot;)</span></span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a><span class="vs">BLOCKED_KINDS = (&quot;wall&quot;, &quot;void&quot;)</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a><span class="vs">DIRECTION_STEPS = {&quot;up&quot;: (-1, 0), &quot;down&quot;: (1, 0), &quot;left&quot;: (0, -1), &quot;right&quot;: (0, 1)}</span></span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a><span class="vs">def parse_header(header_text):</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a><span class="vs">    header = </span><span class="sc">{}</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a><span class="vs">    for line in header_text.splitlines():</span></span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a><span class="vs">        key, _, value = line.partition(&quot;:&quot;)</span></span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a><span class="vs">        header[key.strip()] = value.strip()</span></span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a><span class="vs">    return header</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a><span class="vs">def parse_legend(legend_text):</span></span>
+<span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a><span class="vs">    legend = </span><span class="sc">{}</span></span>
+<span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a><span class="vs">    for entry in legend_text.split(&quot;|&quot;):</span></span>
+<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a><span class="vs">        symbol, _, meaning = entry.strip().partition(&quot; &quot;)</span></span>
+<span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a><span class="vs">        legend[symbol] = meaning.strip()</span></span>
+<span id="cb32-32"><a href="#cb32-32" aria-hidden="true" tabindex="-1"></a><span class="vs">    return legend</span></span>
+<span id="cb32-33"><a href="#cb32-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-34"><a href="#cb32-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-35"><a href="#cb32-35" aria-hidden="true" tabindex="-1"></a><span class="vs">def parse_floor_plan(text):</span></span>
+<span id="cb32-36"><a href="#cb32-36" aria-hidden="true" tabindex="-1"></a><span class="vs">    header_text, _, map_text = text.strip(&quot;\n&quot;).partition(&quot;\n\n&quot;)</span></span>
+<span id="cb32-37"><a href="#cb32-37" aria-hidden="true" tabindex="-1"></a><span class="vs">    header = parse_header(header_text)</span></span>
+<span id="cb32-38"><a href="#cb32-38" aria-hidden="true" tabindex="-1"></a><span class="vs">    legend = parse_legend(header[&quot;legend&quot;])</span></span>
+<span id="cb32-39"><a href="#cb32-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-40"><a href="#cb32-40" aria-hidden="true" tabindex="-1"></a><span class="vs">    trimmed_rows = [row_text.rstrip() for row_text in map_text.splitlines()]</span></span>
+<span id="cb32-41"><a href="#cb32-41" aria-hidden="true" tabindex="-1"></a><span class="vs">    width = max(len(row_text) for row_text in trimmed_rows)</span></span>
+<span id="cb32-42"><a href="#cb32-42" aria-hidden="true" tabindex="-1"></a><span class="vs">    grid = [list(row_text.ljust(width)) for row_text in trimmed_rows]</span></span>
+<span id="cb32-43"><a href="#cb32-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-44"><a href="#cb32-44" aria-hidden="true" tabindex="-1"></a><span class="vs">    markers = </span><span class="sc">{}</span></span>
+<span id="cb32-45"><a href="#cb32-45" aria-hidden="true" tabindex="-1"></a><span class="vs">    for row_number, grid_row in enumerate(grid):</span></span>
+<span id="cb32-46"><a href="#cb32-46" aria-hidden="true" tabindex="-1"></a><span class="vs">        for column_number, character in enumerate(grid_row):</span></span>
+<span id="cb32-47"><a href="#cb32-47" aria-hidden="true" tabindex="-1"></a><span class="vs">            if character == &quot; &quot;:</span></span>
+<span id="cb32-48"><a href="#cb32-48" aria-hidden="true" tabindex="-1"></a><span class="vs">                continue</span></span>
+<span id="cb32-49"><a href="#cb32-49" aria-hidden="true" tabindex="-1"></a><span class="vs">            if character not in legend:</span></span>
+<span id="cb32-50"><a href="#cb32-50" aria-hidden="true" tabindex="-1"></a><span class="vs">                raise ValueError(</span></span>
+<span id="cb32-51"><a href="#cb32-51" aria-hidden="true" tabindex="-1"></a><span class="vs">                    f&quot;symbol </span><span class="sc">{character!r}</span><span class="vs"> at row </span><span class="sc">{row_number}</span><span class="vs">, column </span><span class="sc">{column_number}</span><span class="vs"> &quot;</span></span>
+<span id="cb32-52"><a href="#cb32-52" aria-hidden="true" tabindex="-1"></a><span class="vs">                    f&quot;is not in the legend&quot;)</span></span>
+<span id="cb32-53"><a href="#cb32-53" aria-hidden="true" tabindex="-1"></a><span class="vs">            kind = legend[character]</span></span>
+<span id="cb32-54"><a href="#cb32-54" aria-hidden="true" tabindex="-1"></a><span class="vs">            if kind not in PLAIN_KINDS:</span></span>
+<span id="cb32-55"><a href="#cb32-55" aria-hidden="true" tabindex="-1"></a><span class="vs">                markers.setdefault(kind, []).append((row_number, column_number))</span></span>
+<span id="cb32-56"><a href="#cb32-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-57"><a href="#cb32-57" aria-hidden="true" tabindex="-1"></a><span class="vs">    return {&quot;header&quot;: header, &quot;legend&quot;: legend, &quot;grid&quot;: grid,</span></span>
+<span id="cb32-58"><a href="#cb32-58" aria-hidden="true" tabindex="-1"></a><span class="vs">            &quot;markers&quot;: markers, &quot;height&quot;: len(grid), &quot;width&quot;: width}</span></span>
+<span id="cb32-59"><a href="#cb32-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-60"><a href="#cb32-60" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-61"><a href="#cb32-61" aria-hidden="true" tabindex="-1"></a><span class="vs">def kind_at(plan, row, column):</span></span>
+<span id="cb32-62"><a href="#cb32-62" aria-hidden="true" tabindex="-1"></a><span class="vs">    if not (0 &lt;= row &lt; plan[&quot;height&quot;] and 0 &lt;= column &lt; plan[&quot;width&quot;]):</span></span>
+<span id="cb32-63"><a href="#cb32-63" aria-hidden="true" tabindex="-1"></a><span class="vs">        return None</span></span>
+<span id="cb32-64"><a href="#cb32-64" aria-hidden="true" tabindex="-1"></a><span class="vs">    character = plan[&quot;grid&quot;][row][column]</span></span>
+<span id="cb32-65"><a href="#cb32-65" aria-hidden="true" tabindex="-1"></a><span class="vs">    return plan[&quot;legend&quot;].get(character, &quot;void&quot;)</span></span>
+<span id="cb32-66"><a href="#cb32-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-67"><a href="#cb32-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-68"><a href="#cb32-68" aria-hidden="true" tabindex="-1"></a><span class="vs">def neighbors_of(plan, row, column):</span></span>
+<span id="cb32-69"><a href="#cb32-69" aria-hidden="true" tabindex="-1"></a><span class="vs">    open_neighbors = </span><span class="sc">{}</span></span>
+<span id="cb32-70"><a href="#cb32-70" aria-hidden="true" tabindex="-1"></a><span class="vs">    for direction_name, (row_change, column_change) in DIRECTION_STEPS.items():</span></span>
+<span id="cb32-71"><a href="#cb32-71" aria-hidden="true" tabindex="-1"></a><span class="vs">        neighbor_row = row + row_change</span></span>
+<span id="cb32-72"><a href="#cb32-72" aria-hidden="true" tabindex="-1"></a><span class="vs">        neighbor_column = column + column_change</span></span>
+<span id="cb32-73"><a href="#cb32-73" aria-hidden="true" tabindex="-1"></a><span class="vs">        kind = kind_at(plan, neighbor_row, neighbor_column)</span></span>
+<span id="cb32-74"><a href="#cb32-74" aria-hidden="true" tabindex="-1"></a><span class="vs">        if kind is not None and kind not in BLOCKED_KINDS:</span></span>
+<span id="cb32-75"><a href="#cb32-75" aria-hidden="true" tabindex="-1"></a><span class="vs">            open_neighbors[direction_name] = (neighbor_row, neighbor_column)</span></span>
+<span id="cb32-76"><a href="#cb32-76" aria-hidden="true" tabindex="-1"></a><span class="vs">    return open_neighbors</span></span>
+<span id="cb32-77"><a href="#cb32-77" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-78"><a href="#cb32-78" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-79"><a href="#cb32-79" aria-hidden="true" tabindex="-1"></a><span class="vs">def describe_shape(value):</span></span>
+<span id="cb32-80"><a href="#cb32-80" aria-hidden="true" tabindex="-1"></a><span class="vs">    if isinstance(value, dict):</span></span>
+<span id="cb32-81"><a href="#cb32-81" aria-hidden="true" tabindex="-1"></a><span class="vs">        if not value:</span></span>
+<span id="cb32-82"><a href="#cb32-82" aria-hidden="true" tabindex="-1"></a><span class="vs">            return &quot;empty dict&quot;</span></span>
+<span id="cb32-83"><a href="#cb32-83" aria-hidden="true" tabindex="-1"></a><span class="vs">        key_shapes = {describe_shape(key) for key in value}</span></span>
+<span id="cb32-84"><a href="#cb32-84" aria-hidden="true" tabindex="-1"></a><span class="vs">        value_shapes = {describe_shape(item) for item in value.values()}</span></span>
+<span id="cb32-85"><a href="#cb32-85" aria-hidden="true" tabindex="-1"></a><span class="vs">        if len(key_shapes) == 1 and len(value_shapes) == 1:</span></span>
+<span id="cb32-86"><a href="#cb32-86" aria-hidden="true" tabindex="-1"></a><span class="vs">            return f&quot;dict of {key_shapes.pop()} -&gt; {value_shapes.pop()}&quot;</span></span>
+<span id="cb32-87"><a href="#cb32-87" aria-hidden="true" tabindex="-1"></a><span class="vs">        fields = &quot;, &quot;.join(f&quot;</span><span class="sc">{key}</span><span class="vs">: {describe_shape(item)}&quot; for key, item in value.items())</span></span>
+<span id="cb32-88"><a href="#cb32-88" aria-hidden="true" tabindex="-1"></a><span class="vs">        return &quot;record{&quot; + fields + &quot;}&quot;</span></span>
+<span id="cb32-89"><a href="#cb32-89" aria-hidden="true" tabindex="-1"></a><span class="vs">    if isinstance(value, list):</span></span>
+<span id="cb32-90"><a href="#cb32-90" aria-hidden="true" tabindex="-1"></a><span class="vs">        if not value:</span></span>
+<span id="cb32-91"><a href="#cb32-91" aria-hidden="true" tabindex="-1"></a><span class="vs">            return &quot;empty list&quot;</span></span>
+<span id="cb32-92"><a href="#cb32-92" aria-hidden="true" tabindex="-1"></a><span class="vs">        item_shapes = {describe_shape(item) for item in value}</span></span>
+<span id="cb32-93"><a href="#cb32-93" aria-hidden="true" tabindex="-1"></a><span class="vs">        if len(item_shapes) == 1:</span></span>
+<span id="cb32-94"><a href="#cb32-94" aria-hidden="true" tabindex="-1"></a><span class="vs">            return f&quot;list of {item_shapes.pop()}&quot;</span></span>
+<span id="cb32-95"><a href="#cb32-95" aria-hidden="true" tabindex="-1"></a><span class="vs">        return &quot;list of mixed(&quot; + &quot; | &quot;.join(sorted(item_shapes)) + &quot;)&quot;</span></span>
+<span id="cb32-96"><a href="#cb32-96" aria-hidden="true" tabindex="-1"></a><span class="vs">    if isinstance(value, tuple):</span></span>
+<span id="cb32-97"><a href="#cb32-97" aria-hidden="true" tabindex="-1"></a><span class="vs">        return &quot;(&quot; + &quot;, &quot;.join(describe_shape(item) for item in value) + &quot;)&quot;</span></span>
+<span id="cb32-98"><a href="#cb32-98" aria-hidden="true" tabindex="-1"></a><span class="vs">    return type(value).__name__</span></span>
+<span id="cb32-99"><a href="#cb32-99" aria-hidden="true" tabindex="-1"></a><span class="vs">&#39;&#39;&#39;</span></span>
+<span id="cb32-100"><a href="#cb32-100" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-101"><a href="#cb32-101" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(<span class="st">&quot;grid_pieces.py&quot;</span>, <span class="st">&quot;w&quot;</span>, encoding<span class="op">=</span><span class="st">&quot;utf-8&quot;</span>) <span class="im">as</span> module_file:</span>
+<span id="cb32-102"><a href="#cb32-102" aria-hidden="true" tabindex="-1"></a>    module_file.write(module_source)</span>
+<span id="cb32-103"><a href="#cb32-103" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-104"><a href="#cb32-104" aria-hidden="true" tabindex="-1"></a><span class="co"># Prove the saved module behaves exactly like the functions we built above.</span></span>
+<span id="cb32-105"><a href="#cb32-105" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> importlib</span>
+<span id="cb32-106"><a href="#cb32-106" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> grid_pieces</span>
+<span id="cb32-107"><a href="#cb32-107" aria-hidden="true" tabindex="-1"></a>importlib.<span class="bu">reload</span>(grid_pieces)</span>
+<span id="cb32-108"><a href="#cb32-108" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-109"><a href="#cb32-109" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;module matches notebook:&quot;</span>,</span>
+<span id="cb32-110"><a href="#cb32-110" aria-hidden="true" tabindex="-1"></a>      grid_pieces.parse_floor_plan(bakery_file_text) <span class="op">==</span> bakery_plan</span>
+<span id="cb32-111"><a href="#cb32-111" aria-hidden="true" tabindex="-1"></a>      <span class="kw">and</span> grid_pieces.neighbors_of(bakery_plan, <span class="dv">3</span>, <span class="dv">5</span>) <span class="op">==</span> neighbors_of(bakery_plan, <span class="dv">3</span>, <span class="dv">5</span>)</span>
+<span id="cb32-112"><a href="#cb32-112" aria-hidden="true" tabindex="-1"></a>      <span class="kw">and</span> grid_pieces.describe_shape(bakery_plan) <span class="op">==</span> describe_shape(bakery_plan))</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>module matches notebook: True
+</code></pre>
+</div>
+</div>
+<div id="5bd1ede2" class="cell markdown">
+<p><strong>What happened.</strong> We wrote the source to disk, imported
+it, and compared its answers with the notebook&#39;s own functions on the
+same input. This last check is a small <strong>contract test</strong>:
+it protects you from the notebook and the module quietly drifting apart.
+The <code>r&#39;&#39;&#39;...&#39;&#39;&#39;</code> prefix <code>r</code> makes it a
+<em>raw</em> string, so sequences like <code>\n</code> inside the module
+source are kept as the two characters backslash and <code>n</code>
+rather than turned into a real line break.</p>
+</div>
+<div id="7f008809" class="cell markdown">
+<h2 id="7--swap-test-then-combine">7 · Swap test, then Combine</h2>
+<p><strong>The swap.</strong> The piece &quot;map text to grid and markers&quot;
+can be written three genuinely different ways. If the contract is
+honest, any of them can replace any other.</p>
+<ul>
+<li><strong>A: index loops.</strong> Everything done with
+<code>range(len(...))</code> and explicit indexes. Most explicit, and
+the most places to be off by one.</li>
+<li><strong>B: comprehensions and <code>enumerate</code>.</strong> What
+we wrote above.</li>
+<li><strong>C: one pass over raw characters.</strong> Never cuts the
+text into lines at all: it walks character by character, counting rows
+and columns as it goes, and starts a new row whenever it meets
+<code>\n</code>.</li>
+</ul>
+</div>
+<div id="289a7395" class="cell code" data-execution_count="18">
+<div class="sourceCode" id="cb34"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>legend <span class="op">=</span> bakery_plan[<span class="st">&quot;legend&quot;</span>]</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>map_text_only <span class="op">=</span> bakery_file_text.strip(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>).partition(<span class="st">&quot;</span><span class="ch">\n\n</span><span class="st">&quot;</span>)[<span class="dv">2</span>]</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_version_a(map_text, legend):</span>
+<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>    lines <span class="op">=</span> map_text.splitlines()</span>
+<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>    trimmed <span class="op">=</span> []</span>
+<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> line_index <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(lines)):</span>
+<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>        trimmed.append(lines[line_index].rstrip())</span>
+<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>    width <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> line_index <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(trimmed)):</span>
+<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(trimmed[line_index]) <span class="op">&gt;</span> width:</span>
+<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>            width <span class="op">=</span> <span class="bu">len</span>(trimmed[line_index])</span>
+<span id="cb34-14"><a href="#cb34-14" aria-hidden="true" tabindex="-1"></a>    grid <span class="op">=</span> []</span>
+<span id="cb34-15"><a href="#cb34-15" aria-hidden="true" tabindex="-1"></a>    markers <span class="op">=</span> {}</span>
+<span id="cb34-16"><a href="#cb34-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> row_number <span class="kw">in</span> <span class="bu">range</span>(<span class="bu">len</span>(trimmed)):</span>
+<span id="cb34-17"><a href="#cb34-17" aria-hidden="true" tabindex="-1"></a>        padded <span class="op">=</span> trimmed[row_number] <span class="op">+</span> <span class="st">&quot; &quot;</span> <span class="op">*</span> (width <span class="op">-</span> <span class="bu">len</span>(trimmed[row_number]))</span>
+<span id="cb34-18"><a href="#cb34-18" aria-hidden="true" tabindex="-1"></a>        grid_row <span class="op">=</span> []</span>
+<span id="cb34-19"><a href="#cb34-19" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> column_number <span class="kw">in</span> <span class="bu">range</span>(width):</span>
+<span id="cb34-20"><a href="#cb34-20" aria-hidden="true" tabindex="-1"></a>            character <span class="op">=</span> padded[column_number]</span>
+<span id="cb34-21"><a href="#cb34-21" aria-hidden="true" tabindex="-1"></a>            grid_row.append(character)</span>
+<span id="cb34-22"><a href="#cb34-22" aria-hidden="true" tabindex="-1"></a>            kind <span class="op">=</span> legend.get(character)</span>
+<span id="cb34-23"><a href="#cb34-23" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> kind <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> kind <span class="kw">not</span> <span class="kw">in</span> (<span class="st">&quot;wall&quot;</span>, <span class="st">&quot;floor&quot;</span>):</span>
+<span id="cb34-24"><a href="#cb34-24" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> kind <span class="kw">not</span> <span class="kw">in</span> markers:</span>
+<span id="cb34-25"><a href="#cb34-25" aria-hidden="true" tabindex="-1"></a>                    markers[kind] <span class="op">=</span> []</span>
+<span id="cb34-26"><a href="#cb34-26" aria-hidden="true" tabindex="-1"></a>                markers[kind].append((row_number, column_number))</span>
+<span id="cb34-27"><a href="#cb34-27" aria-hidden="true" tabindex="-1"></a>        grid.append(grid_row)</span>
+<span id="cb34-28"><a href="#cb34-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grid, markers</span>
+<span id="cb34-29"><a href="#cb34-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-30"><a href="#cb34-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-31"><a href="#cb34-31" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_version_b(map_text, legend):</span>
+<span id="cb34-32"><a href="#cb34-32" aria-hidden="true" tabindex="-1"></a>    trimmed <span class="op">=</span> [line.rstrip() <span class="cf">for</span> line <span class="kw">in</span> map_text.splitlines()]</span>
+<span id="cb34-33"><a href="#cb34-33" aria-hidden="true" tabindex="-1"></a>    width <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(line) <span class="cf">for</span> line <span class="kw">in</span> trimmed)</span>
+<span id="cb34-34"><a href="#cb34-34" aria-hidden="true" tabindex="-1"></a>    grid <span class="op">=</span> [<span class="bu">list</span>(line.ljust(width)) <span class="cf">for</span> line <span class="kw">in</span> trimmed]</span>
+<span id="cb34-35"><a href="#cb34-35" aria-hidden="true" tabindex="-1"></a>    markers <span class="op">=</span> {}</span>
+<span id="cb34-36"><a href="#cb34-36" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> row_number, grid_row <span class="kw">in</span> <span class="bu">enumerate</span>(grid):</span>
+<span id="cb34-37"><a href="#cb34-37" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> column_number, character <span class="kw">in</span> <span class="bu">enumerate</span>(grid_row):</span>
+<span id="cb34-38"><a href="#cb34-38" aria-hidden="true" tabindex="-1"></a>            kind <span class="op">=</span> legend.get(character)</span>
+<span id="cb34-39"><a href="#cb34-39" aria-hidden="true" tabindex="-1"></a>            <span class="cf">if</span> kind <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> kind <span class="kw">not</span> <span class="kw">in</span> (<span class="st">&quot;wall&quot;</span>, <span class="st">&quot;floor&quot;</span>):</span>
+<span id="cb34-40"><a href="#cb34-40" aria-hidden="true" tabindex="-1"></a>                markers.setdefault(kind, []).append((row_number, column_number))</span>
+<span id="cb34-41"><a href="#cb34-41" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grid, markers</span>
+<span id="cb34-42"><a href="#cb34-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-43"><a href="#cb34-43" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-44"><a href="#cb34-44" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parse_version_c(map_text, legend):</span>
+<span id="cb34-45"><a href="#cb34-45" aria-hidden="true" tabindex="-1"></a>    grid <span class="op">=</span> []</span>
+<span id="cb34-46"><a href="#cb34-46" aria-hidden="true" tabindex="-1"></a>    markers <span class="op">=</span> {}</span>
+<span id="cb34-47"><a href="#cb34-47" aria-hidden="true" tabindex="-1"></a>    current_row <span class="op">=</span> []</span>
+<span id="cb34-48"><a href="#cb34-48" aria-hidden="true" tabindex="-1"></a>    row_number <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb34-49"><a href="#cb34-49" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> character <span class="kw">in</span> map_text <span class="op">+</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>:            <span class="co"># a sentinel newline closes the last row</span></span>
+<span id="cb34-50"><a href="#cb34-50" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> character <span class="op">==</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>:</span>
+<span id="cb34-51"><a href="#cb34-51" aria-hidden="true" tabindex="-1"></a>            grid.append(current_row)</span>
+<span id="cb34-52"><a href="#cb34-52" aria-hidden="true" tabindex="-1"></a>            current_row <span class="op">=</span> []</span>
+<span id="cb34-53"><a href="#cb34-53" aria-hidden="true" tabindex="-1"></a>            row_number <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb34-54"><a href="#cb34-54" aria-hidden="true" tabindex="-1"></a>            <span class="cf">continue</span></span>
+<span id="cb34-55"><a href="#cb34-55" aria-hidden="true" tabindex="-1"></a>        column_number <span class="op">=</span> <span class="bu">len</span>(current_row)</span>
+<span id="cb34-56"><a href="#cb34-56" aria-hidden="true" tabindex="-1"></a>        current_row.append(character)</span>
+<span id="cb34-57"><a href="#cb34-57" aria-hidden="true" tabindex="-1"></a>        kind <span class="op">=</span> legend.get(character)</span>
+<span id="cb34-58"><a href="#cb34-58" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> kind <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span> <span class="kw">and</span> kind <span class="kw">not</span> <span class="kw">in</span> (<span class="st">&quot;wall&quot;</span>, <span class="st">&quot;floor&quot;</span>):</span>
+<span id="cb34-59"><a href="#cb34-59" aria-hidden="true" tabindex="-1"></a>            markers.setdefault(kind, []).append((row_number, column_number))</span>
+<span id="cb34-60"><a href="#cb34-60" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> grid_row <span class="kw">in</span> grid:                        <span class="co"># same clean-up as the others, done afterwards</span></span>
+<span id="cb34-61"><a href="#cb34-61" aria-hidden="true" tabindex="-1"></a>        <span class="cf">while</span> grid_row <span class="kw">and</span> grid_row[<span class="op">-</span><span class="dv">1</span>] <span class="op">==</span> <span class="st">&quot; &quot;</span>:</span>
+<span id="cb34-62"><a href="#cb34-62" aria-hidden="true" tabindex="-1"></a>            grid_row.pop()</span>
+<span id="cb34-63"><a href="#cb34-63" aria-hidden="true" tabindex="-1"></a>    width <span class="op">=</span> <span class="bu">max</span>(<span class="bu">len</span>(grid_row) <span class="cf">for</span> grid_row <span class="kw">in</span> grid)</span>
+<span id="cb34-64"><a href="#cb34-64" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> grid_row <span class="kw">in</span> grid:</span>
+<span id="cb34-65"><a href="#cb34-65" aria-hidden="true" tabindex="-1"></a>        grid_row.extend([<span class="st">&quot; &quot;</span>] <span class="op">*</span> (width <span class="op">-</span> <span class="bu">len</span>(grid_row)))</span>
+<span id="cb34-66"><a href="#cb34-66" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> grid, markers</span>
+<span id="cb34-67"><a href="#cb34-67" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-68"><a href="#cb34-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb34-69"><a href="#cb34-69" aria-hidden="true" tabindex="-1"></a>result_a <span class="op">=</span> parse_version_a(map_text_only, legend)</span>
+<span id="cb34-70"><a href="#cb34-70" aria-hidden="true" tabindex="-1"></a>result_b <span class="op">=</span> parse_version_b(map_text_only, legend)</span>
+<span id="cb34-71"><a href="#cb34-71" aria-hidden="true" tabindex="-1"></a>result_c <span class="op">=</span> parse_version_c(map_text_only, legend)</span>
+<span id="cb34-72"><a href="#cb34-72" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;A == B:&quot;</span>, result_a <span class="op">==</span> result_b)</span>
+<span id="cb34-73"><a href="#cb34-73" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;B == C:&quot;</span>, result_b <span class="op">==</span> result_c)</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>A == B: True
+B == C: True
+</code></pre>
+</div>
+</div>
+<div id="55384ffe" class="cell markdown">
+<p><strong>What happened.</strong> Three different ways of writing the
+piece return exactly the same pair <code>(grid, markers)</code> on the
+bakery. That is the swap rule from the piece card holding up, and it is
+the point of writing a contract: you can change the inside without
+touching anything that uses the piece.</p>
+<p>Now let us measure whether the choice makes a difference in speed. We
+tile the bakery into a map with 7 × 200 = 1,400 rows and time each
+version, keeping the best of five runs.</p>
+</div>
+<div id="658b0fa1" class="cell code" data-execution_count="19">
+<div class="sourceCode" id="cb36"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> time</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>big_map_text <span class="op">=</span> <span class="st">&quot;</span><span class="ch">\n</span><span class="st">&quot;</span>.join(map_text_only.splitlines() <span class="op">*</span> <span class="dv">200</span>)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> best_time_in_ms(parse_function, repeats<span class="op">=</span><span class="dv">5</span>):</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    best_seconds <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(repeats):</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>        start <span class="op">=</span> time.perf_counter()</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>        parse_function(big_map_text, legend)</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>        elapsed <span class="op">=</span> time.perf_counter() <span class="op">-</span> start</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> best_seconds <span class="kw">is</span> <span class="va">None</span> <span class="kw">or</span> elapsed <span class="op">&lt;</span> best_seconds:</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a>            best_seconds <span class="op">=</span> elapsed</span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> best_seconds <span class="op">*</span> <span class="dv">1000</span></span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> name, function <span class="kw">in</span> [(<span class="st">&quot;A&quot;</span>, parse_version_a), (<span class="st">&quot;B&quot;</span>, parse_version_b), (<span class="st">&quot;C&quot;</span>, parse_version_c)]:</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span>best_time_in_ms(function)<span class="sc">:.2f}</span><span class="ss"> ms for </span><span class="sc">{</span><span class="bu">len</span>(big_map_text.splitlines())<span class="sc">}</span><span class="ss"> rows&quot;</span>)</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;all three still agree:&quot;</span>,</span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>      parse_version_a(big_map_text, legend) <span class="op">==</span> parse_version_b(big_map_text, legend)</span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>      <span class="op">==</span> parse_version_c(big_map_text, legend))</span></code></pre></div>
+<div class="output stream stdout">
+<pre><code>A: 1.79 ms for 1400 rows
+B: 1.60 ms for 1400 rows
+C: 2.33 ms for 1400 rows
+all three still agree: True
+</code></pre>
+</div>
+</div>
+<div id="3bae8135" class="cell markdown">
+<p><strong>Reading the result honestly.</strong> The times above were
+measured on whatever machine ran this notebook, so yours will differ,
+and gaps of a few milliseconds on one run mean little. Do not memorise a
+ranking; do notice that three programs that look very different cost
+about the same order of time. What actually separates them is
+readability and risk, and that part is an <em>opinion</em>, not a
+measurement: A has the most places to make an index mistake, B reads
+closest to the sentence &quot;for every square, record its address if it is
+special&quot;, and C avoids building the list of line strings but is the
+hardest to read.</p>
+<p><strong>Combine.</strong> L01 imports no earlier lab, because it is
+the first. The module <code>grid_pieces.py</code> is what L02 will
+import in its own Combine section.</p>
+<p><strong>Before you go on, check yourself.</strong> Without scrolling
+up, can you (1) say what the three layers of nested data are, (2) read
+the row of the second door from the plan with one path, and (3) explain
+why <code>kind_at</code> checks bounds before indexing? If any of these
+is shaky, redo Step 10 before starting L02. Once they are solid, the
+natural next move is to go beyond the lab: break the parser on purpose
+with a map that has an unknown symbol and read the error, or change the
+legend and see what still works.</p>
+</div>
+</body>
+</html>

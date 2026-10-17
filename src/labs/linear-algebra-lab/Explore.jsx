@@ -5,18 +5,21 @@ import { Eliminate, SolutionSet, Truss } from './explore/systems.jsx'
 import { Bellman, Descent, Fit, Pca } from './explore/data.jsx'
 import { Space3D } from './explore/space3d.jsx'
 import { CurvedMap, Hill, Zoom } from './explore/calculus.jsx'
+import { PageRank, StressMohr, Vibrations } from './explore/eigen.jsx'
 
 export { eigen2, solveLinear, svd2 } from './explore/parts.jsx'
 export { trussForces } from './explore/systems.jsx'
 export { curvedJacobian, curvedMap, hillGradient, hillHeight } from './explore/calculus.jsx'
 export { bellmanTrace, descentTrace, fitLine, covariance } from './explore/data.jsx'
 export { det3, cross } from './explore/space3d.jsx'
+export { cutStress, linkMatrixOf, pageRankStep, springModes } from './explore/eigen.jsx'
 
 export const GROUPS = [
   ['Vectors', [['combine', 'Combine vectors', Combine], ['dot', 'Dot & projection', DotProjection]]],
   ['Matrices', [['circle', 'Unit circle', UnitCircle], ['transform', 'Matrix as a map', Transform], ['svd', 'Circle to ellipse (SVD)', SvdCircle]]],
   ['Systems & space', [['eliminate', 'Row operations', Eliminate], ['solutions', 'Solution sets', SolutionSet], ['space3d', '3D span & volume', Space3D], ['truss', 'Bridge truss', Truss]]],
   ['Calculus', [['zoom', 'Zoom to straight', Zoom], ['hill', 'Hill map & gradient', Hill], ['curved', 'Curved map & Jacobian', CurvedMap]]],
+  ['Eigen & tensors', [['pagerank', 'PageRank step by step', PageRank], ['modes', 'Vibration modes', Vibrations], ['stress', 'Stress & Mohr circle', StressMohr]]],
   ['Data & learning', [['fit', 'Least squares', Fit], ['pca', 'Principal directions', Pca], ['descent', 'Gradient descent', Descent], ['bellman', 'Bellman updates', Bellman]]],
 ]
 export const EXPERIMENTS = GROUPS.flatMap(([, items]) => items)
@@ -26,7 +29,7 @@ const BY_LESSON = {
   'laml-slope': 'zoom', 'laml-gradient': 'hill', 'laml-jacobian': 'curved', 'laml-chain-rule': 'curved', 'laml-vectorized-gradient': 'hill', 'laml-descent-convergence': 'descent',
   'laml-sin-cos': 'circle', 'laml-matrix-vector': 'transform', 'laml-truss': 'truss', 'laml-why-equations': 'eliminate', 'laml-circuit': 'eliminate',
   'laml-dot-product': 'dot', 'laml-length-distance-cosine': 'combine', 'laml-projection': 'dot', 'laml-orthogonal-qr': 'dot', 'laml-gram-schmidt': 'dot',
-  'laml-two-multiplications': 'transform', 'laml-markov-state-vectors': 'transform', 'laml-orthogonal-matrices': 'transform',
+  'laml-two-multiplications': 'transform', 'laml-markov-state-vectors': 'pagerank', 'laml-pagerank': 'pagerank', 'laml-vibrations': 'modes', 'laml-stress-tensor': 'stress', 'laml-principal-stresses': 'stress', 'laml-mohr-circle': 'stress', 'laml-orthogonal-matrices': 'transform',
   'laml-determinant-area': 'transform', 'laml-elimination': 'eliminate', 'laml-lu-pivoting': 'eliminate', 'laml-invertibility': 'eliminate',
   'laml-span-rank': 'space3d', 'laml-subspaces-3d': 'space3d', 'laml-basis-dimension': 'space3d', 'laml-vector-spaces': 'combine', 'laml-change-of-basis': 'combine',
   'laml-nullspace': 'solutions', 'laml-four-subspaces': 'solutions',
@@ -34,7 +37,7 @@ const BY_LESSON = {
   'laml-covariance-pca': 'pca', 'laml-pca-ridge-capstone': 'pca', 'laml-recommendation-studio': 'svd',
   'laml-svd-low-rank': 'svd', 'laml-spectral-svd-theorem': 'svd', 'laml-symmetric-quadratic': 'transform', 'laml-positive-definite': 'transform',
 }
-const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Least squares and data': 'fit', 'Calculus meets matrices': 'hill', 'Spectral thinking': 'transform', 'Spectral theory': 'transform', 'Math for machine learning': 'descent', 'Dynamic programming': 'bellman', 'Mastery studio': 'bellman' }
+const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Least squares and data': 'fit', 'Calculus meets matrices': 'hill', "Directions that don't turn": 'transform', 'Tensors in the real world': 'transform', 'The SVD: the shape of any matrix': 'svd', 'Math for machine learning': 'descent', 'Dynamic programming': 'bellman', 'Mastery studio': 'bellman' }
 export const experimentFor = lesson => BY_LESSON[lesson.id] || BY_MODULE[lesson.module] || 'combine'
 
 export default function Explore({ lesson }) {

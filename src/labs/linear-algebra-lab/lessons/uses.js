@@ -8,6 +8,91 @@ export const ROLES = [
 ]
 
 export const USES = {
+  'laml-eigen-iteration': [
+    { who: 'general', title: 'Wobbling bridges', story: 'Engineers find a structure\'s natural shapes of motion, its eigenvectors, before it is built, so that wind and footsteps cannot feed one of them.' },
+    { who: 'cs', title: 'Ranking and graphs', story: 'Search ranking, influence in social networks and graph clustering all compute an eigenvector of a large sparse matrix, usually by power iteration.' },
+    { who: 'ml', title: 'Principal directions in data', story: 'PCA finds the directions along which data varies most: the eigenvectors of its covariance matrix. Power iteration finds the first one for very large data.' },
+    { who: 'mech', title: 'Buckling loads', story: 'The load at which a column suddenly bows sideways is an eigenvalue problem, and the bowed shape is its eigenvector.' },
+    { who: 'physics', title: 'Quantum states', story: 'In quantum mechanics, the allowed energies of an atom are the eigenvalues of a matrix (or operator), and the states are its eigenvectors.' },
+    { who: 'math', title: 'Invariant directions', story: 'An eigenvector spans a line that the matrix maps into itself. Finding those lines is the first step to understanding any linear map.' },
+  ],
+  'laml-markov-state-vectors': [
+    { who: 'general', title: 'Market share and migration', story: 'Customers switching brands or people moving between regions each year can be modelled as a Markov chain. The steady state predicts the long-run split.' },
+    { who: 'cs', title: 'Queues and caches', story: 'How full a server queue tends to be, or how often a cache hits, can be analysed as a Markov chain over its states.' },
+    { who: 'ml', title: 'Text and speech models', story: 'Early predictive text and speech recognisers modelled the next word or sound with transition matrices. Reinforcement learning is built on Markov chains with rewards.' },
+    { who: 'physics', title: 'Random walks and diffusion', story: 'A particle hopping between sites is a Markov chain. Repeated steps spread the probability out, which is diffusion.' },
+    { who: 'mech', title: 'Reliability', story: 'A machine that is working, degraded or broken, with chances of moving between them each month, is a Markov chain. Its steady state gives the long-run availability.' },
+    { who: 'math', title: 'Eigenvalue 1', story: 'Because every row of P adds to 1, P has eigenvalue 1 with eigenvector all ones. So Pᵀ also has eigenvalue 1, and its eigenvector is the steady state.' },
+  ],
+  'laml-pagerank': [
+    { who: 'cs', title: 'Web search', story: 'PageRank was the idea behind Google\'s early ranking. The same algorithm now ranks papers by citations and finds important functions in call graphs.' },
+    { who: 'general', title: 'Who matters in a network', story: 'Sports rankings that weigh wins by the strength of the opponent, and measures of influence in social networks, use the same idea.' },
+    { who: 'ml', title: 'Graph learning', story: 'Recommendation systems and graph neural networks spread scores along links in the same way, a step of matrix–vector multiplication at a time.' },
+    { who: 'math', title: 'Perron–Frobenius', story: 'A matrix with all positive entries has one largest eigenvalue with an eigenvector of all positive entries. The random jumps make G positive, so PageRank exists and is unique.' },
+  ],
+  'laml-vibrations': [
+    { who: 'mech', title: 'Designing against resonance', story: 'Engine mounts, turbine blades, car bodies and floors are tuned so that their natural frequencies stay away from the speeds and forces they will meet in service.' },
+    { who: 'general', title: 'Music', story: 'A guitar string, a drum skin and the air in a flute have natural modes. The notes you hear are their natural frequencies.' },
+    { who: 'physics', title: 'Molecules and crystals', story: 'Atoms joined by bonds vibrate in modes too. Infrared spectroscopy identifies molecules by the frequencies of their vibration modes.' },
+    { who: 'ee', title: 'Coupled circuits', story: 'Two LC circuits linked by a shared component behave like two masses joined by springs, with two natural frequencies found the same way.' },
+    { who: 'cs', title: 'Physics engines and cloth', story: 'Game and film simulations of cloth, hair and soft bodies use spring–mass networks. Their stiffest modes set how small the time step must be.' },
+    { who: 'math', title: 'Second-order systems', story: 'Every system x″ = −Kx with symmetric positive definite K splits into independent oscillators along the eigenvectors of K.' },
+  ],
+  'laml-diagonalization': [
+    { who: 'general', title: 'Long-run growth', story: 'Population models with age groups, such as fish stocks or wildlife, grow in the long run at the rate of the largest eigenvalue, with the age mix of its eigenvector.' },
+    { who: 'cs', title: 'Fast Fibonacci and recurrences', story: 'Any linear recurrence, such as the Fibonacci numbers, is a matrix power. Diagonalising gives a closed formula, and repeated squaring computes it quickly.' },
+    { who: 'physics', title: 'Decoupling equations', story: 'In the eigenvector basis, coupled differential equations separate into independent ones, each solved by an exponential.' },
+    { who: 'ee', title: 'State-space control', story: 'Control engineers read a system\'s stability from the eigenvalues of its state matrix: each mode grows or decays on its own.' },
+    { who: 'math', title: 'Similarity', story: 'A = VDV⁻¹ says A is just D seen in a different basis. Properties such as the trace, determinant and eigenvalues do not depend on the basis.' },
+  ],
+  'laml-complex-eigen': [
+    { who: 'ee', title: 'Oscillating circuits', story: 'An RLC circuit\'s state matrix has complex eigenvalues when it rings. Their size says whether the ringing dies out, and their angle sets its frequency.' },
+    { who: 'mech', title: 'Damped vibration', story: 'Car suspensions and door closers are tuned so that the eigenvalues give just enough damping: the motion settles quickly without bouncing.' },
+    { who: 'general', title: 'Predators and prey', story: 'Linearised predator–prey models have complex eigenvalues: the populations circle around their balance point, rising and falling in turn.' },
+    { who: 'cs', title: 'Stable simulations', story: 'A numerical method for orbits or springs is stable only if its update matrix has eigenvalues of size at most 1. Spirals outwards mean the method is adding energy.' },
+    { who: 'math', title: 'Rotation and scaling', story: 'A real 2 × 2 matrix with complex eigenvalues r(cos θ ± i sin θ) is a rotation by θ combined with a scaling by r, in a suitable basis.' },
+  ],
+  'laml-stress-tensor': [
+    { who: 'mech', title: 'Every stress calculation', story: 'Finite-element software reports the stress tensor at every point of a part. Engineers then check the cuts most likely to fail, such as welds, bolt holes and fillets.' },
+    { who: 'general', title: 'Why things break where they do', story: 'Bones, branches and chalk snap along particular angles. The stress tensor explains why: different cuts through the same point feel different forces.' },
+    { who: 'physics', title: 'Fluids and pressure', story: 'In a still fluid the stress tensor is −p·I, the same pressure on every cut. Moving, viscous fluids add shear terms to it.' },
+    { who: 'cs', title: 'Simulation and graphics', story: 'Physics engines for deformable objects, such as jelly, flesh and snow in films, compute a stress tensor in each element at every time step.' },
+    { who: 'math', title: 'A linear map from directions to forces', story: 'A tensor of this kind is a linear map. Writing it as a matrix depends on the axes, but the map itself, and its eigenvalues, do not.' },
+  ],
+  'laml-principal-stresses': [
+    { who: 'mech', title: 'Failure criteria', story: 'Design rules for brittle materials compare the largest principal stress with the material\'s strength. Rules for steel, such as Tresca and von Mises, are built from differences of principal stresses.' },
+    { who: 'general', title: 'Cracks in concrete', story: 'Diagonal cracks near the supports of a concrete beam run across the direction of greatest pull. Steel reinforcement is placed to carry that pull.' },
+    { who: 'physics', title: 'Earthquakes and faults', story: 'Geologists estimate the principal stresses in the Earth\'s crust. The orientation of faults reflects those directions.' },
+    { who: 'cs', title: 'Visualising simulations', story: 'Engineering software draws principal-stress arrows or lines over a part so that designers can see how load flows through it.' },
+    { who: 'math', title: 'The spectral theorem in action', story: 'Principal stresses are a direct use of the spectral theorem: a symmetric matrix has real eigenvalues and perpendicular eigenvectors.' },
+  ],
+  'laml-mohr-circle': [
+    { who: 'mech', title: 'Quick hand checks', story: 'Engineers still sketch Mohr\'s circle to check computer results and to see at a glance which cut has the largest shear.' },
+    { who: 'physics', title: 'Soil and rock mechanics', story: 'Geotechnical engineers use Mohr\'s circle with a failure line to judge whether a slope or foundation soil will slide.' },
+    { who: 'general', title: 'One picture for every angle', story: 'Instead of a table of numbers for every cut angle, one circle shows them all. It is an early and still useful example of turning a calculation into a picture.' },
+    { who: 'math', title: 'Trace and determinant', story: 'The centre of the circle is half the trace and c² − R² is the determinant, so the principal stresses solve λ² − (trace)λ + det = 0.' },
+  ],
+  'laml-symmetric-quadratic': [
+    { who: 'mech', title: 'Strain energy', story: 'The energy stored in a deformed structure is ½ xᵀKx with a symmetric stiffness matrix K. Finite-element programs minimise it to find how the structure settles.' },
+    { who: 'ml', title: 'Loss surfaces', story: 'Near a minimum, any smooth loss looks like a quadratic bowl whose shape is set by a symmetric matrix of second derivatives, the Hessian. Its eigenvalues set the learning rate that works.' },
+    { who: 'physics', title: 'Kinetic energy and small oscillations', story: 'Kinetic and potential energies near equilibrium are quadratic forms. Diagonalising them gives the normal modes of molecules and structures.' },
+    { who: 'cs', title: 'Ellipses and collision shapes', story: 'Graphics and robotics describe ellipses and ellipsoids as xᵀAx = 1. Uncertainty ellipses in tracking come from covariance matrices in the same way.' },
+    { who: 'math', title: 'Classifying quadratics', story: 'Every quadratic form is a weighted sum of squares in the right axes. Their signs classify it as a bowl, a saddle or flat in some direction.' },
+  ],
+  'laml-positive-definite': [
+    { who: 'mech', title: 'Stable structures', story: 'A stiffness matrix is positive definite exactly when the structure is held firmly: every displacement stores energy. A zero eigenvalue means a mechanism that can move freely.' },
+    { who: 'ml', title: 'Covariance and kernels', story: 'Covariance matrices and kernel matrices must be positive semidefinite. Gaussian process and Kalman filter code checks this with a Cholesky factorisation.' },
+    { who: 'cs', title: 'Fast solvers', story: 'Positive definite systems can be solved by Cholesky in about half the work of a general solve, and by conjugate gradients when they are huge and sparse.' },
+    { who: 'physics', title: 'Stable equilibrium', story: 'An equilibrium is stable when the matrix of second derivatives of the energy is positive definite: every nudge raises the energy.' },
+    { who: 'math', title: 'Many tests, one property', story: 'Positive eigenvalues, positive energy for every x, a successful Cholesky and positive leading minors all describe the same matrices.' },
+  ],
+  'laml-inertia-tensor': [
+    { who: 'mech', title: 'Balancing rotors', story: 'Wheels, fans and turbines are balanced so that they spin about a principal axis. Otherwise the shaft feels a rotating force and the bearings wear out.' },
+    { who: 'physics', title: 'The tennis-racket effect', story: 'Spin about the middle principal axis is unstable. This explains tumbling wing nuts filmed in space and the flip of a thrown phone or racket.' },
+    { who: 'cs', title: 'Game physics', story: 'Rigid-body engines store each object\'s inertia tensor in its principal axes, where it is diagonal, and rotate it into world axes each frame.' },
+    { who: 'general', title: 'Satellites and spacecraft', story: 'Explorer 1, the first US satellite, began to tumble because it lost energy while spinning about its axis of least inertia. Spacecraft are now designed with this in mind.' },
+    { who: 'math', title: 'A symmetric matrix again', story: 'The inertia tensor is symmetric and positive definite, so it has three real positive moments and three perpendicular principal axes.' },
+  ],
   'laml-slope': [
     { who: 'general', title: 'Speedometers and growth rates', story: 'A speedometer shows a derivative: how fast distance is changing right now. "Prices are rising 3% a year" is a rate of change too.' },
     { who: 'physics', title: 'Velocity and acceleration', story: 'Velocity is the derivative of position and acceleration is the derivative of velocity. Newton\'s laws are written in derivatives.' },
@@ -228,6 +313,66 @@ export const USES = {
 }
 
 export const ANGLES = {
+  'laml-eigen-iteration': [
+    { title: 'A stretch with no turn', body: 'Picture every arrow from the origin being moved by $A$. Most swing round; eigenvectors only grow or shrink. A negative eigenvalue flips the arrow but keeps it on the same line.' },
+    { title: 'A race between directions', body: 'Write the start as a mix of eigenvectors. Each multiplication multiplies each part by its eigenvalue, so the part with the largest $|\\lambda|$ wins the race.' },
+    { title: 'An equation to solve', body: 'Rewrite $A\\mathbf v = \\lambda\\mathbf v$ as $(A - \\lambda I)\\mathbf v = \\mathbf 0$. A nonzero solution needs $A - \\lambda I$ to be singular, so $\\det(A - \\lambda I) = 0$. That equation gives the eigenvalues.' },
+  ],
+  'laml-markov-state-vectors': [
+    { title: 'Flows of people', body: 'Think of the bikes as a crowd. Each night a fixed fraction flows along each route. The steady state is when the flow into each station balances the flow out.' },
+    { title: 'As an eigenvector', body: 'The steady state satisfies $P^T\\mathbf s = \\mathbf s$: an eigenvector with eigenvalue 1. The other eigenvalue here is $0.7$, so the distance from steady shrinks by $0.7$ each night.' },
+    { title: 'As a balance equation', body: 'For two stations, steady means the bikes leaving station 1 equal those arriving: $0.1\\,s_1 = 0.2\\,s_2$. With $s_1 + s_2 = 1$ that gives $s_1 = 2/3$.' },
+  ],
+  'laml-pagerank': [
+    { title: 'A random surfer', body: 'The rank of a page is the fraction of time a random clicker spends on it in the long run.' },
+    { title: 'A vote that counts more from important voters', body: 'Each page splits its own score among the pages it links to. Being linked by a high-ranked page is worth more than by an unknown one.' },
+    { title: 'Why the jumps matter', body: 'Without jumps, a page with no links out, or a loop of pages linking only to each other, would trap the surfer and soak up all the rank.' },
+  ],
+  'laml-vibrations': [
+    { title: 'Each mode on its own', body: 'In mode coordinates the coupled masses become separate simple oscillators, each swinging at its own frequency. Real motion is a mix of them.' },
+    { title: 'Stiffer and lighter is higher', body: 'Frequency grows with stiffness and falls with mass: $\\omega = \\sqrt{k/m}$ for one mass. The eigenvalues of $K$ (here with $m = 1$) play the role of $k/m$.' },
+    { title: 'Beats', body: 'Start one mass alone and the motion slowly passes back and forth between the masses. That is the two modes drifting in and out of step.' },
+  ],
+  'laml-diagonalization': [
+    { title: 'Change axes, stretch, change back', body: '$A = VDV^{-1}$ reads right to left: convert to eigenvector coordinates, stretch each one by its eigenvalue, convert back.' },
+    { title: 'Powers are easy', body: '$A^k = VD^kV^{-1}$, and $D^k$ just raises each diagonal entry to the $k$th power.' },
+    { title: 'When it fails', body: 'If there are not enough independent eigenvectors, as for $\\begin{bmatrix} 1 & 1 \\\\ 0 & 1 \\end{bmatrix}$, $V$ cannot be inverted and the matrix is not diagonalisable.' },
+  ],
+  'laml-complex-eigen': [
+    { title: 'No line survives', body: 'A rotation turns every arrow, so no real direction is only stretched. The eigenvalues become complex numbers.' },
+    { title: 'Read it from two numbers', body: 'For a $2 \\times 2$ matrix, if $\\text{trace}^2 < 4\\det$ the eigenvalues are complex. The scaling per step is $\\sqrt{\\det}$.' },
+    { title: 'Spirals in or out', body: 'Plot repeated steps: a scaling below 1 spirals in to the origin, above 1 spirals out, and exactly 1 goes round for ever.' },
+  ],
+  'laml-stress-tensor': [
+    { title: 'A machine that eats directions', body: 'Feed in the direction of a cut and the tensor returns the force per area on it. Two cut directions determine everything, because the map is linear.' },
+    { title: 'Columns are the faces', body: 'Column 1 of $\\boldsymbol\\sigma$ is the traction on the face whose normal is $x$; column 2 is the traction on the face whose normal is $y$.' },
+    { title: 'Normal and shear by the dot product', body: 'Projecting $\\mathbf t$ onto $\\mathbf n$ gives the normal stress, exactly the projection from Stage 1. The remainder is shear.' },
+  ],
+  'laml-principal-stresses': [
+    { title: 'Cuts where the force points straight out', body: 'Turn the cut until the traction lines up with the normal. That direction is a principal direction and the size of the traction is a principal stress.' },
+    { title: 'The tensor in its own axes', body: 'In the principal axes, $\\boldsymbol\\sigma$ is diagonal. The material at that point is simply pulled along two perpendicular directions.' },
+    { title: 'From the formula', body: 'The principal stresses solve $\\det(\\boldsymbol\\sigma - \\lambda I) = 0$, which is $\\lambda^2 - (\\sigma_x + \\sigma_y)\\lambda + (\\sigma_x\\sigma_y - \\tau^2) = 0$.' },
+  ],
+  'laml-mohr-circle': [
+    { title: 'Twice the angle', body: 'Turning the cut by $\\theta$ moves the point round the circle by $2\\theta$. Principal cuts, $90°$ apart, sit at opposite ends of a diameter.' },
+    { title: 'Mean plus wobble', body: 'Every cut feels the mean pull $c$, plus something between $-R$ and $R$ that depends on the angle.' },
+    { title: 'The same as the eigenvalues', body: 'The quadratic $\\lambda^2 - 2c\\lambda + (c^2 - R^2) = 0$ has roots $c \\pm R$. Mohr\'s circle is the eigenvalue formula drawn as a picture.' },
+  ],
+  'laml-symmetric-quadratic': [
+    { title: 'A tilted ellipse', body: 'The curve $\\mathbf x^TH\\mathbf x = 1$ is an ellipse whose axes point along the eigenvectors. Its half-lengths are $1/\\sqrt{d_i}$.' },
+    { title: 'Why perpendicular', body: 'For symmetric $H$ and eigenvectors with $\\lambda_1 \\ne \\lambda_2$: $\\lambda_1\\,\\mathbf v_1\\cdot\\mathbf v_2 = (H\\mathbf v_1)\\cdot\\mathbf v_2 = \\mathbf v_1\\cdot(H\\mathbf v_2) = \\lambda_2\\,\\mathbf v_1\\cdot\\mathbf v_2$, so the dot product must be 0.' },
+    { title: 'Energy in each axis', body: 'Along each eigenvector the energy is a simple $d\\,z^2$, like a single spring of stiffness $d$.' },
+  ],
+  'laml-positive-definite': [
+    { title: 'A bowl', body: 'Positive definite means the energy surface $\\mathbf x^TA\\mathbf x$ is a bowl with its bottom at the origin.' },
+    { title: 'A square root of a matrix', body: 'Cholesky writes $A = R^TR$. Then $\\mathbf x^TA\\mathbf x = \\|R\\mathbf x\\|^2$, which is clearly never negative.' },
+    { title: 'Quick checks by hand', body: 'For $2 \\times 2$: positive definite exactly when $a > 0$ and $\\det > 0$.' },
+  ],
+  'laml-inertia-tensor': [
+    { title: 'Momentum need not follow the spin', body: 'Mass far from the axis resists spinning more. When the mass is arranged unevenly about the spin axis, the angular momentum leans towards the harder direction.' },
+    { title: 'The same story as stress', body: 'Inertia, stress and stiffness tensors are all symmetric matrices. Each has perpendicular principal axes in which it becomes diagonal.' },
+    { title: 'Why the middle axis flips', body: 'Spin energy and angular momentum are both conserved. About the largest or smallest axis, the two conservation laws pin the spin in place; about the middle one they allow a long swing over to the opposite side.' },
+  ],
   'laml-slope': [
     { title: 'As a speed', body: 'A slope is a rate: how many units of output per unit of input. For height over time, that rate is a speed.' },
     { title: 'As a zoom', body: 'Zoom in on a smooth curve and it straightens out. The slope is the steepness of what you see when it looks straight. Try it in the zoom playground.' },

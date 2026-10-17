@@ -1,6 +1,7 @@
 import { stage1 } from './lessons/stage1.js'
 import { stage2 } from './lessons/stage2.js'
 import { calculus } from './lessons/calculus.js'
+import { eigenLessons } from './lessons/eigen.js'
 import { core } from './lessons/core.js'
 import { applications } from './lessons/applications.js'
 import { spaces } from './lessons/spaces.js'
@@ -25,12 +26,12 @@ function assemble(base, additions) {
 export const STAGES = [
   ['See it', ['Vectors: arrows and lists', 'The dot product']],
   ['Use it', ['Matrices are machines', 'Solving many equations']],
-  ['Understand it', ['Spaces and bases', 'Least squares and data', 'Calculus meets matrices', 'Spectral thinking', 'Spectral theory']],
+  ['Understand it', ['Spaces and bases', 'Least squares and data', 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world', 'The SVD: the shape of any matrix']],
   ['Apply it', ['Math for machine learning', 'Dynamic programming', 'Mastery studio']],
 ]
 export const MODULES = STAGES.flatMap(([, modules]) => modules)
 
-const assembled = assemble([...stage1, ...stage2, ...core, ...calculus, ...applications], [...spaces, ...spectralTheory])
+const assembled = assemble([...stage1, ...stage2, ...core, ...calculus, ...eigenLessons, ...applications], [...spaces, ...spectralTheory])
 const unplaced = assembled.filter(lesson => !MODULES.includes(lesson.module))
 if (unplaced.length) throw new Error(`Lessons in no stage: ${unplaced.map(lesson => lesson.id).join(', ')}`)
 export const LESSONS = MODULES.flatMap(module => assembled.filter(lesson => lesson.module === module))
