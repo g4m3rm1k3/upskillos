@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 72,
+    "labs": 73,
     "games": 16
   },
   "courses": [
@@ -488,6 +488,12 @@
       "label": "Decomp Lab",
       "kind": "lab",
       "path": "/decomp-lab"
+    },
+    {
+      "id": "discrete-math-lab",
+      "label": "Discrete Math Lab",
+      "kind": "lab",
+      "path": "/lab/discrete-math-lab"
     },
     {
       "id": "dp-lab",

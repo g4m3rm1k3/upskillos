@@ -22,6 +22,39 @@ function factorial(n) {
 
 const gcd2 = (a, b) => { while (b) [a, b] = [b, a % b]; return a }
 
+// A range or array as rows of numbers, for the matrix functions: a blank or a word is #VALUE!, as in Excel.
+function numericMatrix(a, name) {
+  const M = toMatrix(a), rows = []
+  for (let r = 0; r < M.height; r++) {
+    const row = []
+    for (let c = 0; c < M.width; c++) {
+      const v = M.get(r, c)
+      if (isError(v)) raise(v)
+      if (typeof v !== 'number') fail('#VALUE!', `${name} needs a number in every cell; row ${r + 1}, column ${c + 1} holds ${v === null || v === undefined || v === '' ? 'nothing' : 'text'}.`)
+      row.push(v)
+    }
+    rows.push(row)
+  }
+  if (name !== 'MMULT' && rows.length !== rows[0].length) fail('#VALUE!', `${name} needs a square matrix; this one is ${rows.length} × ${rows[0].length}.`)
+  return rows
+}
+
+// The inverse by Gauss–Jordan elimination, choosing the largest pivot in each column; null if there is none.
+function inverse(A) {
+  const n = A.length, M = A.map((row, i) => [...row, ...Array.from({ length: n }, (_, j) => (i === j ? 1 : 0))])
+  const scale = Math.max(...A.flat().map(Math.abs), 1e-300)
+  for (let c = 0; c < n; c++) {
+    let best = c
+    for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[best][c])) best = r
+    if (Math.abs(M[best][c]) <= 1e-12 * scale) return null
+    ;[M[c], M[best]] = [M[best], M[c]]
+    const pivot = M[c][c]
+    for (let k = 0; k < 2 * n; k++) M[c][k] /= pivot
+    for (let r = 0; r < n; r++) if (r !== c && M[r][c] !== 0) { const f = M[r][c]; for (let k = 0; k < 2 * n; k++) M[r][k] -= f * M[c][k] }
+  }
+  return M.map((row) => row.slice(n))
+}
+
 export default {
   SUM: def(C, 'SUM(number1, [number2], …)', 'Adds numbers.', (args) => numbers(args).reduce((s, x) => s + x, 0), {
     min: 1,
@@ -44,6 +77,7 @@ export default {
     args: [['range', 'The cells to test.'], ['criteria', 'A value, or a test as text: ">5", "<>apple", "a*".'], ['sum_range', 'The cells to add (default: range).']],
     example: ['=SUMIF(B2:B9, ">100")', 'the sum of values over 100'],
     learn: 'The criteria is text that starts with a comparison operator. To use a cell in it, join them: ">"&D1.',
+    scalar: [1],
   }),
   SUMIFS: def(C, 'SUMIFS(sum_range, criteria_range1, criteria1, …)', 'Adds the cells that meet every condition.', ([sumRange, ...rest]) => {
     if (rest.length % 2) fail('#VALUE!', 'Criteria come in pairs: a range and its condition.')
@@ -54,7 +88,7 @@ export default {
     let total = 0, i = 0
     for (const v of S.values()) { if (mask[i++] && typeof v === 'number') total += v; else if (mask[i - 1] && isError(v)) raise(v) }
     return total
-  }, { min: 3, args: [['sum_range', 'The cells to add.'], ['criteria_range1, criteria1, …', 'Pairs of a range to test and its condition.']], example: ['=SUMIFS(C:C, A:A, "North", B:B, ">=2025-01-01")', 'North sales this year'] }),
+  }, { min: 3, scalar: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26], args: [['sum_range', 'The cells to add.'], ['criteria_range1, criteria1, …', 'Pairs of a range to test and its condition.']], example: ['=SUMIFS(C:C, A:A, "North", B:B, ">=2025-01-01")', 'North sales this year'] }),
   SUMPRODUCT: def(C, 'SUMPRODUCT(array1, [array2], …)', 'Multiplies matching elements of arrays and adds the products.', (args) => {
     const ms = args.map(toMatrix)
     const h = ms[0].height, w = ms[0].width
@@ -67,6 +101,38 @@ export default {
     }
     return total
   }, { min: 1, example: ['=SUMPRODUCT(B2:B5, C2:C5)', 'quantity × price, summed'], learn: 'SUMPRODUCT is the dot product from linear algebra. With conditions it counts or sums: =SUMPRODUCT((A2:A9="North")*(B2:B9)).' }),
+  MMULT: def(C, 'MMULT(array1, array2)', 'The matrix product: row i of array1 times column j of array2, added up.', ([a, b]) => {
+    const A = numericMatrix(a, 'MMULT'), B = numericMatrix(b, 'MMULT')
+    if (A[0].length !== B.length) fail('#VALUE!', `MMULT needs as many columns in array1 (${A[0].length}) as rows in array2 (${B.length}).`)
+    return Matrix.fill(A.length, B[0].length, (r, c) => A[r].reduce((s, x, k) => s + x * B[k][c], 0))
+  }, {
+    returnsArray: true, example: ['=MMULT({1,2;3,4}, {5;6})', '{17; 39}'],
+    learn: 'Each answer is a SUMPRODUCT of a row of the first array and a column of the second. =MMULT(TRANSPOSE(X), X) is XᵀX, the left side of the normal equations of least squares.',
+  }),
+  MINVERSE: def(C, 'MINVERSE(array)', 'The inverse of a square matrix: the matrix that multiplies it to give the identity.', ([a]) => {
+    const inv = inverse(numericMatrix(a, 'MINVERSE'))
+    if (!inv) fail('#NUM!', 'This matrix has no inverse: one of its rows can be made from the others (its determinant is 0).')
+    return Matrix.fill(inv.length, inv.length, (r, c) => inv[r][c])
+  }, {
+    returnsArray: true, example: ['=MINVERSE({4,-1;2,1})', '{1/6, 1/6; -1/3, 2/3}'],
+    learn: 'Worked out by Gauss–Jordan elimination with the largest pivot in each column. =MMULT(MINVERSE(A), b) solves A w = b, but solving directly is faster and more accurate than inverting.',
+  }),
+  MDETERM: def(C, 'MDETERM(array)', 'The determinant of a square matrix.', ([a]) => {
+    const M = numericMatrix(a, 'MDETERM').map((row) => [...row]), n = M.length
+    let det = 1
+    for (let c = 0; c < n; c++) {
+      let best = c
+      for (let r = c + 1; r < n; r++) if (Math.abs(M[r][c]) > Math.abs(M[best][c])) best = r
+      if (M[best][c] === 0) return 0
+      if (best !== c) { [M[c], M[best]] = [M[best], M[c]]; det = -det }
+      det *= M[c][c]
+      for (let r = c + 1; r < n; r++) { const f = M[r][c] / M[c][c]; for (let k = c; k < n; k++) M[r][k] -= f * M[c][k] }
+    }
+    return det
+  }, {
+    example: ['=MDETERM({3,6,1;1,1,0;3,10,2})', '1'],
+    learn: 'The product of the pivots of Gaussian elimination, with the sign flipped for each row swap. It is 0 exactly when the matrix has no inverse.',
+  }),
   SUMSQ: def(C, 'SUMSQ(number1, [number2], …)', 'Adds the squares of numbers.', (args) => numbers(args).reduce((s, x) => s + x * x, 0), { min: 1, example: ['=SUMSQ(3,4)', '25'] }),
   PRODUCT: def(C, 'PRODUCT(number1, [number2], …)', 'Multiplies numbers.', (args) => { const xs = numbers(args); return xs.length ? checkNumber(xs.reduce((p, x) => p * x, 1)) : 0 }, { min: 1, example: ['=PRODUCT(2,3,4)', '24'] }),
   ABS: def(C, 'ABS(number)', 'The absolute value: the number without its sign.', num1(Math.abs), { scalar: true, example: ['=ABS(-7)', '7'] }),

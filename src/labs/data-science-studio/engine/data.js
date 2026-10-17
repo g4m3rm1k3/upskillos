@@ -133,6 +133,24 @@ export function makeDeliveries(orders, seed = 13) {
   return rows
 }
 
+// The website's A/B test of a new home page, on the days table's visits (python/data.py's make_trial).
+export const TRIAL_HEADER = ['date', 'page', 'visitors', 'clicks']
+export const TRIAL_START = 152, TRIAL_DAYS = 28
+export const CLICK_RATE = { A: 200, B: 220 }
+export function makeTrial(days, seed = 17) {
+  const rng = new Rng(seed), rows = []
+  for (let day = TRIAL_START; day < TRIAL_START + TRIAL_DAYS; day++) {
+    const counts = { A: [0, 0], B: [0, 0] }
+    for (let v = 0; v < Number(days[day][4]); v++) {
+      const page = 'AB'[rng.below(2)]
+      counts[page][0]++
+      if (rng.below(1000) < CLICK_RATE[page]) counts[page][1]++
+    }
+    for (const page of 'AB') rows.push([days[day][0], page, String(counts[page][0]), String(counts[page][1])])
+  }
+  return rows
+}
+
 export const csvField = text => (/[,"\n]/.test(text) ? `"${text.replaceAll('"', '""')}"` : text)
 export const toCsv = (header, rows) => [header, ...rows].map(row => row.map(csvField).join(',')).join('\n') + '\n'
 
@@ -143,3 +161,4 @@ export const CATALOGUE_CSV = () => toCsv(CATALOGUE_HEADER, makeCatalogue())
 export const RETURNS_CSV = () => toCsv(RETURNS_HEADER, makeReturns(makeOrders()))
 export const DAYS_CSV = () => toCsv(DAYS_HEADER, makeDays())
 export const DELIVERIES_CSV = () => toCsv(DELIVERIES_HEADER, makeDeliveries(makeOrders()))
+export const TRIAL_CSV = () => toCsv(TRIAL_HEADER, makeTrial(makeDays()))

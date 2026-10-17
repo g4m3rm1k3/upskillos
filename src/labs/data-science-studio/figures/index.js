@@ -5,8 +5,12 @@ import { ScaleExplorer, JoinStepper, TickExplorer, BinExplorer, AreaLie, KdeExpl
 import { BalancePoint, QuantileExplorer, QuickselectTrace, SpreadExplorer, BesselSimulator, CancellationDemo, OutlierFinder, GroupByView, PivotBuilder } from './part2.jsx'
 import { Quadrants, CorrelationShapes, RankTies, LineFit, Anscombe, LogStraightens, Overplotting, Simpson, CausalSims } from './part5.jsx'
 import { SampleDrawer, BinomialExplorer, SamplingDistribution, CltExplorer, HeavyTail, CoverageRuns, BootstrapView, ReservoirRun, StrataLab, ErrorBars } from './part6.jsx'
+import { ShuffleTest, PValueRain, TvsNormal, PowerCurve, ManyTests, Peeking } from './part7.jsx'
+import { ModelLoss, EliminationSteps, DescentPath, Overfit, RidgePath, FoldView, LogisticFit } from './part8.jsx'
 
 export const FIGURES = {
+  ShuffleTest, PValueRain, TvsNormal, PowerCurve, ManyTests, Peeking,
+  ModelLoss, EliminationSteps, DescentPath, Overfit, RidgePath, FoldView, LogisticFit,
   Quadrants, CorrelationShapes, RankTies, LineFit, Anscombe, LogStraightens, Overplotting, Simpson, CausalSims,
   SampleDrawer, BinomialExplorer, SamplingDistribution, CltExplorer, HeavyTail, CoverageRuns, BootstrapView, ReservoirRun, StrataLab, ErrorBars,
   TableView, CsvScanner, FloatExplorer, MissingDemo, QueryBuilder, SortRace, RowsVsColumns,

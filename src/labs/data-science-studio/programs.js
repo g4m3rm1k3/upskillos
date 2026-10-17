@@ -5,7 +5,8 @@ import { SOURCES, parse } from './source.js'
 import { HEADER, makeOrders } from './engine/data.js'
 import { readCsv, withNumbers, toPence } from './engine/tables.js'
 import { cleanOrders } from './engine/cleaning.js'
-import { ORDERS_CSV, CATALOGUE_CSV } from './engine/data.js'
+import { ORDERS_CSV, CATALOGUE_CSV, DAYS_CSV } from './engine/data.js'
+import { normalEquations, weekday, standardise } from './engine/models.js'
 
 export const lineOf = (file, text) => SOURCES[file].split('\n').findIndex(l => l.includes(text)) + 1
 // The first line holding `text` inside one function: for a line that other functions share.
@@ -154,6 +155,51 @@ PROGRAMS.reservoir = {
   focus: ['i', 'item', 'j', 'kept'],
   watch: { kept: ['kept'] },
   jump: { label: 'Next item after the first 5', targets: () => [['samples.py', lineOf('samples.py', '            j = rng.below(i)')]] },
+}
+
+// The lights' prices by channel (lesson 7.1), and a hundred tests' p-values (lesson 7.8).
+const lightsBy = channel => cleanOrders(readCsv(ORDERS_CSV()), Object.fromEntries(catalogueRows().map(r => [r.item, toPence(r.list_price)])))
+  .filter(r => r.item === 'Lights, front and back' && r.price !== null && r.channel === channel).map(r => r.price / 100)
+PROGRAMS.permutation_diffs = {
+  label: 'The permutation test (7.1)', file: 'significance.py', module: 'significance', function: 'permutation_diffs', view: 'watch',
+  about: 'Lesson 7.1: pool the lights’ web and shop prices, shuffle the first 52 places, and take “web” minus “shop” again. `out` collects the differences the null hypothesis would give.',
+  input: { name: 'repeats', label: 'How many shuffles', value: '5' },
+  kwargs: v => ({ a: lightsBy('web'), b: lightsBy('shop'), repeats: firstN(v, 5, 40), seed: 3 }),
+  focus: ['i', 'j', 'out', 'k'],
+  watch: { out: ['[round(d, 4) for d in out]'] },
+  jump: { label: 'Next shuffle', targets: () => [['significance.py', lineOf('significance.py', '        out.append(mean(pooled[:k]) - mean(pooled[k:]))')]] },
+}
+PROGRAMS.benjamini_hochberg = {
+  label: 'Benjamini–Hochberg (7.8)', file: 'significance.py', module: 'significance', function: 'benjamini_hochberg', view: 'watch',
+  about: 'Lesson 7.8: the p-values in order, each against its rising bar q × rank / m. `cutoff` is the last rank under its bar; everything up to it is a discovery.',
+  input: { name: 'pvalues', label: 'p-values', value: '0.001 0.008 0.039 0.041 0.042 0.06 0.074 0.205' },
+  kwargs: v => ({ pvalues: numbers(v).length ? numbers(v).slice(0, 40) : [0.5], q: 0.05 }),
+  focus: ['rank', 'i', 'cutoff', 'order', 'found'],
+  watch: { bar: ['q * rank / m'] },
+  jump: { label: 'Next rank', targets: () => [['significance.py', lineOf('significance.py', '        if pvalues[i] <= q * rank / m:')]] },
+}
+
+// The days as rows of numbers (lessons 8.3 and 8.6): the normal equations of riders on temperature,
+// rain and the weekend, and the first days in standard units for gradient descent.
+const daysDesign = () => readCsv(DAYS_CSV()).map(r => [1, Number(r.high_c), Number(r.rain_mm), weekday(r.date) >= 5 ? 1 : 0])
+const dayRiders = () => readCsv(DAYS_CSV()).map(r => Number(r.riders))
+PROGRAMS.solve = {
+  label: 'Gaussian elimination (8.3)', file: 'models.py', module: 'models', function: 'solve', view: 'watch',
+  about: 'Lesson 8.3: the normal equations of riders on temperature, rain and the weekend. Each column: the pivot row swapped up, then a multiple of it taken from each row below. Then back substitution, from the last row up.',
+  input: { name: 'days', label: 'How many days to fit on', value: '365' },
+  kwargs: v => { const n = firstN(v, 365, 365); const [A, b] = normalEquations(daysDesign().slice(0, n), dayRiders().slice(0, n)); return { A, b } },
+  focus: ['c', 'p', 'r', 'f', 'i', 'w'],
+  watch: { M: ['[[round(v, 2) for v in row] for row in M]'] },
+  jump: { label: 'Next row eliminated', targets: () => [['models.py', lineOf('models.py', '            f = M[r][c] / M[c][c]')], ['models.py', lineOf('models.py', '        w[i] = s / M[i][i]')]] },
+}
+PROGRAMS.gradient_descent = {
+  label: 'Gradient descent (8.6)', file: 'models.py', module: 'models', function: 'gradient_descent', view: 'watch',
+  about: 'Lesson 8.6: riders on temperature in standard units, by walking downhill. Each step: the misses, the gradient, and a step of the rate against it. Watch `w` approach the least-squares answer.',
+  input: { name: 'rate', label: 'Learning rate', value: '0.5' },
+  kwargs: v => { const rate = Math.min(2, Math.max(0.001, Number.parseFloat(v) || 0.5)); const z = standardise(daysDesign().map(r => r[1]))[0]; return { X: z.slice(0, 60).map(x => [1, x]), y: dayRiders().slice(0, 60), rate, steps: 20 } },
+  focus: ['w', 'grad'],
+  watch: { w: ['[round(v, 3) for v in w]'] },
+  jump: { label: 'Next step', targets: () => [['models.py', lineOf('models.py', '        w = [w[j] - rate * grad[j] for j in range(k)]')]] },
 }
 
 export const SAMPLE_ORDERS = () => makeOrders().slice(0, 5)

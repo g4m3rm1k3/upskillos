@@ -16,6 +16,8 @@ import * as C from './engine/cleaning.js'
 import * as G from './engine/charts.js'
 import * as P from './engine/patterns.js'
 import * as M from './engine/samples.js'
+import * as Q from './engine/significance.js'
+import * as F from './engine/models.js'
 import { ORDERS_CSV, CATALOGUE_CSV } from './engine/data.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
@@ -121,5 +123,25 @@ describe.skipIf(!existsSync(python))('the lab’s programs in the real Python st
     await load(s, 'reservoir');[r, n] = await jumps(s, 'reservoir', 30)
     expect(n).toBe(15)   // items 6 to 20
     expect(plain(r.result)).toEqual(M.reservoir(Array.from({ length: 20 }, (_, i) => i + 1), 5, 61))
+  }, 60000)
+
+  it('permutation_diffs, benjamini_hochberg, solve and gradient_descent give the engine’s answers, one jump per step', async () => {
+    const near = (got, want) => { expect(got.length).toBe(want.length); got.forEach((g, k) => expect(g).toBeCloseTo(want[k], 9)) }
+    await load(s, 'permutation_diffs')
+    let [r, n] = await jumps(s, 'permutation_diffs', 20)
+    expect(n).toBe(5)
+    const k = PROGRAMS.permutation_diffs.kwargs('5')
+    near(plain(r.result), Q.permutationDiffs(k.a, k.b, 5, 3))
+    await load(s, 'benjamini_hochberg');[r, n] = await jumps(s, 'benjamini_hochberg', 20)
+    expect(n).toBe(8)
+    expect(plain(r.result)).toEqual(Q.benjaminiHochberg(PROGRAMS.benjamini_hochberg.kwargs(PROGRAMS.benjamini_hochberg.input.value).pvalues))
+    await load(s, 'solve');[r, n] = await jumps(s, 'solve', 30)
+    expect(n).toBe(10)   // 3 + 2 + 1 rows eliminated, then 4 weights
+    const { A, b } = PROGRAMS.solve.kwargs('365')
+    near(plain(r.result), F.solve(A, b))
+    await load(s, 'gradient_descent');[r, n] = await jumps(s, 'gradient_descent', 30)
+    expect(n).toBe(20)
+    const g = PROGRAMS.gradient_descent.kwargs('0.5')
+    near(plain(r.result), F.gradientDescent(g.X, g.y, 0.5, 20))
   }, 60000)
 })

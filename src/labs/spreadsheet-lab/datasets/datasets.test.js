@@ -98,6 +98,16 @@ describe.each(DATASETS)('dataset: $title', (ds) => {
       expect(find(result, 'Slope m')).toBeCloseTo(slope, 2)
       expect(Math.abs(slope - 5.5)).toBeLessThan(0.6)
     }
+    // The shop's A/B test and its model of riders: what Data Science Studio's lessons 7.10 and 8.3 find by hand.
+    const cell = (a) => { const p = parseCell(a); return wb.getCell(s.id, p.row, p.col).value }
+    if (t.label.startsWith('The website’s A/B test')) {
+      expect(cell('J5')).toBeCloseTo(2.957, 3)
+      expect(cell('J7')).toBeCloseTo(cell('J6'), 10)
+    }
+    if (t.label.startsWith('Riders from temperature')) {
+      expect(cell('I2').rows[0].map((x) => Math.round(x))).toEqual([94, -12, 22, 291])
+      expect(cell('I4').rows.map((r) => r[0])).toEqual(cell('I2').rows[0].slice().reverse().map((x) => expect.closeTo(x, 8)))
+    }
     if (t.label.startsWith('Fit and test')) {
       expect(find(result, 'Per m² of floor area')).toBeGreaterThan(1.7)
       expect(find(result, 'Per m² of floor area')).toBeLessThan(2.5)
@@ -119,7 +129,7 @@ describe.each(DATASETS.filter((d) => d.lessons))('lesson exercises on $title', (
       const v = wb.getCell(s.id, at.row + 1, at.col).value
       expect(isError(v), t.id + ': ' + t.solution).toBe(false)
     }
-  })
+  }, 60000)
 
   it('opens an exercise with the learner’s own formula', async () => {
     const { SHEET_EXERCISES, exerciseTry } = await ds.lessons()

@@ -1,0 +1,124 @@
+.discrete-math-lab .math-sidebar-note { font-size: 12px; color: var(--muted); margin: 22px 10px; }
+.discrete-math-lab svg text { font: 12px Inter, system-ui, sans-serif; fill: var(--ink); }
+
+@media (max-width: 700px) {
+  .discrete-math-lab .qm-body { flex-direction: column; }
+  .discrete-math-lab .qm-sidebar { width: 100%; max-height: 155px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .discrete-math-lab .math-sidebar-note { display: none; }
+  .discrete-math-lab .qm-main { min-height: 0; padding: 16px 12px; }
+  .discrete-math-lab .qm-header { padding: 10px 12px; }
+  .discrete-math-lab .qm-slider input { width: 125px; }
+}
+
+/* Shared figure & EquationAnatomy primitives */
+.mm-graph { width: 100%; max-width: 560px; display: block; margin: 6px 0; touch-action: none; }
+.mm-grid { stroke: #0000000d; }
+.mm-axis { stroke: #00000059; }
+.mm-tick { font-size: 10px; fill: #777; }
+.mm-axislabel { font-size: 11px; fill: #555; font-style: italic; }
+.mm-curvelabel { font-size: 12px; font-weight: 600; }
+.mm-working td { padding: 4px 10px; }
+.mm-bars { display: grid; gap: 4px; margin: 8px 0; }
+.mm-bar-row { display: grid; grid-template-columns: minmax(90px, min(48%, 290px)) minmax(60px, 1fr) 74px; gap: 8px; align-items: center; font-size: 13px; }
+.mm-bar-row.mark .mm-bar-label { font-weight: 700; }
+.mm-bar-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mm-bar-track { height: 11px; background: #0001; border-radius: 3px; overflow: hidden; }
+.mm-bar-fill { display: block; height: 100%; background: #1f6f68; }
+.mm-bar-fill.neg { background: #c0533a; }
+.mm-bar-value { text-align: right; font-variant-numeric: tabular-nums; }
+.mm-equation { overflow-x: auto; padding: 4px 0; }
+.mm-parts { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.mm-parts button { padding: 4px 10px; }
+.mm-parts button.active { background: #5b4bb522; border-color: #5b4bb5; }
+.mm-part-explain { padding: 8px 12px; border-left: 3px solid #5b4bb5; background: #5b4bb50d; margin: 6px 0; }
+.mm-decoder table td { vertical-align: top; }
+
+/* Worked derivations & Proof Builder */
+.dm-worked { margin: 14px 0; border: 1px solid var(--line); border-radius: 8px; background: #faf8f3; overflow: hidden; }
+.dm-worked-title { padding: 8px 12px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; background: #f3efe6; }
+.dm-worked-table { width: 100%; margin: 0; }
+.dm-step-badge { font: 600 12px ui-monospace, monospace; color: #5b4bb5; white-space: nowrap; }
+
+.dm-proof-builder { border-left: 4px solid #5b4bb5; background: #f8f6fc; }
+.dm-proof-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.dm-proof-title { margin: 2px 0 0; font-size: 16px; }
+.dm-proof-badge { font: 600 12px ui-monospace, monospace; padding: 3px 9px; border-radius: 99px; background: #5b4bb51c; color: #47389c; }
+.dm-proof-claim { padding: 8px 12px; border-radius: 6px; background: #fff; border: 1px solid #e5e0f2; margin-bottom: 10px; font-size: 14px; display: grid; gap: 4px; }
+.dm-proof-meta { font-size: 13px; color: #444; }
+.dm-proof-chain { list-style: none; padding: 0; margin: 0 0 12px; display: grid; gap: 6px; }
+.dm-proof-step-done { display: flex; gap: 10px; align-items: flex-start; padding: 7px 10px; border-radius: 6px; background: #e8f4f1; border: 1px solid #bce0d8; font-size: 13.5px; }
+.dm-proof-step-num { font: 700 11px ui-monospace, monospace; color: #1f6f68; white-space: nowrap; margin-top: 2px; }
+.dm-proof-step-why { font-size: 12px; color: #2b5a55; margin-top: 2px; }
+.dm-proof-prompt { margin: 6px 0; }
+.dm-proof-qed { padding: 8px 12px; border-radius: 6px; background: #1f6f6818; border: 1px solid #1f6f6844; color: #164e49; margin-top: 8px; }
+
+/* Interactive Figures */
+.dm-fig-lead { font-size: 13px; color: #444; margin: 4px 0 8px; }
+.dm-truth-table th, .dm-truth-table td { text-align: center; padding: 5px 8px; }
+.dm-active-row { background: #5b4bb51a; }
+.dm-mismatch-row { background: #c0533a18; }
+
+.dm-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr)); gap: 8px; margin: 8px 0; }
+.dm-wason-card { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 12px 8px; border-radius: 8px; border: 2px solid #d5cfc2; background: #fffcf6; cursor: pointer; text-align: center; }
+.dm-wason-card.flipped { background: #eef6f4; border-color: #1f6f68; }
+.dm-card-face { font: 700 20px ui-monospace, monospace; color: #222; }
+.dm-card-sub { font-size: 11.5px; color: #555; }
+
+.dm-matrix-table th, .dm-matrix-table td { text-align: center; padding: 4px 8px; }
+.dm-cell-btn { min-width: 44px; padding: 4px 8px; border-radius: 5px; border: 1px solid #ccc; background: #f5f2ea; font: 600 12.5px ui-monospace, monospace; cursor: pointer; }
+.dm-cell-btn.on { background: #1f6f68; color: #fff; border-color: #1f6f68; }
+.dm-cell-btn.blocked { background: #c0533a; color: #fff; border-color: #c0533a; }
+
+.dm-board-wrap { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; margin: 8px 0; }
+.dm-mini-board { display: grid; grid-template-columns: repeat(8, 22px); grid-template-rows: repeat(8, 22px); border: 2px solid #333; border-radius: 4px; overflow: hidden; }
+.dm-sq { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.dm-sq.dark { background: #8a7f6d; color: #fff; }
+.dm-sq.light { background: #f3efe6; color: #333; }
+.dm-sq.removed { background: #c0533a !important; color: #fff !important; }
+.dm-board-stats { flex: 1 1 280px; }
+
+.dm-stamp-grid, .dm-sieve-grid, .dm-crt-grid { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0; }
+.dm-stamp-cell, .dm-sieve-cell { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 42px; padding: 4px 6px; border-radius: 5px; border: 1px solid #d5cfc2; background: #f7f4ec; font: 600 12px ui-monospace, monospace; cursor: pointer; }
+.dm-stamp-cell.reachable { background: #1f6f681c; border-color: #1f6f6866; color: #164e49; }
+.dm-stamp-cell.gap { background: #c0533a18; border-color: #c0533a55; color: #8c2f1b; }
+.dm-stamp-cell.selected, .dm-sieve-cell.active { outline: 2px solid #5b4bb5; font-weight: 700; }
+.dm-sieve-cell.prime { background: #5b4bb51a; border-color: #5b4bb566; color: #3b2d85; }
+.dm-sieve-cell.divisor { background: #c26a1224; border-color: #c26a12; }
+
+.dm-clock-strip { display: flex; flex-wrap: wrap; gap: 5px; margin: 8px 0; }
+.dm-clock-pill { padding: 4px 8px; border-radius: 6px; border: 1px solid #d5cfc2; background: #faf7f0; font: 12px ui-monospace, monospace; }
+.dm-clock-pill.unit { background: #1f6f6824; border-color: #1f6f68; color: #154c47; }
+.dm-clock-pill.zero-div { background: #c0533a1f; border-color: #c0533a; }
+
+.dm-crt-cell { display: inline-flex; flex-direction: column; align-items: center; padding: 4px 8px; border-radius: 6px; border: 1px solid #d5cfc2; background: #faf7f0; font: 11.5px ui-monospace, monospace; }
+.dm-crt-cell.hit { background: #1f6f68; color: #fff; border-color: #1f6f68; }
+
+.dm-pascal { display: flex; flex-direction: column; gap: 4px; margin: 8px 0; overflow-x: auto; }
+.dm-pascal-row { display: flex; align-items: center; gap: 4px; }
+.dm-pascal-n, .dm-pascal-sum { font: 11px ui-monospace, monospace; color: #666; min-width: 44px; }
+.dm-pascal-cell { min-width: 36px; height: 26px; border-radius: 4px; border: 1px solid #d5cfc2; background: #f7f4ec; font: 600 12px ui-monospace, monospace; cursor: pointer; }
+.dm-pascal-cell.target { background: #c26a12; color: #fff; border-color: #c26a12; }
+.dm-pascal-cell.parent { background: #1f6f6828; border-color: #1f6f68; color: #154c47; }
+
+.dm-catalan-pills { display: flex; flex-wrap: wrap; gap: 5px; margin: 6px 0; }
+.dm-pill { padding: 2px 7px; border-radius: 4px; background: #eee9dc; font: 12px ui-monospace, monospace; }
+
+/* Puzzles & Challenges Workbench */
+.dm-puzzle-nav { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 8px; margin: 12px 0 18px; }
+.dm-puzzle-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); background: #faf8f2; text-align: left; cursor: pointer; }
+.dm-puzzle-card.active { border-color: #5b4bb5; background: #5b4bb514; }
+.dm-puzzle-card strong { display: block; font-size: 13.5px; }
+.dm-puzzle-card small { font-size: 11.5px; color: var(--muted); }
+.dm-puzzle-icon { font-size: 22px; }
+.dm-studio { display: grid; gap: 10px; }
+.dm-studio-sub { margin: 10px 0 2px; font-size: 15px; }
+.dm-islander-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 6px 0; }
+.dm-islander-card, .dm-vertex-btn { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 14px; border-radius: 8px; border: 2px solid #ccc; background: #fff; cursor: pointer; min-width: 110px; }
+.dm-islander-card.knight { border-color: #1f6f68; background: #1f6f6814; }
+.dm-islander-card.knave { border-color: #c26a12; background: #c26a1214; }
+.dm-tromino-grid { display: grid; grid-template-columns: repeat(4, 52px); grid-template-rows: repeat(4, 52px); gap: 3px; margin: 6px 0; }
+.dm-tromino-cell { display: flex; align-items: center; justify-content: center; border-radius: 5px; font: 700 12px ui-monospace, monospace; border: 1px solid #0002; }
+.dm-prop-pills { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.dm-badge { padding: 3px 9px; border-radius: 99px; font: 600 12px ui-monospace, monospace; }
+.dm-badge.ok { background: #1f6f6822; color: #164e49; }
+.dm-badge.no { background: #c0533a1f; color: #8c2f1b; }

@@ -10,6 +10,8 @@ import * as C from './cleaning.js'
 import * as G from './charts.js'
 import * as P from './patterns.js'
 import * as M from './samples.js'
+import * as Q from './significance.js'
+import * as F from './models.js'
 
 function close(got, want, where = '') {
   if (typeof want === 'number') {
@@ -231,5 +233,88 @@ describe('Part 4 gives the same answers as the Python', () => {
     close([...[20, 22.5, 25, 27.5, 30].map(x => G.kde(lights, 1, x)), G.silverman(lights)], p4.kde, 'kde')
     expect([0, 0.25, 0.5, 1].map(t => G.mix([255, 255, 255], [8, 48, 107], t))).toEqual(p4.mix)
     close(G.lieFactor(87, 114, 7, 34), p4.lie, 'lie factor')
+  })
+})
+
+describe('Parts 7 and 8 give the same answers as the Python', () => {
+  const p7 = parity.part7, p8 = parity.part8
+  const listPrices = Object.fromEntries(T.readCsv(D.CATALOGUE_CSV()).map(r => [r.item, T.toPence(r.list_price)]))
+  const clean = C.cleanOrders(rows, listPrices)
+  const lights = ch => clean.filter(r => r.price !== null && r.item === 'Lights, front and back' && r.channel === ch).map(r => r.price / 100)
+  const [web, shop] = [lights('web'), lights('shop')]
+  const days = P.numberDays(T.readCsv(D.DAYS_CSV()))
+  const H = days.map(r => r.high_c), RI = days.map(r => r.riders)
+  const towns = Object.fromEntries(clean.map(r => [r.order_id, r.town]))
+  const deliveries = T.readCsv(D.DELIVERIES_CSV())
+  const many = Q.manyTests(10, 3, 12, 0.8, 3)
+
+  it('the trial: the same text, byte for byte', () => {
+    expect(D.TRIAL_CSV()).toBe(p7.trial_csv)
+  })
+  it('the permutation test, Simpson’s rule, the normal and the z test', () => {
+    close(Q.permutationDiffs(web, shop, 30, 3), p7.perm, 'perm')
+    close([Q.permutationP(Q.permutationDiffs(web, shop, 300, 3), S.mean(web) - S.mean(shop)), Q.permutationP([0.5, -0.2, 0.1], 0.2)], p7.perm_p, 'perm p')
+    close([Q.simpson(u => u * u, 0, 3, 10), Q.simpson(u => 1 / (1 + u * u), 0, 1)], p7.simpson, 'simpson')
+    close([-3, -1.2, 0, 0.5, 1.96, 6].map(Q.normalCdf), p7.normal_cdf, 'normal cdf')
+    close([0.025, 0.5, 0.8, 0.975].map(Q.normalQuantile), p7.normal_quantile, 'quantile')
+    close([Q.twoProportionZ(1434, 7381, 1588, 7425), Q.twoProportionZ(0, 5, 0, 5), Q.twoProportionZ(13, 14, 59, 65)], p7.z, 'z')
+    close([2.957, -1.0, 0].map(Q.zPValue), p7.z_p, 'z p')
+    close(Q.simulatedPvalues(50, 0.2, 0.2, 20, 5), p7.simulated_pvalues, 'simulated p')
+  })
+  it('the t test, effect size, power and the sample size', () => {
+    close([Q.welchT(web, shop), Q.welchT([1, 2, 3, 4], [2, 4, 6, 9, 11])], p7.welch, 'welch')
+    close([[2.1, 7.5], [0.352, 76.06], [1.0, 1], [3.0, 2], [0, 5]].map(([t, df]) => Q.tTwoSided(t, df)), p7.t_two_sided, 't')
+    close([1, 4, 30].map(df => Q.tCritical(df)), p7.t_critical, 't critical')
+    close([Q.cohensD(web, shop), Q.cohensD([1, 2, 3], [2, 3, 4, 5])], p7.cohens_d, 'd')
+    close(Q.simulatedPower(14, 0.85, 0.97, 100, 5), p7.power, 'power')
+    close([Q.sampleSize(0.2, 0.22), Q.sampleSize(0.85, 0.97, 0.05, 0.9)], p7.sample_size, 'n')
+  })
+  it('chi-squared, dispersion, many tests, peeking and the trial’s checks', () => {
+    close([Q.chiSquared([[61, 20], [65, 16]]), Q.chiSquared([[1, 2, 3], [4, 5, 6]])], p7.chi_squared, 'chi squared')
+    close([[3.84, 1], [5.99, 2], [5.0, 3], [10, 4], [311.75, 364]].map(([x, df]) => Q.chi2Tail(x, df)), p7.chi2_tail, 'chi2 tail')
+    close(Q.dispersion(M.ordersPerDay(clean.map(r => r.date))), p7.dispersion, 'dispersion')
+    close(many, p7.many, 'many')
+    expect([Q.bonferroni(many), Q.benjaminiHochberg(many, 0.1)]).toEqual([p7.bonferroni, p7.bh])
+    close(Q.aaPeeking(Array(10).fill(30), 0.2, 20, 9), p7.peeking, 'peeking')
+    close([Q.splitCheck(7381, 7425), Q.liftInterval(1434, 7381, 1588, 7425)], [p7.split, p7.lift], 'split, lift')
+  })
+
+  const drows = days.map(r => ({ ...r, weekend: F.weekday(r.date) >= 5 ? 1 : 0 }))
+  const X = F.designMatrix(drows, ['high_c', 'rain_mm', 'weekend'])
+  const [A, b] = F.normalEquations(X, RI), w = F.fit(X, RI)
+  const dows = days.map(r => F.weekday(r.date))
+  const Xd = days.map((r, k) => [1, r.high_c, r.rain_mm, ...F.oneHot([dows[k]], [0, 1, 2, 3, 4, 5, 6])[0].slice(1)])
+  const Xt = X.map((row, k) => [...row, ...F.oneHot([dows[k]], [0, 1, 2, 3, 4, 5, 6])[0]])
+  const cols = [1, 2, 3].map(j => F.standardise(X.map(row => row[j]))[0]), Z = X.map((_, i) => [1, ...cols.map(c => c[i])])
+  const months = days.map(r => r.date.slice(5, 7))
+  const LX = deliveries.map(r => [1, r.courier === 'Northern' ? 1 : 0, D.FAR_TOWNS.includes(towns[r.order_id]) ? 1 : 0])
+  const LY = deliveries.map(r => (r.on_time === 'yes' ? 1 : 0))
+  it('least squares, the weekday, matrices and Gaussian elimination', () => {
+    close([F.leastSquares(H, RI), F.leastSquares([1, 2, 3], [2, 4, 7])], p8.least_squares, 'least squares')
+    expect(['2025-01-01', '2025-06-02', '2025-12-31'].map(F.weekday)).toEqual(p8.weekday)
+    close(X.slice(0, 3), p8.design, 'design')
+    close([F.transpose([[1, 2, 3], [4, 5, 6]]), F.matMul([[1, 2], [3, 4]], [[5, 6], [7, 8]])], [p8.transpose, p8.mat_mul], 'matrices')
+    close([A, b], p8.normal_equations, 'normal equations')
+    expect(F.solve([[2, 1], [4, 2]], [1, 2])).toBeNull()
+    close([F.solve(A, b), F.solve([[0, 1], [1, 0]], [3, 4])], [p8.solve[0], p8.solve[2]], 'solve')
+    expect(p8.solve[1]).toBeNull()
+    close([w, F.predict(X.slice(0, 5), w), F.rSquared(RI, F.predict(X, w))], [p8.fit, p8.predict, p8.r2], 'fit')
+  })
+  it('one-hot columns and the trap, standardising, gradient descent, polynomials, ridge', () => {
+    close(F.oneHot([0, 2, 1], [0, 1, 2]), p8.one_hot, 'one hot')
+    close(F.fit(Xd, RI), p8.dummies, 'dummies')
+    expect(F.fit(Xt, RI)).toBeNull()
+    expect(p8.trap).toBeNull()
+    close(F.standardise([1, 2, 3, 4]), p8.standardise, 'standardise')
+    close(F.gradientDescent(Z, RI, 0.5, 30), p8.gd, 'gradient descent')
+    close(F.polynomial([0.5, -1, 2], 3), p8.polynomial, 'polynomial')
+    close([F.rmse(RI, F.predict(X, w)), F.ridge(X, RI, 10)], [p8.rmse, p8.ridge], 'rmse, ridge')
+  })
+  it('folds, cross-validation, logistic regression and the leak', () => {
+    expect([F.kFolds(10, 3, 5), F.groupFolds(months.slice(0, 70))]).toEqual([p8.k_folds, p8.group_folds])
+    close([F.crossValidate(X, RI, F.kFolds(365, 5, 5)), F.crossValidate(X, RI, F.groupFolds(months), 10)], p8.cv, 'cv')
+    close([[-2, 0, 3].map(F.sigmoid), F.logLoss([1, 0, 1], [0.9, 0.2, 0.6])], [p8.sigmoid, p8.log_loss], 'sigmoid, log loss')
+    close(F.logisticFit(LX, LY, 1, 200), p8.logistic, 'logistic')
+    close([F.thresholdAccuracy(deliveries.map(r => Number(r.days)), LY), F.thresholdAccuracy([1, 2, 3], [1, 0, 1])], p8.threshold, 'threshold')
   })
 })

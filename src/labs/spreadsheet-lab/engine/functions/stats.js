@@ -134,6 +134,10 @@ function invertMatrix(A) {
   return M.map((row) => row.slice(n))
 }
 
+// The criteria of the IF family, which may each be an array: the function then gives one answer per
+// criterion, as Excel does (a column of criteria against a row of them makes a table).
+const CRITERIA = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25], CRITERIA_AFTER_SUM = [2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26]
+
 export default {
   AVERAGE: def(C, 'AVERAGE(number1, [number2], …)', 'The arithmetic mean: the sum divided by the count.', (args) => mean(need(numbers(args), 1, 'AVERAGE')), {
     min: 1, example: ['=AVERAGE(2, 4, 9)', '5'],
@@ -147,8 +151,8 @@ export default {
     let i = 0
     for (const v of A.values()) { if (mask[i++] && typeof v === 'number') xs.push(v) }
     return mean(need(xs, 1, 'AVERAGEIF'))
-  }, { example: ['=AVERAGEIF(A2:A9, "North", B2:B9)', 'the mean of B where A is North'] }),
-  AVERAGEIFS: def(C, 'AVERAGEIFS(average_range, criteria_range1, criteria1, …)', 'The mean of the cells that meet every condition.', (args) => mean(need(ifsMask(args), 1, 'AVERAGEIFS')), { min: 3 }),
+  }, { scalar: [1], example: ['=AVERAGEIF(A2:A9, "North", B2:B9)', 'the mean of B where A is North'] }),
+  AVERAGEIFS: def(C, 'AVERAGEIFS(average_range, criteria_range1, criteria1, …)', 'The mean of the cells that meet every condition.', (args) => mean(need(ifsMask(args), 1, 'AVERAGEIFS')), { min: 3, scalar: CRITERIA_AFTER_SUM }),
   COUNT: def(C, 'COUNT(value1, [value2], …)', 'Counts the cells that contain numbers.', (args) => {
     let n = 0
     for (const a of args) {
@@ -171,18 +175,18 @@ export default {
     let n = 0
     for (const v of toMatrix(r).values()) if (test(v)) n++
     return n
-  }, { example: ['=COUNTIF(B2:B30, ">=50")', 'how many scores are 50 or more'], learn: 'Criteria can be a value (5, "Yes"), a comparison as text (">=50"), or a pattern with wildcards ("A*" starts with A, "?at" is any three-letter word ending in "at").' }),
+  }, { scalar: [1], example: ['=COUNTIF(B2:B30, ">=50")', 'how many scores are 50 or more'], learn: 'Criteria can be a value (5, "Yes"), a comparison as text (">=50"), or a pattern with wildcards ("A*" starts with A, "?at" is any three-letter word ending in "at").' }),
   COUNTIFS: def(C, 'COUNTIFS(criteria_range1, criteria1, …)', 'Counts the rows that meet every condition.', (args) => {
     if (args.length % 2) fail('#VALUE!', 'Criteria come in pairs: a range and its condition.')
     const first = toMatrix(args[0])
     const list = []
     for (let i = 0; i < args.length; i += 2) list.push([args[i], args[i + 1]])
     return criteriaMask(list, first.height, first.width).filter(Boolean).length
-  }, { min: 2 }),
+  }, { min: 2, scalar: CRITERIA, learn: 'Given an array of conditions, COUNTIFS counts once for each, as Excel does: =COUNTIFS(A2:A9, {"North";"South"}, B2:B9, {"yes","no"}) is a 2 × 2 table of counts, a column of conditions against a row of them.' }),
   MAX: def(C, 'MAX(number1, [number2], …)', 'The largest number.', (args) => { const xs = numbers(args); return xs.length ? Math.max(...xs) : 0 }, { min: 1, example: ['=MAX(3, 9, 4)', '9'] }),
   MIN: def(C, 'MIN(number1, [number2], …)', 'The smallest number.', (args) => { const xs = numbers(args); return xs.length ? Math.min(...xs) : 0 }, { min: 1, example: ['=MIN(3, 9, 4)', '3'] }),
-  MAXIFS: def(C, 'MAXIFS(max_range, criteria_range1, criteria1, …)', 'The largest number among cells that meet every condition.', (args) => { const xs = ifsMask(args); return xs.length ? Math.max(...xs) : 0 }, { min: 3 }),
-  MINIFS: def(C, 'MINIFS(min_range, criteria_range1, criteria1, …)', 'The smallest number among cells that meet every condition.', (args) => { const xs = ifsMask(args); return xs.length ? Math.min(...xs) : 0 }, { min: 3 }),
+  MAXIFS: def(C, 'MAXIFS(max_range, criteria_range1, criteria1, …)', 'The largest number among cells that meet every condition.', (args) => { const xs = ifsMask(args); return xs.length ? Math.max(...xs) : 0 }, { min: 3, scalar: CRITERIA_AFTER_SUM }),
+  MINIFS: def(C, 'MINIFS(min_range, criteria_range1, criteria1, …)', 'The smallest number among cells that meet every condition.', (args) => { const xs = ifsMask(args); return xs.length ? Math.min(...xs) : 0 }, { min: 3, scalar: CRITERIA_AFTER_SUM }),
   MEDIAN: def(C, 'MEDIAN(number1, [number2], …)', 'The middle value.', (args) => percentileInc(need(numbers(args), 1, 'MEDIAN'), 0.5), { min: 1, example: ['=MEDIAN(1, 3, 100)', '3'], learn: 'With an even count, MEDIAN averages the two middle values. Unlike the mean, one extreme value hardly moves it.' }),
   'MODE.SNGL': def(C, 'MODE.SNGL(number1, [number2], …)', 'The most frequent value.', (args) => {
     const xs = numbers(args), counts = new Map()

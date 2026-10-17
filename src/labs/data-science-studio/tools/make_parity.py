@@ -17,6 +17,8 @@ import frames as f  # noqa: E402
 import charts as ch  # noqa: E402
 import patterns as p  # noqa: E402
 import samples as sm  # noqa: E402
+import significance as g  # noqa: E402
+import models as m  # noqa: E402
 
 csv_text = d.to_csv(d.HEADER, d.make_orders())
 rows = t.read_csv(csv_text)
@@ -172,8 +174,68 @@ part6 = {
     "reservoir": [sm.reservoir(list(range(1, 21)), 5, 61), sm.reservoir(["a", "b"], 5, 1)],
     "stratified": [r["order_id"] for r in sm.stratified_sample([r for r in clean if r["price"] is not None], "item", 40, 71)],
 }
+lights_web = [r["price"] / 100 for r in clean if r["price"] is not None and r["item"] == "Lights, front and back" and r["channel"] == "web"]
+lights_shop = [r["price"] / 100 for r in clean if r["price"] is not None and r["item"] == "Lights, front and back" and r["channel"] == "shop"]
+per_day = sm.orders_per_day([r["date"] for r in clean])
+many = g.many_tests(10, 3, 12, 0.8, 3)
+part7 = {
+    "trial_csv": d.to_csv(d.TRIAL_HEADER, d.make_trial(d.make_days())),
+    "perm": g.permutation_diffs(lights_web, lights_shop, 30, 3),
+    "perm_p": [g.permutation_p(g.permutation_diffs(lights_web, lights_shop, 300, 3), s.mean(lights_web) - s.mean(lights_shop)), g.permutation_p([0.5, -0.2, 0.1], 0.2)],
+    "simpson": [g.simpson(lambda u: u * u, 0, 3, 10), g.simpson(lambda u: 1 / (1 + u * u), 0, 1)],
+    "normal_cdf": [g.normal_cdf(z) for z in [-3, -1.2, 0, 0.5, 1.96, 6]],
+    "normal_quantile": [g.normal_quantile(q) for q in [0.025, 0.5, 0.8, 0.975]],
+    "z": [g.two_proportion_z(1434, 7381, 1588, 7425), g.two_proportion_z(0, 5, 0, 5), g.two_proportion_z(13, 14, 59, 65)],
+    "z_p": [g.z_p_value(z) for z in [2.957, -1.0, 0]],
+    "simulated_pvalues": g.simulated_pvalues(50, 0.2, 0.2, 20, 5),
+    "welch": [g.welch_t(lights_web, lights_shop), g.welch_t([1, 2, 3, 4], [2, 4, 6, 9, 11])],
+    "t_two_sided": [g.t_two_sided(tv, df) for tv, df in [(2.1, 7.5), (0.352, 76.06), (1.0, 1), (3.0, 2), (0, 5)]],
+    "t_critical": [g.t_critical(df) for df in [1, 4, 30]],
+    "cohens_d": [g.cohens_d(lights_web, lights_shop), g.cohens_d([1, 2, 3], [2, 3, 4, 5])],
+    "power": g.simulated_power(14, 0.85, 0.97, 100, 5),
+    "sample_size": [g.sample_size(0.2, 0.22), g.sample_size(0.85, 0.97, 0.05, 0.9)],
+    "chi_squared": [g.chi_squared([[61, 20], [65, 16]]), g.chi_squared([[1, 2, 3], [4, 5, 6]])],
+    "chi2_tail": [g.chi2_tail(x, df) for x, df in [(3.84, 1), (5.99, 2), (5.0, 3), (10, 4), (311.75, 364)]],
+    "dispersion": g.dispersion(per_day),
+    "many": many, "bonferroni": g.bonferroni(many), "bh": g.benjamini_hochberg(many, 0.1),
+    "peeking": g.aa_peeking([30] * 10, 0.2, 20, 9),
+    "split": g.split_check(7381, 7425),
+    "lift": g.lift_interval(1434, 7381, 1588, 7425),
+}
+drows = [dict(r, weekend=1.0 if m.weekday(r["date"]) >= 5 else 0.0) for r in num]
+X = m.design_matrix(drows, ["high_c", "rain_mm", "weekend"])
+A, b = m.normal_equations(X, RI)
+w = m.fit(X, RI)
+dows = [m.weekday(r["date"]) for r in num]
+Xd = [[1.0, r["high_c"], r["rain_mm"]] + oh[1:] for r, oh in zip(num, m.one_hot(dows, list(range(7))))]
+Xt = [row + oh for row, oh in zip(X, m.one_hot(dows, list(range(7))))]
+Z = [[1.0] + list(vals) for vals in zip(*[m.standardise([row[j] for row in X])[0] for j in range(1, 4)])]
+months = [r["date"][5:7] for r in num]
+LX = [[1.0, 1.0 if r["courier"] == "Northern" else 0.0, 1.0 if r["far"] == "far" else 0.0] for r in deliveries]
+LY = [1 if r["on_time"] == "yes" else 0 for r in deliveries]
+part8 = {
+    "least_squares": [m.least_squares(H, RI), m.least_squares([1, 2, 3], [2, 4, 7])],
+    "weekday": [m.weekday(x) for x in ["2025-01-01", "2025-06-02", "2025-12-31"]],
+    "design": X[:3],
+    "transpose": m.transpose([[1, 2, 3], [4, 5, 6]]), "mat_mul": m.mat_mul([[1, 2], [3, 4]], [[5, 6], [7, 8]]),
+    "normal_equations": [A, b],
+    "solve": [m.solve(A, b), m.solve([[2, 1], [4, 2]], [1, 2]), m.solve([[0, 1], [1, 0]], [3, 4])],
+    "fit": w, "predict": m.predict(X[:5], w), "r2": m.r_squared(RI, m.predict(X, w)),
+    "one_hot": m.one_hot([0, 2, 1], [0, 1, 2]), "dummies": m.fit(Xd, RI), "trap": m.fit(Xt, RI),
+    "standardise": m.standardise([1, 2, 3, 4]),
+    "gd": m.gradient_descent(Z, RI, 0.5, 30),
+    "polynomial": m.polynomial([0.5, -1, 2], 3),
+    "rmse": m.rmse(RI, m.predict(X, w)),
+    "ridge": m.ridge(X, RI, 10.0),
+    "k_folds": m.k_folds(10, 3, 5), "group_folds": m.group_folds(months[:70]),
+    "cv": [m.cross_validate(X, RI, m.k_folds(365, 5, 5)), m.cross_validate(X, RI, m.group_folds(months), 10.0)],
+    "sigmoid": [m.sigmoid(z) for z in [-2, 0, 3]],
+    "log_loss": m.log_loss([1, 0, 1], [0.9, 0.2, 0.6]),
+    "logistic": m.logistic_fit(LX, LY, 1.0, 200),
+    "threshold": [m.threshold_accuracy([float(r["days"]) for r in deliveries], LY), m.threshold_accuracy([1, 2, 3], [1, 0, 1])],
+}
 path = os.path.join(HERE, "..", "engine", "parity.json")
 with open(path, "w", encoding="utf-8", newline="\n") as handle:
-    json.dump({"part1": part1, "part2": part2, "part3": part3, "part4": part4, "part5": part5, "part6": part6}, handle, ensure_ascii=False)
+    json.dump({"part1": part1, "part2": part2, "part3": part3, "part4": part4, "part5": part5, "part6": part6, "part7": part7, "part8": part8}, handle, ensure_ascii=False)
     handle.write("\n")
 print(f"wrote {os.path.normpath(path)}")

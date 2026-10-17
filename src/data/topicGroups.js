@@ -124,6 +124,8 @@ const CURATED_TOPICS = {
         items: [
           { kind: 'course', key: 'discrete-math',
             differentiator: 'Structured curriculum — logic, sets, graphs, and the mathematics of computing, in order.' },
+          { kind: 'lab', key: 'discrete-math-lab',
+            differentiator: 'Interactive lessons, step-by-step proof builders, playable logic & graph puzzles, and a symbol & theorem decoder.' },
           { kind: 'game', key: 'rubiks-cube',
             differentiator: "Group theory, permutations, and non-commutativity through the world's most famous puzzle." },
         ],

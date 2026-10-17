@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 72 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 73 labs · 16 games
 
 ## How things are counted
 
@@ -85,6 +85,7 @@
 | CSS 0 to Mastery | `css-mastery` | lesson | `/web-learn/css-mastery` |
 | Data Science Studio | `data-science-studio` | lab | `/lab/data-science-studio` |
 | Decomp Lab | `decomp-lab` | lab | `/decomp-lab` |
+| Discrete Math Lab | `discrete-math-lab` | lab | `/lab/discrete-math-lab` |
 | Dynamic Programming Lab | `dp-lab` | lab | `/lab/dp-lab` |
 | Drone Lab | `drone-lab` | lab | `/drone-lab` |
 | Arrays & Memory Lab | `dsa-arrays-lab` | lab | `/lab/dsa-arrays-lab` |

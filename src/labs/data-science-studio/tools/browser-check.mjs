@@ -126,7 +126,7 @@ try {
   // The shop's dataset opens the sheets its formulas join to (Part 3).
   const tabs = await page.getByRole('tablist', { name: 'Sheets' }).last().getByRole('tab').allTextContents()
   console.log('the Spreadsheet Lab’s sheets:', tabs.join(', '))
-  if (!['catalogue', 'returns', 'days', 'deliveries'].every(t => tabs.includes(t))) problems.push(`the shop dataset did not open its catalogue, returns, days and deliveries sheets: ${tabs.join(', ')}`)
+  if (!['catalogue', 'returns', 'days', 'deliveries', 'trial'].every(t => tabs.includes(t))) problems.push(`the shop dataset did not open its catalogue, returns, days, deliveries and trial sheets: ${tabs.join(', ')}`)
   await page.screenshot({ path: path.join(out, 'spreadsheet-lab.png') })
   await page.keyboard.press('Escape')
 
@@ -170,6 +170,32 @@ try {
     console.log('Spearman in the spreadsheet block:', got)
     if (!/Right: 0\.92/.test(got)) problems.push(`the Spearman formula was not solved: ${got}`)
     await block.screenshot({ path: path.join(out, 'formula-block-spearman.png') })
+  }
+
+  // Parts 7 and 8: a chi-squared test from COUNTIFS with arrays of criteria and MMULT, and the normal
+  // equations with MINVERSE, typed into the lessons' real grids (all three were added to the
+  // Spreadsheet Lab for these parts), and the trial sheet beside the others.
+  const typed = [
+    ['chi-squared', 0, '=CHISQ.TEST(COUNTIFS(deliveries!B2:B163,{"Northern";"Swift"},deliveries!D2:D163,{"yes","no"}),MMULT(COUNTIF(deliveries!B2:B163,{"Northern";"Swift"}),COUNTIF(deliveries!D2:D163,{"yes","no"}))/162)', /Right: 0\.44/, 'formula-block-chisq.png'],
+    ['gaussian-elimination', 0, '=INDEX(MMULT(MINVERSE(MMULT(TRANSPOSE(HSTACK(SEQUENCE(365,1,1,0),days!B2:C366,--(WEEKDAY(days!A2:A366,2)>5))),HSTACK(SEQUENCE(365,1,1,0),days!B2:C366,--(WEEKDAY(days!A2:A366,2)>5)))),MMULT(TRANSPOSE(HSTACK(SEQUENCE(365,1,1,0),days!B2:C366,--(WEEKDAY(days!A2:A366,2)>5))),days!D2:D366)),2,1)', /Right: 22\.4/, 'formula-block-normal-equations.png'],
+  ]
+  for (const [id, nth, formula, right, shot] of typed) {
+    const lesson = LESSONS.find(l => l.id === id)
+    await page.goto(URL)
+    await page.locator('.qm-sidebar button').filter({ hasText: lesson.title }).first().click()
+    const block = page.locator('.ds-formula').nth(nth)
+    const g = block.locator('[role=grid]')
+    await g.waitFor({ timeout: 60000 })
+    const sheetTabs = await block.getByRole('tab').allTextContents()
+    if (!sheetTabs.includes('trial')) problems.push(`lesson ${lesson.number}’s spreadsheet has no trial sheet: ${sheetTabs.join(', ')}`)
+    await block.scrollIntoViewIfNeeded()
+    await g.evaluate(el => el.focus())
+    await page.keyboard.type(formula)
+    await page.keyboard.press('Enter')
+    const got = (await block.locator('.qm-answer strong').textContent()).trim()
+    console.log(`lesson ${lesson.number} spreadsheet block:`, got)
+    if (!right.test(got)) problems.push(`lesson ${lesson.number}’s formula was not solved: ${got}`)
+    await block.screenshot({ path: path.join(out, shot) })
   }
 
   // The Spreadsheet Lab's charts (Part 4): a histogram's bin rule, and "This chart in D3".

@@ -165,6 +165,7 @@ export const DATASETS = [
       ['returns', 'The returns form as customers typed it: order ids and item names with mistakes in them, for lessons 3.5 and 3.8.'],
       ['days', 'One row per day of 2025: the highest temperature (°C), the rain (mm), riders counted on the cycle path, and visits to the shop’s website. For correlation, from lesson 5.1. Riders and visits both follow the temperature; on 11 February a news story swamped the website.'],
       ['deliveries', 'One row per web order sent by courier (Northern or Swift): days taken and whether it was on time. The town is not here but in the orders: on the orders sheet, =XLOOKUP(deliveries!A2:A163, A2:A403, C2:C403) looks up each delivery’s town. Lesson 5.9.'],
+      ['trial', 'The website’s A/B test of a new home page, four weeks from 2 June: each visitor was sent to page A (the old one) or B (the new one) by a coin flip; one row per day and page, with the visitors and how many clicked through to a product. The generator’s truth: 20 in 100 click on A, 22 in 100 on B. Lesson 7.10.'],
     ],
     sheets: async () => {
       const D = await import('../../data-science-studio/engine/data.js')
@@ -173,6 +174,7 @@ export const DATASETS = [
         { name: 'returns', rows: [D.RETURNS_HEADER, ...D.makeReturns(D.makeOrders())] },
         { name: 'days', rows: [D.DAYS_HEADER, ...D.makeDays()] },
         { name: 'deliveries', rows: [D.DELIVERIES_HEADER, ...D.makeDeliveries(D.makeOrders())] },
+        { name: 'trial', rows: [D.TRIAL_HEADER, ...D.makeTrial(D.makeDays())] },
       ]
     },
     // Every spreadsheet exercise in Data Science Studio's lessons, listed under "From the lessons".
@@ -185,6 +187,8 @@ export const DATASETS = [
       { label: 'Items sold by item and channel (lesson 2.8)', learn: 'PIVOTBY makes the pivot table: one row per item, one column per channel, totals included.', steps: [{ kind: 'cells', at: 'I1', rows: [['=PIVOTBY(D1:D403, G1:G403, F1:F403, SUM)']] }] },
       { label: 'Temperature, riders and visits (lessons 5.1 to 5.4)', learn: 'On the days sheet: riders and visits both rise with the temperature. The news day drags Pearson’s correlation of temperature and visits down to 0.19; Spearman’s, on ranks, stays at 0.92.', steps: [{ kind: 'cells', at: 'I1', rows: [['Correlation, temperature and riders', '=CORREL(days!B2:B366, days!D2:D366)'], ['Riders per degree (slope)', '=SLOPE(days!D2:D366, days!B2:B366)'], ['Correlation, temperature and visits', '=CORREL(days!B2:B366, days!E2:E366)'], ['Spearman, temperature and visits', '=CORREL(RANK.AVG(days!B2:B366, days!B2:B366, 1), RANK.AVG(days!E2:E366, days!E2:E366, 1))']] }] },
       { label: 'Which courier is on time more often? (lesson 5.9)', learn: 'Swift is on time more often overall. Join each delivery’s town from the orders and count again within the far towns: Northern wins there, and in the near towns too.', steps: [{ kind: 'cells', at: 'I1', rows: [['Courier', 'On time', 'Deliveries', 'Rate'], ['Northern', '=COUNTIFS(deliveries!B2:B163, I2, deliveries!D2:D163, "yes")', '=COUNTIF(deliveries!B2:B163, I2)', '=J2/K2'], ['Swift', '=COUNTIFS(deliveries!B2:B163, I3, deliveries!D2:D163, "yes")', '=COUNTIF(deliveries!B2:B163, I3)', '=J3/K3']] }] },
+      { label: 'The website’s A/B test (lessons 7.2 and 7.10)', learn: 'On the trial sheet: the click rate of each page, the z statistic of the difference, and its p-value. CHISQ.TEST on the 2 × 2 table of clicks and non-clicks gives the same p-value: for two groups, chi-squared is z squared.', steps: [{ kind: 'cells', at: 'I1', rows: [['Page', 'Visitors', 'Clicks', 'Rate'], ['A', '=SUMIFS(trial!C2:C57, trial!B2:B57, I2)', '=SUMIFS(trial!D2:D57, trial!B2:B57, I2)', '=K2/J2'], ['B', '=SUMIFS(trial!C2:C57, trial!B2:B57, I3)', '=SUMIFS(trial!D2:D57, trial!B2:B57, I3)', '=K3/J3'], ['Both', '=J2+J3', '=K2+K3', '=K4/J4'], ['z', '=(L3-L2)/SQRT(L4*(1-L4)*(1/J2+1/J3))'], ['p-value', '=2*(1-NORM.S.DIST(ABS(J5), TRUE))'], ['CHISQ.TEST', '=CHISQ.TEST(HSTACK(K2:K3, J2:J3-K2:K3), MMULT(J2:J3, HSTACK(L4, 1-L4)))']] }] },
+      { label: 'Riders from temperature, rain and the weekend (lessons 8.2 to 8.4)', learn: 'LINEST fits all three at once: about 22 riders a degree, −12 a millimetre of rain and 90 more at the weekend, the rules the generator used. The normal equations, typed with MMULT and MINVERSE, give the same numbers (intercept first).', steps: [{ kind: 'cells', at: 'I1', rows: [['Weekend, rain, temperature, intercept'], ['=LINEST(days!D2:D366, HSTACK(days!B2:C366, --(WEEKDAY(days!A2:A366, 2)>5)))'], ['The normal equations'], ['=MMULT(MINVERSE(MMULT(TRANSPOSE(HSTACK(SEQUENCE(365, 1, 1, 0), days!B2:C366, --(WEEKDAY(days!A2:A366, 2)>5))), HSTACK(SEQUENCE(365, 1, 1, 0), days!B2:C366, --(WEEKDAY(days!A2:A366, 2)>5)))), MMULT(TRANSPOSE(HSTACK(SEQUENCE(365, 1, 1, 0), days!B2:C366, --(WEEKDAY(days!A2:A366, 2)>5))), days!D2:D366))']] }] },
     ],
   },
   {

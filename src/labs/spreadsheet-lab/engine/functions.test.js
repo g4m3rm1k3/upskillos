@@ -245,6 +245,46 @@ describe('errors explain themselves', () => {
   })
 })
 
+describe('the IF family with an array of criteria, as in Excel', () => {
+  const cells = { A1: 'North', A2: 'South', A3: 'North', A4: 'North', B1: 'yes', B2: 'yes', B3: 'no', B4: 'yes', C1: '5', C2: '7', C3: '1', C4: '2' }
+  is('=COUNTIF(A1:A4, {"North";"South"})', [[3], [1]], cells)
+  is('=COUNTIFS(A1:A4, {"North";"South"}, B1:B4, {"yes","no"})', [[2, 1], [1, 0]], cells)
+  is('=SUMIFS(C1:C4, A1:A4, {"North","South"})', [[8, 7]], cells)
+  is('=SUMIF(A1:A4, {"North";"South"}, C1:C4)', [[8], [7]], cells)
+  is('=AVERAGEIFS(C1:C4, A1:A4, "North", B1:B4, {"yes";"no"})', [[3.5], [1]], cells)
+  is('=MAXIFS(C1:C4, A1:A4, {"North","South"})', [[5, 7]], cells)
+  is('=COUNTIF(A1:A4, "North")', 3, cells)
+  is('=COUNTIF(A1:A4, A1)', 3, cells)
+})
+
+describe('matrices: MMULT, MINVERSE, MDETERM', () => {
+  // Microsoft's examples: MMULT {1,3;7,2} × {2,0;0,2}; MDETERM of {1,3,8,5;1,3,6,1;1,1,1,0;7,3,10,2} is 88.
+  is('=MMULT({1,3;7,2}, {2,0;0,2})', [[2, 6], [14, 4]])
+  is('=MMULT({1,2;3,4}, {5;6})', [[17], [39]])
+  is('=MMULT({1,2}, {1,2})', '#VALUE!')
+  near('=MDETERM({1,3,8,5;1,3,6,1;1,1,1,0;7,3,10,2})', 88, 9)
+  near('=MDETERM({3,6,1;1,1,0;3,10,2})', 1, 12)
+  is('=MDETERM({1,2;2,4})', 0)
+  is('=MINVERSE({1,2;2,4})', '#NUM!')
+  is('=MINVERSE({1,2;3,4;5,6})', '#VALUE!')
+  is('=MMULT(A1:B1, A1:B1)', '#VALUE!', { A1: '1', B1: 'x' })
+  it('MINVERSE({4,-1;2,1}) is {1/6, 1/6; -1/3, 2/3}, and gives the identity back', () => {
+    const inv = calc('=MINVERSE({4,-1;2,1})')
+    ;[[1 / 6, 1 / 6], [-1 / 3, 2 / 3]].forEach((row, r) => row.forEach((v, c) => expect(inv[r][c]).toBeCloseTo(v, 12)))
+    const back = calc('=MMULT({4,-1;2,1}, MINVERSE({4,-1;2,1}))')
+    ;[[1, 0], [0, 1]].forEach((row, r) => row.forEach((v, c) => expect(back[r][c]).toBeCloseTo(v, 12)))
+  })
+  it('the normal equations in a sheet give LINEST’s answer', () => {
+    // y = 1 + 2x₁ + 3x₂ exactly, at five points: (XᵀX)⁻¹Xᵀy is [1, 2, 3].
+    const cells = {}, xs = [[0, 1], [1, 0], [2, 3], [3, 1], [4, 2]]
+    xs.forEach(([a, b], i) => { cells[`A${i + 1}`] = '1'; cells[`B${i + 1}`] = String(a); cells[`C${i + 1}`] = String(b); cells[`D${i + 1}`] = String(1 + 2 * a + 3 * b) })
+    const w = calc('=MMULT(MINVERSE(MMULT(TRANSPOSE(A1:C5), A1:C5)), MMULT(TRANSPOSE(A1:C5), D1:D5))', cells)
+    ;[1, 2, 3].forEach((v, k) => expect(w[k][0]).toBeCloseTo(v, 10))
+    const l = calc('=LINEST(D1:D5, B1:C5)', cells)
+    ;[3, 2, 1].forEach((v, k) => expect(l[0][k]).toBeCloseTo(v, 10))
+  })
+})
+
 describe('the library', () => {
   it('documents every function', () => {
     for (const [name, f] of Object.entries(FUNCTIONS)) {

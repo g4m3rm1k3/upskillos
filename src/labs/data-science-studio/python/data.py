@@ -220,6 +220,31 @@ def make_deliveries(orders, seed=13):
     return rows
 
 
+TRIAL_HEADER = ["date", "page", "visitors", "clicks"]
+TRIAL_START, TRIAL_DAYS = 152, 28  # Monday 2 June, for four weeks
+# The chance (in 1000) that a visitor clicks through to a product, on the old page A and the new page B.
+CLICK_RATE = {"A": 200, "B": 220}
+
+
+def make_trial(days, seed=17):
+    """The website's A/B test of a new home page, on the real visits of the days table (rows as
+    make_days writes them): each visitor is sent to page A or page B by a coin flip, and clicks
+    through to a product with chance CLICK_RATE in 1000. The new page is better by 2 in 100: that is
+    the truth the test is trying to find. One row per day and page."""
+    rng = Rng(seed)
+    rows = []
+    for day in range(TRIAL_START, TRIAL_START + TRIAL_DAYS):
+        counts = {"A": [0, 0], "B": [0, 0]}
+        for _ in range(int(days[day][4])):
+            page = "AB"[rng.below(2)]
+            counts[page][0] += 1
+            if rng.below(1000) < CLICK_RATE[page]:
+                counts[page][1] += 1
+        for page in "AB":
+            rows.append([days[day][0], page, str(counts[page][0]), str(counts[page][1])])
+    return rows
+
+
 def csv_field(text):
     """A field as a CSV file writes it: in double quotes if it holds a comma, a quote or a new
     line, with every quote inside doubled."""
