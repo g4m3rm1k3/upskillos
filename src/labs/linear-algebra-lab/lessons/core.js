@@ -66,7 +66,7 @@ disp(P);
 disp(P*A-L*U);
 disp(x);
 disp(A*x-b);
-bar([1 2],x);
+bar(x);
 title('Pivoted LU recovers both unknowns');
 xlabel('Unknown index');
 ylabel('Solved value');`,
@@ -286,6 +286,7 @@ predictions=X*beta;`,
   },
   {
     id: 'laml-covariance-pca', module: 'The SVD: the shape of any matrix', title: 'Covariance and PCA: find the data’s main direction', minutes: 30, level: 'Advanced',
+    why: { title: 'A table of measurements is a picture too', story: 'Measure the height and arm span of a class, or the size and price of houses, and the points lie in a cloud stretched along one direction. Principal component analysis (PCA) finds that direction, so two or two hundred measurements can be summarised by a few numbers that keep most of the spread. It is the SVD layers of the previous lessons, applied to data after subtracting the averages.' },
     objective: 'Center two features, form sample covariance, and compute a one-component PCA reconstruction with a sign-invariant projector.',
     prose: [
       'The four points (-2,-1), (-1,-2), (1,2), and (2,1) vary mostly along the diagonal where both features increase together. A single coordinate along that diagonal preserves much of their spread, while the perpendicular difference varies less.',
@@ -334,52 +335,6 @@ squaredError=sum(sum((X-reconstructed).^2));`,
       cases: [{ setup: 'X=[11 2;12 1;14 3;13 4];', checks: [{ name: 'mu', expected: [[12.5, 2.5]], tolerance: 1e-6, message: 'Use one mean per feature; translating one feature changes only its own mean.' }, { name: 'covariance', expected: [[5 / 3, 1], [1, 5 / 3]], tolerance: 1e-6, message: 'Proper centering makes covariance invariant to a feature translation.' }, { name: 'squaredError', expected: 2, tolerance: 1e-6, message: 'Translation should not change the lost centered variation.' }] }],
       hints: ['Start with two explicit column means, then subtract repmat(mu,n,1).', 'Covariance is C\'*C/(n-1); the larger second eigenvalue supplies the retained direction here.', 'Use Q*diag([0 1])*Q\' as a sign-invariant projector, then restore mu after C*projector.'],
       transfer: 'Multiply just one feature by 100 and repeat PCA. Explain why centering alone does not remove unit sensitivity, and compare with standardizing feature scales.',
-    },
-  },
-  {
-    id: 'laml-svd-low-rank', module: 'The SVD: the shape of any matrix', title: 'SVD: compress a matrix and measure the loss', minutes: 30, level: 'Advanced',
-    objective: 'Construct a rank-one matrix approximation from SVD and quantify discarded squared energy.',
-    prose: [
-      'A three-by-two data matrix [3 0;0 1;0 0] contains one strong direction of size 3 and one weaker direction of size 1. Keeping only the strong direction reconstructs [3 0;0 0;0 0], losing just the entry of size 1.',
-      'The singular value decomposition, or SVD, writes a real matrix as U*S*V\'. Columns of V identify input directions; S contains nonnegative singular values; columns of U identify corresponding output directions. It works for rectangular matrices, so it can describe observation-by-feature data directly.',
-      'A low-rank approximation keeps the largest singular values and replaces the others by zero. Rank counts the retained independent directions. The best rank-k approximation in total squared entry error comes from keeping the k largest singular values. Discarded singular values predict its squared error: add their squares.',
-      'Squared matrix energy means the sum of squared entries, also called the squared Frobenius norm. The same energy equals the sum of squared singular values. Retained energy divides the squared kept singular values by that total. For an all-zero matrix, total energy is zero, so that fraction needs an explicit convention. A high energy fraction measures reconstruction quality, not whether useful labels or rare events were preserved.',
-      'The syntax [U,S,V]=svd(A) collects three factors. Set Sk=S and replace Sk(2,2) with zero before multiplying U*Sk*V\'. This factor product also avoids relying on row-versus-column conventions for single vectors in OpenMat. The bar plot exposes the singular strengths rather than hiding loss behind a compressed picture.',
-    ],
-    procedure: ['Compute U,S,V and verify that their product reconstructs the input.', 'Choose the retained rank, copy S, and zero the discarded diagonal entries.', 'Reconstruct the approximation with the modified diagonal matrix.', 'Measure squared entry error and retained energy; compare them with the discarded singular values.'],
-    prediction: { question: 'For singular values 3 and 1, what fraction of squared energy does rank one retain?', answer: 'It retains 3 squared divided by (3 squared plus 1 squared), which is 9/10 or 90 percent. The squared reconstruction error is 1.' },
-    demo: {
-      code: String.raw`A=[3 0;0 1;0 0];
-[U,S,V]=svd(A);
-Sk=S;
-Sk(2,2)=0;
-lowRank=U*Sk*V';
-squaredError=sum(sum((A-lowRank).^2));
-retainedEnergy=S(1,1)^2/(S(1,1)^2+S(2,2)^2);
-disp(S);
-disp(lowRank);
-disp(squaredError);
-disp(retainedEnergy);
-bar([1 2],[S(1,1) S(2,2)]);
-title('Keep the strong singular direction, discard the weak one');
-xlabel('Singular direction, strongest first');
-ylabel('Singular value');`,
-      explain: [{ code: '[U,S,V]=svd(A)', meaning: 'Factor this rectangular data matrix into input directions, strengths, and output directions.' }, { code: 'Sk(2,2)=0', meaning: 'Discard the weaker singular direction while preserving the factor dimensions.' }, { code: 'lowRank=U*Sk*V\'', meaning: 'Reconstruct with only one nonzero singular value, yielding a rank-one approximation.' }, { code: 'sum(sum((A-lowRank).^2))', meaning: 'Square each entry error and add them all; the discarded singular value predicts this total.' }],
-    },
-    challenge: {
-      prompt: 'Use SVD to form a rank-one approximation lowRank by zeroing the second singular value in a copy of S. Store total squared entry error in squaredError and the fraction of squared singular-value energy retained in retainedEnergy.',
-      setup: 'A=[4 0;0 2;0 0];',
-      starter: 'lowRank=A;\nsquaredError=0;\nretainedEnergy=1;',
-      solution: String.raw`[U,S,V]=svd(A);
-Sk=S;
-Sk(2,2)=0;
-lowRank=U*Sk*V';
-squaredError=sum(sum((A-lowRank).^2));
-retainedEnergy=S(1,1)^2/(S(1,1)^2+S(2,2)^2);`,
-      checks: [{ name: 'lowRank', expected: [[4, 0], [0, 0], [0, 0]], tolerance: 1e-6, message: 'Discard the weaker singular direction; returning the original matrix has rank two.' }, { name: 'squaredError', expected: 4, tolerance: 1e-6, message: 'The discarded singular value is 2, so its contribution to squared error is 4.' }, { name: 'retainedEnergy', expected: 0.8, tolerance: 1e-6, message: 'Use squared singular values for energy, not their unsquared sum.' }],
-      cases: [{ setup: 'A=[3 0;0 1;0 0];', checks: [{ name: 'lowRank', expected: [[3, 0], [0, 0], [0, 0]], tolerance: 1e-6, message: 'Recompute the approximation from the supplied matrix.' }, { name: 'squaredError', expected: 1, tolerance: 1e-6, message: 'The squared discarded singular value determines the new loss.' }, { name: 'retainedEnergy', expected: 0.9, tolerance: 1e-6, message: 'Recalculate retained energy from the actual singular values.' }] }],
-      hints: ['Capture all three SVD outputs and copy S before editing its second diagonal entry.', 'Set Sk(2,2)=0, then reconstruct U*Sk*V\'.', 'Compare sum(sum((A-lowRank).^2)) with S(2,2)^2; retained energy uses S(1,1)^2 divided by both squared values.'],
-      transfer: 'Try A=[3 1;1 3;0 0], where no individual entry alone represents the weak direction. Verify that truncating SVD still gives the smallest rank-one squared error.',
     },
   },
 ]

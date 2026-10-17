@@ -143,7 +143,7 @@ describe('Linear Algebra Lab', () => {
   })
 
   it('shows no problem-set tab for a lesson without problems', () => {
-    localStorage.setItem(STORE_KEY, JSON.stringify({ current: 'laml-svd-low-rank' }))
+    localStorage.setItem(STORE_KEY, JSON.stringify({ current: 'laml-why-linear-algebra' }))
     render(<Lab />)
     expect(screen.queryByRole('tab', { name: /Problem set/ })).toBeNull()
   })

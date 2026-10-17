@@ -6,6 +6,7 @@ import { Bellman, Descent, Fit, Pca } from './explore/data.jsx'
 import { Space3D } from './explore/space3d.jsx'
 import { CurvedMap, Hill, Zoom } from './explore/calculus.jsx'
 import { PageRank, StressMohr, Vibrations } from './explore/eigen.jsx'
+import { PhotoCompress } from './explore/svd.jsx'
 
 export { eigen2, solveLinear, svd2 } from './explore/parts.jsx'
 export { trussForces } from './explore/systems.jsx'
@@ -13,10 +14,11 @@ export { curvedJacobian, curvedMap, hillGradient, hillHeight } from './explore/c
 export { bellmanTrace, descentTrace, fitLine, covariance } from './explore/data.jsx'
 export { det3, cross } from './explore/space3d.jsx'
 export { cutStress, linkMatrixOf, pageRankStep, springModes } from './explore/eigen.jsx'
+export { layerSum, photoStats, photoSvd, SCENES } from './explore/svd.jsx'
 
 export const GROUPS = [
   ['Vectors', [['combine', 'Combine vectors', Combine], ['dot', 'Dot & projection', DotProjection]]],
-  ['Matrices', [['circle', 'Unit circle', UnitCircle], ['transform', 'Matrix as a map', Transform], ['svd', 'Circle to ellipse (SVD)', SvdCircle]]],
+  ['Matrices', [['circle', 'Unit circle', UnitCircle], ['transform', 'Matrix as a map', Transform], ['svd', 'Circle to ellipse (SVD)', SvdCircle], ['photo', 'Compress a photo (SVD)', PhotoCompress]]],
   ['Systems & space', [['eliminate', 'Row operations', Eliminate], ['solutions', 'Solution sets', SolutionSet], ['space3d', '3D span & volume', Space3D], ['truss', 'Bridge truss', Truss]]],
   ['Calculus', [['zoom', 'Zoom to straight', Zoom], ['hill', 'Hill map & gradient', Hill], ['curved', 'Curved map & Jacobian', CurvedMap]]],
   ['Eigen & tensors', [['pagerank', 'PageRank step by step', PageRank], ['modes', 'Vibration modes', Vibrations], ['stress', 'Stress & Mohr circle', StressMohr]]],
@@ -35,9 +37,9 @@ const BY_LESSON = {
   'laml-nullspace': 'solutions', 'laml-four-subspaces': 'solutions',
   'laml-least-squares': 'fit', 'laml-regression-validation': 'fit', 'laml-ridge-scaling': 'fit',
   'laml-covariance-pca': 'pca', 'laml-pca-ridge-capstone': 'pca', 'laml-recommendation-studio': 'svd',
-  'laml-svd-low-rank': 'svd', 'laml-spectral-svd-theorem': 'svd', 'laml-symmetric-quadratic': 'transform', 'laml-positive-definite': 'transform',
+  'laml-svd-photo': 'photo', 'laml-svd-low-rank': 'photo', 'laml-spectral-svd-theorem': 'svd', 'laml-symmetric-quadratic': 'transform', 'laml-positive-definite': 'transform',
 }
-const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Least squares and data': 'fit', 'Calculus meets matrices': 'hill', "Directions that don't turn": 'transform', 'Tensors in the real world': 'transform', 'The SVD: the shape of any matrix': 'svd', 'Math for machine learning': 'descent', 'Dynamic programming': 'bellman', 'Mastery studio': 'bellman' }
+const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Least squares and data': 'fit', 'Calculus meets matrices': 'hill', "Directions that don't turn": 'transform', 'Tensors in the real world': 'transform', 'The SVD: the shape of any matrix': 'photo', 'Math for machine learning': 'descent', 'Dynamic programming': 'bellman', 'Mastery studio': 'bellman' }
 export const experimentFor = lesson => BY_LESSON[lesson.id] || BY_MODULE[lesson.module] || 'combine'
 
 export default function Explore({ lesson }) {

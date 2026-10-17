@@ -8,8 +8,8 @@ import { instantiate, problemsFor, PROBLEM_SETS } from './practice/index.js'
 
 const SEEDS = ['a', 'b', 'c', 'd', 'e', 'f']
 
-// Lessons without a problem set: the opening tour (motivation only) and one lesson still to be written.
-const WITHOUT_PROBLEMS = ['laml-why-linear-algebra', 'laml-svd-low-rank']
+// Lessons without a problem set: the opening tour (motivation only).
+const WITHOUT_PROBLEMS = ['laml-why-linear-algebra']
 
 // Families whose answers are (nearly) the same on every draw, so typing the number passes.
 // Known weakness: their generators vary entries but not structure (ranks, nullities, zero checks).

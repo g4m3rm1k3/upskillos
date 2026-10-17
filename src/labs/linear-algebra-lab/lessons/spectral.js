@@ -196,7 +196,8 @@ ylabel('Energy')`,
     },
   },
   {
-    id: 'laml-spectral-svd-theorem', after: 'laml-svd-low-rank', module: 'The SVD: the shape of any matrix', title: 'The spectral theorem, and why every matrix has an SVD', minutes: 40, level: 'Advanced',
+    id: 'laml-spectral-svd-theorem', after: 'laml-covariance-pca', module: 'The SVD: the shape of any matrix', title: 'The spectral theorem, and why every matrix has an SVD', minutes: 40, level: 'Advanced',
+    why: { title: 'Why does it always work?', story: 'The photo, the bridge sensors and the data cloud were all split into layers, and it never failed. That is not luck. Every matrix turns a circle into an ellipse, and the SVD is the axes of that ellipse. This lesson shows why the axes always exist, starting from symmetric matrices, whose stretch directions are always perpendicular.' },
     objective: 'Use the spectral theorem for symmetric matrices, and build the SVD of any matrix from the eigenvectors of AᵀA.',
     prose: [
       'A metal plate is stretched by a symmetric stress matrix S = [3 1; 1 3]. Two directions stretch without turning: [1; 1] by 4 and [1; −1] by 2. Those directions are perpendicular. That is no accident of this example.',

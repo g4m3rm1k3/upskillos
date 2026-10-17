@@ -496,3 +496,9 @@
 .la-lab .la-link-grid > div { display: flex; align-items: center; gap: 5px; }
 .la-lab .la-link-grid button { font: 600 12px var(--mono); min-width: 30px; padding: 4px 8px; border-radius: 999px; }
 .la-lab .la-link-grid button[aria-pressed=true] { border-color: var(--c-dir); color: var(--c-dir); background: color-mix(in srgb, var(--c-dir) 12%, transparent); }
+.la-photo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.la-photo-frame { margin: 0; }
+.la-photo-frame svg { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); }
+.la-photo-frame figcaption { font-size: 12px; color: var(--muted); margin-top: 4px; text-align: center; }
+.la-photo-bars { margin-bottom: 10px; }
+@media (max-width: 560px) { .la-photo { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

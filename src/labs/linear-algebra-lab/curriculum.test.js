@@ -11,8 +11,7 @@ describe('OpenMAT linear algebra curriculum', () => {
   it('has durable unique ids, complete teaching sequences and progressively harder modules', () => {
     expect(new Set(LESSONS.map(lesson => lesson.id)).size).toBe(LESSONS.length)
     // Core modules (Stages 1-3) need at least four lessons; Stage 4 modules are optional tracks.
-    // The SVD module has three until Phase 5 of the gentle plan adds its opening lesson.
-    for (const module of MODULES) expect(LESSONS.filter(lesson => lesson.module === module).length, module).toBeGreaterThanOrEqual(STAGES[3][1].includes(module) ? 2 : module === 'The SVD: the shape of any matrix' ? 3 : 4)
+    for (const module of MODULES) expect(LESSONS.filter(lesson => lesson.module === module).length, module).toBeGreaterThanOrEqual(STAGES[3][1].includes(module) ? 2 : 4)
     for (const lesson of LESSONS) {
       expect(lesson.id).toMatch(/^laml-/)
       expect(lesson.prose.length).toBeGreaterThanOrEqual(4)
@@ -101,8 +100,8 @@ describe('gentle curve', () => {
   })
   it('opens every Stage 1 and Stage 2 lesson with why it matters and where it is used', () => {
     const roles = new Set(ROLES.map(([id]) => id))
-    // Every reworked module: Stages 1 and 2, and so far three modules of Stage 3.
-    for (const lesson of LESSONS.filter(l => [...STAGES[0][1], ...STAGES[1][1], 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world'].includes(l.module))) {
+    // Every reworked module: Stages 1 and 2, and so far four modules of Stage 3.
+    for (const lesson of LESSONS.filter(l => [...STAGES[0][1], ...STAGES[1][1], 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world', 'The SVD: the shape of any matrix'].includes(l.module))) {
       expect(lesson.why?.story.length, lesson.id).toBeGreaterThan(80)
       expect(lesson.uses?.length, lesson.id).toBeGreaterThanOrEqual(4)
     }

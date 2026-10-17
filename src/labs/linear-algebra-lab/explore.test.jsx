@@ -3,7 +3,7 @@ import React from 'react'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
-import Explore, { covariance, cross, curvedJacobian, curvedMap, cutStress, det3, EXPERIMENTS, fitLine, hillGradient, hillHeight, linkMatrixOf, pageRankStep, solveLinear, springModes, svd2, trussForces } from './Explore.jsx'
+import Explore, { covariance, cross, curvedJacobian, curvedMap, cutStress, det3, EXPERIMENTS, fitLine, hillGradient, hillHeight, layerSum, linkMatrixOf, pageRankStep, photoStats, photoSvd, SCENES, solveLinear, springModes, svd2, trussForces } from './Explore.jsx'
 import { sse } from './explore/data.jsx'
 
 afterEach(cleanup)
@@ -54,6 +54,30 @@ describe('playground mathematics', () => {
     expect(Math.abs(modes[1][0] + modes[1][1])).toBeLessThan(1e-9)
     const uneven = springModes(1, 2, 4)
     expect(uneven.modes[0][0] * uneven.modes[1][0] + uneven.modes[0][1] * uneven.modes[1][1]).toBeCloseTo(0, 10)
+  })
+  it('splits a picture into SVD layers that rebuild it, strongest first, with the predicted error', () => {
+    const small = [[3, 0], [4, 5]]
+    photoSvd(small).sigma.forEach((s, i) => expect(s).toBeCloseTo(svd2(small).sigma[i], 10))
+    const A = [[2, 7, 1, 8, 2], [8, 1, 8, 2, 8], [4, 5, 9, 0, 4], [5, 2, 3, 5, 3]]
+    const svd = photoSvd(A)
+    const engine = executeScript(`A = [${A.map(row => row.join(' ')).join('; ')}];\ns = svd(A);`).workspace.find(w => w.name === 's').value
+    engine.slice(0, 4).forEach((s, i) => expect(svd.sigma[i]).toBeCloseTo(s, 9))
+    const rebuilt = layerSum(svd, 0, 5)
+    A.forEach((row, i) => row.forEach((value, j) => expect(rebuilt[i][j]).toBeCloseTo(value, 9)))
+    const two = layerSum(svd, 0, 2)
+    const error = Math.sqrt(A.flatMap((row, i) => row.map((value, j) => (value - two[i][j]) ** 2)).reduce((a, b) => a + b, 0))
+    expect(photoStats(svd.sigma, 2, 4, 5).error).toBeCloseTo(error, 9)
+    expect(photoStats(svd.sigma, 2, 4, 5).storage).toBe(20)
+    for (const [name, make] of Object.entries(SCENES)) {
+      const picture = make(), { sigma } = photoSvd(picture)
+      for (let i = 1; i < sigma.length; i++) expect(sigma[i], name).toBeLessThanOrEqual(sigma[i - 1] + 1e-12)
+      const full = layerSum(photoSvd(picture), 0, sigma.length)
+      expect(Math.max(...picture.flatMap((row, i) => row.map((value, j) => Math.abs(value - full[i][j]))))).toBeLessThan(1e-9)
+    }
+    // The tartan is a few layers exactly; the static needs nearly all of them.
+    expect(photoStats(photoSvd(SCENES.Tartan()).sigma, 3, 40, 40).relative).toBeLessThan(1e-9)
+    expect(photoStats(photoSvd(SCENES.Static()).sigma, 10, 40, 40).relative).toBeGreaterThan(0.25)
+    expect(photoStats(photoSvd(SCENES.Landscape()).sigma, 10, 40, 40).relative).toBeLessThan(0.1)
   })
   it('reproduces the PageRank of the lesson and treats a page with no links as linking everywhere', () => {
     const L = linkMatrixOf([[1, 2], [2], [0], [0, 2]])

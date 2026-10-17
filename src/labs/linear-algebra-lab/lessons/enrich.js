@@ -283,16 +283,6 @@ export const ENRICH = {
       conclusion: 'PCA is an eigenvalue problem: the first principal direction is the top eigenvector of the covariance matrix, and its eigenvalue is the variance it captures.',
     },
   },
-  'laml-svd-low-rank': {
-    notation: [
-      { tex: t`A = U\Sigma V^T = \sum_i \sigma_i\,\mathbf u_i\mathbf v_i^T`, say: 'The SVD writes $A$ as a sum of rank-one pieces, largest first.' },
-      { tex: t`\|A - A_k\|_F^2 = \sum_{i > k}\sigma_i^2`, say: 'Keeping $k$ pieces loses exactly the discarded squared singular values.' },
-    ],
-    quiz: [
-      { q: 'Singular values 3 and 1. What fraction of the squared energy does rank one keep?', options: ['90%', '75%', '50%', '100%'], answer: 0, why: '$9/(9+1) = 0.9$.' },
-      { q: 'Which singular values does a rank-$k$ approximation keep?', options: ['The $k$ largest', 'The $k$ smallest', 'Any $k$', 'All but the largest'], answer: 0, why: 'Keeping the largest loses the least energy.' },
-    ],
-  },
   'laml-vectorized-gradient': {
     notation: [
       { tex: t`L(\mathbf w) = \frac{1}{2m}\|X\mathbf w - \mathbf y\|^2`, say: 'Mean squared error, halved for a cleaner gradient.' },

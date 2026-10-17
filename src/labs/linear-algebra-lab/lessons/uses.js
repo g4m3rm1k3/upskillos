@@ -310,9 +310,57 @@ export const USES = {
     { who: 'physics', title: 'Components', story: 'The "component of gravity along the slope", mg sin θ, is a projection. Physics resolves vectors into components along chosen directions all the time.' },
     { who: 'math', title: 'Best approximation', story: 'Projection gives the closest point in a subspace. The same idea underlies least squares, Fourier series and approximation theory.' },
   ],
+  'laml-svd-photo': [
+    { who: 'general', title: 'The empty street behind the traffic', story: 'Stack every frame of a fixed security camera as one column of a matrix. The still background is the first SVD layer; people and cars are what the layer leaves over. This is how video software separates moving objects from the scene.' },
+    { who: 'cs', title: 'Recommendations', story: 'A table of who rated which film is mostly empty. Filling it with a few layers, a few hidden tastes, predicts the missing ratings. The Netflix Prize (2006–2009) was won largely by methods of this kind.' },
+    { who: 'ml', title: 'Shrinking large models', story: 'The weight matrices of a neural network can be replaced by a few SVD layers with little loss. LoRA fine-tunes a large language model by learning only a low-rank change to each weight matrix.' },
+    { who: 'mech', title: 'Flow patterns', story: 'Save a fluid simulation or wind-tunnel measurement at many moments, one column per moment. The first SVD layers are the dominant flow shapes (proper orthogonal decomposition), and a few of them make a fast model of the whole flow.' },
+    { who: 'ee', title: 'Cleaning signals', story: 'A recording from many microphones or antennas is a matrix. Keeping the strong layers keeps the sources and drops most of the hiss, because noise spreads its energy thinly over every layer.' },
+    { who: 'physics', title: 'Entanglement', story: 'The state of two quantum systems can be written as a matrix. Its SVD (called the Schmidt decomposition) has one layer for an unentangled pair, and more layers mean more entanglement.' },
+  ],
+  'laml-svd-low-rank': [
+    { who: 'mech', title: 'Structural health monitoring', story: 'Hours of strain-gauge readings from a bridge are dominated by temperature and traffic. Removing those strong layers leaves a residual where damage, such as a crack that shifts how load flows, stands out.' },
+    { who: 'ml', title: 'How many features are real?', story: 'Before training a model, the strengths of the data matrix show how many independent directions it really has. A sharp elbow says the hundred columns are a few patterns in disguise.' },
+    { who: 'cs', title: 'Search by meaning', story: 'Latent semantic analysis takes a table of word counts per document and keeps a few hundred SVD layers. Documents about the same topic end up close together even when they share no words.' },
+    { who: 'ee', title: 'Many antennas, independent channels', story: 'In MIMO wireless, the channel between several transmit and receive antennas is a matrix. Its SVD splits it into independent streams, one per strength, and weak strengths are not worth sending on.' },
+    { who: 'physics', title: 'Noise floors', story: 'Measured strengths never reach exactly zero. Experimenters set the numerical rank by comparing the strengths with the known measurement noise.' },
+    { who: 'math', title: 'Eckart–Young–Mirsky', story: 'Eckart and Young proved in 1936 that truncating the SVD gives the best low-rank approximation. Mirsky extended it in 1960 to every norm that does not change under rotations.' },
+  ],
+  'laml-covariance-pca': [
+    { who: 'general', title: 'Body measurements', story: 'Clothing makers measure many body sizes. PCA finds that most of the variation is overall size plus one or two shape directions, which is how size charts are designed.' },
+    { who: 'ml', title: 'Seeing high-dimensional data', story: 'Projecting data with hundreds of features onto its first two principal components gives a flat picture you can plot, and often shows clusters before any model is trained.' },
+    { who: 'cs', title: 'Faces as a few patterns', story: 'The "eigenfaces" method (1991) found that face photos are well described by a few dozen principal components, which made early face recognition fast.' },
+    { who: 'mech', title: 'Process monitoring', story: 'A factory logs dozens of temperatures and pressures. A PCA model of normal running flags a fault when a new reading lies far from the usual principal directions.' },
+    { who: 'physics', title: 'Climate patterns', story: 'Climate scientists call principal components of weather maps "empirical orthogonal functions". The El Niño pattern of the Pacific shows up as one of them.' },
+  ],
+  'laml-spectral-svd-theorem': [
+    { who: 'mech', title: 'Principal axes', story: 'Stress tensors, inertia tensors and stiffness matrices are symmetric, so the spectral theorem promises perpendicular principal directions. That is why a stress element can always be turned so the shear vanishes.' },
+    { who: 'physics', title: 'Measurable quantities', story: 'In quantum mechanics, measurable quantities are symmetric (Hermitian) operators. The spectral theorem guarantees real measurement results and perpendicular states.' },
+    { who: 'ml', title: 'Covariance is symmetric', story: 'Every covariance matrix is symmetric with no negative eigenvalues. The spectral theorem is why PCA always finds perpendicular directions with real variances.' },
+    { who: 'cs', title: 'Computing the SVD', story: 'Numerical libraries do not form AᵀA, which squares the rounding error. They reduce A to a two-diagonal form and then iterate, but the theorem in this lesson is what they are computing.' },
+    { who: 'math', title: 'Polar decomposition', story: 'The SVD gives A = (UVᵀ)(VΣVᵀ): a rotation times a symmetric stretch. Every linear map is a stretch along perpendicular axes followed by a rigid turn.' },
+  ],
 }
 
 export const ANGLES = {
+  'laml-svd-photo': [
+    { title: 'Layers like transparencies', body: 'Print each layer on a clear sheet and stack them. The first sheet already shows the broad shapes; each extra sheet sharpens the picture a little less than the one before.' },
+    { title: 'A recipe instead of a list', body: 'A layer does not store pixels. It stores a recipe: "row $i$ is this bright, column $j$ is this bright, multiply them". Recipes are short; lists of pixels are long.' },
+    { title: 'Pictures that compress, and pictures that do not', body: 'Stripes and tartans are one or two layers exactly. A photo has a few strong layers and a long faint tail. Random static has no shared pattern at all, so every layer is about as strong as the next and nothing can be dropped.' },
+  ],
+  'laml-svd-low-rank': [
+    { title: 'Turn, stretch, turn', body: '$A = U\\Sigma V^T$ read right to left: $V^T$ turns the input onto the pattern axes, $\\Sigma$ stretches each axis by its strength, and $U$ turns the result into place. The playground "Circle to ellipse" shows it.' },
+    { title: 'A sum of layers', body: '$A = \\sigma_1\\mathbf u_1\\mathbf v_1^T + \\sigma_2\\mathbf u_2\\mathbf v_2^T + \\cdots$. Each term is one pattern of rows times one pattern of columns, and the strengths say how much of each.' },
+    { title: 'Signal and noise', body: 'Real patterns put a lot of energy into a few layers. Noise spreads a little energy over all of them. The elbow in the strengths is where the patterns end and the noise floor begins.' },
+  ],
+  'laml-covariance-pca': [
+    { title: 'PCA is the SVD of centred data', body: 'Subtract each column\'s mean to get $X_c$. The right singular vectors of $X_c$ are the principal directions, and $\\sigma_i^2/(n-1)$ are their variances. Libraries compute PCA with an SVD for exactly this reason.' },
+    { title: 'Fit a line, measuring sideways', body: 'Least squares measures errors straight up. The first principal component is the line that makes the perpendicular distances smallest, treating both features alike.' },
+  ],
+  'laml-spectral-svd-theorem': [
+    { title: 'Circle to ellipse', body: 'Every matrix turns the unit circle into an ellipse. The $\\mathbf v_i$ are the input directions that land on its axes, the $\\mathbf u_i$ are the axes, and the $\\sigma_i$ are their half-lengths.' },
+    { title: 'Two symmetric matrices', body: '$A^TA = V\\Sigma^2V^T$ and $AA^T = U\\Sigma^2U^T$. The SVD of $A$ is the spectral theorem applied twice, once on each side.' },
+  ],
   'laml-eigen-iteration': [
     { title: 'A stretch with no turn', body: 'Picture every arrow from the origin being moved by $A$. Most swing round; eigenvectors only grow or shrink. A negative eigenvalue flips the arrow but keeps it on the same line.' },
     { title: 'A race between directions', body: 'Write the start as a mix of eigenvectors. Each multiplication multiplies each part by its eigenvalue, so the part with the largest $|\\lambda|$ wins the race.' },

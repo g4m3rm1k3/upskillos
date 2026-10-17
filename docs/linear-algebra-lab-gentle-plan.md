@@ -1,6 +1,6 @@
 # Linear Algebra Lab: gentle-curve redesign plan
 
-Drafted 2026-10-17. Status: Phases 1–4 done (2026-10-17); Phases 5–6 not started.
+Drafted 2026-10-17. Status: Phases 1–4 done (2026-10-17); Phases 5–6 not started. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
 
 ## Goal
 
@@ -119,7 +119,10 @@ N = new lesson, E = existing lesson (reworked where noted).
    - Diagonalization and spirals joined "Directions that don't turn"; positive definite joined "Tensors in the real world". The old "Spectral thinking" and "Spectral theory" modules are gone: PCA, SVD and the spectral theorem form "The SVD: the shape of any matrix", which has 3 lessons (a test exception until Phase 5).
    - Why stories, case studies and extra angles for all 12 lessons of the two modules, plus 36 new problem families ([practice/eigen.js](../src/labs/linear-algebra-lab/practice/eigen.js)).
    - Playgrounds: PageRank step by step (toggle the links), vibration modes (animated), and stress on a cut with a live Mohr's circle.
-5. **Phase 5:** The SVD module, including the photo-compression playground.
+5. **Phase 5 (done, 2026-10-17):** The SVD module, in the order: compress a photo (new, `laml-svd-photo`), inside the SVD (`laml-svd-low-rank`, rewritten), PCA, then the spectral theorem.
+   - Lessons in [lessons/svd.js](../src/labs/linear-algebra-lab/lessons/svd.js); why stories, case studies and angles for all four; 12 new problem families ([practice/svd.js](../src/labs/linear-algebra-lab/practice/svd.js)).
+   - Playground: "Compress a photo (SVD)" with three built-in pictures (landscape, tartan, static), a k slider, the k-th layer on its own, the strengths, storage and error.
+   - The 3-lesson test exception is gone; every lesson but the opening tour now has a problem set.
 6. **Phase 6:**
    - re-sequence Stage 3;
    - move the applied lessons into Stage 4 tracks;
