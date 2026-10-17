@@ -1,8 +1,8 @@
 // Spaces and bases: vector spaces beyond arrows, subspaces in three dimensions, basis and dimension,
 // change of basis and the four fundamental subspaces. Then Gram–Schmidt and orthogonal matrices,
 // which join the least-squares module. Each lesson names the lesson it follows (`after`).
-// OpenMAT notes: column vectors are stored flat, so matrices are written row by row rather than by
-// concatenating column vectors, and outer products are avoided.
+// OpenMAT notes: column vectors are stored flat. Side-by-side concatenation such as [u w] works, but
+// the comma form [u, w] does not and the outer product u*u' returns a dot product, so both are avoided.
 export const spaces = [
   {
     id: 'laml-vector-spaces', after: 'laml-lu-pivoting', module: 'Spaces and bases', title: 'Polynomials are vectors too', minutes: 30, level: 'Intermediate',

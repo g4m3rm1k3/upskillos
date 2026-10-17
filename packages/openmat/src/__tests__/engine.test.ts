@@ -461,6 +461,12 @@ describe('one-output and multi-output linear algebra', () => {
     expect((w.s as number[]).map(v => +v.toFixed(4))).toEqual([6.7082, 2.2361])
     expect((w.S as number[][])[1][1]).toBeCloseTo(2.23607, 4)
   })
+  it('diag builds a matrix from a row or column, even one produced by concatenation', () => {
+    const w = ws('u=1000; D=diag([1 u]); C=diag([2; 3]); M=diag([1 2; 3 4]);')
+    expect(w.D).toEqual([[1, 0], [0, 1000]])
+    expect(w.C).toEqual([[2, 0], [0, 3]])
+    expect(w.M).toEqual([1, 4])
+  })
   it('rank and cond accept a single row or column', () => {
     const w = ws('A=[1 0 1; 0 1 1]; r1=rank(A(:,1)); r0=rank([0;0]); rr=rank([3 4]);')
     expect([w.r1, w.r0, w.rr]).toEqual([1, 0, 1])

@@ -36,9 +36,9 @@ Drafts, last selected lesson, edited examples, reference views, successful check
 
 OpenMAT implements a MATLAB-style subset. It currently stores row and column vectors in the same flat form; vector `size` and workspace displays cannot demonstrate MATLAB's orientation distinction. Genuine multirow, multicolumn matrices preserve their shape. The teaching and syntax guide explain this limitation.
 
-Known engine limits that lessons work around: stacking two flat rows (`[cos(t); sin(t)]`) gives one long row, so lessons fill matrix rows by index; the outer product `u*u'` of flat vectors returns a dot product; `[A, b]` with a comma mis-concatenates (`[A b]` works); complex results are unreliable, so complex eigenvalues are taught through the trace and determinant; `e` is the constant 2.718…, never a variable; and a transpose quote and a string literal on the same line confuse the parser.
+Known engine limits that lessons work around: stacking two flat rows (`[cos(t); sin(t)]`) gives one long row, so lessons fill matrix rows by index; the outer product `u*u'` of flat vectors returns a dot product (use `reshape(u,n,1)*reshape(v,1,m)`); `[A, b]` with a comma mis-concatenates, while side-by-side flat columns such as `[u w v]` work; complex results are unreliable, so complex eigenvalues are taught through the trace and determinant; and a transpose quote and a string literal on the same line confuse the parser.
 
-Engine fixes made for this lab (2026-10-17, with tests in the package): `eig(A)` and `svd(A)` with one output return values, as in MATLAB (`[V,D] = eig(A)` and `[U,S,V] = svd(A)` still return factors); `chol` returns the upper-triangular factor and rejects matrices that are not positive definite; `rank` and `cond` accept a single row or column. Figures now carry `xlabel`, `ylabel` and `legend` fields, and tag their axis-label text elements with a `role`.
+Engine fixes made for this lab (2026-10-17, with tests in the package): `eig(A)` and `svd(A)` with one output return values, as in MATLAB (`[V,D] = eig(A)` and `[U,S,V] = svd(A)` still return factors); `chol` returns the upper-triangular factor and rejects matrices that are not positive definite; `rank` and `cond` accept a single row or column; `diag` of a 1 × n or n × 1 matrix builds a diagonal matrix (previously `diag([1 u])` returned `[1]`). Figures now carry `xlabel`, `ylabel` and `legend` fields, and tag their axis-label text elements with a `role`.
 
 Examples use explicit column means for centering and explicit sums for Frobenius reconstruction error. Lessons teach numerically stable logistic loss and use train-only preprocessing. Markov examples name their row/column convention; control examples specify terminal values and distinguish fixed-policy evaluation from action maximization. A small residual verifies an equation, not the quality or fairness of a real deployment.
 
@@ -46,7 +46,13 @@ Examples use explicit column means for centering and explicit sums for Frobenius
 
 The executable curriculum tests run each worked example, require a figure, grade the reference, reject the runnable starter, and rerun available transfer fixtures. Component tests cover rendered teaching, plotting integration, numerical feedback, saved drafts/progress, lesson switching, hints, corrupt storage and interactive visuals. Runner tests cover cleanup, cancellation, timeout and worker errors. See [the tests](../src/labs/linear-algebra-lab/curriculum.test.js).
 
-Further tests cover the playground (every experiment renders, and its "same experiment in OpenMAT" code runs in the real engine), the review scheduler, and the new content: every formula in notation, quiz and proof text must render in KaTeX, and every quiz and proof step must have a valid answer. Run `npx vitest run src/labs/linear-algebra-lab` (123 tests on 2026-10-17) and `npx vitest run` in `packages/openmat` (63 tests). Learner pacing sessions and an independent human review remain open; the word “mastery” names the final practice stage, not a certification.
+Further tests cover the playground (every experiment renders, and its "same experiment in OpenMAT" code runs in the real engine), the review scheduler, and the new content: every formula in notation, quiz and proof text must render in KaTeX, and every quiz and proof step must have a valid answer. Run `npx vitest run src/labs/linear-algebra-lab` (405 tests on 2026-10-17) and `npx vitest run` in `packages/openmat` (64 tests). Learner pacing sessions and an independent human review remain open; the word “mastery” names the final practice stage, not a certification.
+
+## Problem sets
+
+Each lesson except the SVD compression lesson has a **Problem set** tab with six problem families, warm-up to transfer ([ProblemSet.jsx](../src/labs/linear-algebra-lab/ProblemSet.jsx), content in [the practice folder](../src/labs/linear-algebra-lab/practice)). Every family generates fresh inputs from a stored seed. Answers are not typed in: [execution.js](../src/labs/linear-algebra-lab/execution.js) runs the authored reference on the same inputs in a separate engine, and the learner's same program must also pass two unseen draws. Passes are recorded per family with the draw and whether the reference was opened.
+
+[practice.test.js](../src/labs/linear-algebra-lab/practice.test.js) runs every family on six draws: the reference passes its own and the unseen draws, the starter fails, and hard-coding one draw's answers fails. Fifteen families are listed there as guessable (their answer is the same, or repeats, across draws: mostly rank and nullity counts and zero checks); fixing their generators is open work, and the test fails if a fixed family stays listed.
 
 ## Interface and design rules (2026-10-16 redesign)
 
@@ -64,5 +70,6 @@ Still open:
 
 1. **Learner testing.** No one has worked through the series yet. Pacing, difficulty and the proofs' wrong options need real learners.
 2. **More proofs.** 22 lessons have no proof, mostly the applied machine-learning and dynamic-programming ones, where a short derivation (for example the Bellman contraction) would fit.
-3. **Engine limits** listed above. Fixing flat vectors and complex numbers in OpenMAT would let lessons write `[u w v]` and `eig` of a rotation directly.
-4. **3D output from code.** `plot3` produces a 3D request that the lab does not render yet; 3D is currently taught in the playground only.
+3. **Engine limits** listed above. Fixing flat vectors and complex numbers in OpenMAT would let lessons write `u*u'` and `eig` of a rotation directly.
+4. **Problem sets:** fifteen guessable families need generators that vary structure, the SVD compression lesson has no problem set, and problem-set completion is not yet a mark on the mastery map.
+5. **3D output from code.** `plot3` produces a 3D request that the lab does not render yet; 3D is currently taught in the playground only.

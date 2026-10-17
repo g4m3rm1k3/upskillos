@@ -371,6 +371,10 @@ export function createExecutionEngine(options: EngineOptions = {}): {
   parser.set("diag",     (v: any, k?: any) => {
     const p = toPlain(v)
     if (!Array.isArray(p)) return [[Number(p)]]
+    // A single row or column is a vector, as in MATLAB: diag([1 u]) builds a matrix even when
+    // concatenation produced a 1 × n matrix rather than a flat vector.
+    const single = isMatrix(p) && ((p as any[]).length === 1 || (p as any[][]).every(row => row.length === 1))
+    if (single) return makeDiagonal((p as any[][]).flat())
     if (isMatrix(p)) return toPlain(math.diag(p as any, k ?? 0))
     return k == null ? makeDiagonal(v) : toPlain(math.diag(p as any, Number(k)))
   })

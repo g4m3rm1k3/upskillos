@@ -6,6 +6,8 @@ import Explore from './Explore.jsx'
 import { CodeEditor, CodeView } from './code.jsx'
 import { MasteryMap, Notation, Proof, QuickCheck, Review } from './Study.jsx'
 import { dueItems, schedule } from './review.js'
+import ProblemSet from './ProblemSet.jsx'
+import { problemsFor } from './practice/index.js'
 import Plot from './Plot.jsx'
 import MarkdownProse from '../../components/math/MarkdownProse.jsx'
 import { useThemeColors } from '../../hooks/useThemeColors.js'
@@ -100,7 +102,7 @@ export default function LinearAlgebraLab() {
   const draft = typeof store.drafts?.[lesson.id] === 'string' ? store.drafts[lesson.id] : lesson.challenge.starter
   const [hints, setHints] = useState(0)
   const due = dueItems(LESSONS, store).length
-  const TABS = [['learn', 'Learn & run'], ['explore', 'Visual playground'], ['practice', 'Practice & challenge'], ...(lesson.proof ? [['reason', 'Reason & prove']] : [])]
+  const TABS = [['learn', 'Learn & run'], ['explore', 'Visual playground'], ['practice', 'Practice & challenge'], ...(problemsFor(lesson).length ? [['problems', 'Problem set']] : []), ...(lesson.proof ? [['reason', 'Reason & prove']] : [])]
 
   useEffect(() => { setSaved(saveProgress(store)) }, [store])
   useEffect(() => () => { revision.current++; activeRun.current?.cancel() }, [])
@@ -206,8 +208,10 @@ export default function LinearAlgebraLab() {
             <div className="la-support"><h3>Need a foothold?</h3>{lesson.challenge.hints.slice(0, hints).map((hint, i) => <p key={i} className="la-hint"><strong>Hint {i + 1}</strong> {hint}</p>)}<button type="button" disabled={hints >= lesson.challenge.hints.length} onClick={() => setHints(hints + 1)}>{hints ? 'Reveal next hint' : 'Reveal first hint'}</button></div>
             <details className="la-details la-reference-answer" onToggle={viewSolution}><summary>Reveal reference solution · counts as assisted practice</summary><CodeView code={lesson.challenge.solution} label="Reference solution" /><p className="la-muted">Compare each operation with your approach. Then attempt the transfer task without copying.</p></details>
             <div className="la-transfer"><div className="la-eyebrow">Transfer the idea</div><h3>Go beyond the check</h3><Prose>{lesson.challenge.transfer}</Prose><p className="la-muted">This extension is self assessed. Record a prediction, working code, a numerical check, and an explanation of a failure case.</p></div>
-            {lesson.proof && <div className="la-next-activity"><p>You can compute it. Now show why it must be true.</p><button type="button" className="la-primary" onClick={() => switchTab('reason')}>Reason it out →</button></div>}
+            {problemsFor(lesson).length > 0 && <div className="la-next-activity"><p>One challenge is not enough. Solve varied problems with fresh numbers.</p><button type="button" className="la-primary" onClick={() => switchTab('problems')}>Work the problem set →</button></div>}
+            {!problemsFor(lesson).length && lesson.proof && <div className="la-next-activity"><p>You can compute it. Now show why it must be true.</p><button type="button" className="la-primary" onClick={() => switchTab('reason')}>Reason it out →</button></div>}
           </section>}
+          {tab === 'problems' && <ProblemSet key={lesson.id} lesson={lesson} store={store} setStore={setStore} colors={colors} renderResult={value => <Result value={value} colors={colors} />} />}
           {tab === 'reason' && lesson.proof && <Proof key={lesson.id} lesson={lesson} proved={store.proved?.[lesson.id]} onComplete={record => setStore(previous => ({ ...previous, proved: { ...previous.proved, [lesson.id]: record } }))} />}
         </div>
         <footer className="la-footer">

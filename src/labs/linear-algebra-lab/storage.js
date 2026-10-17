@@ -12,6 +12,12 @@ export function readProgress() {
       ran: dictionary(value.ran),
       proved: dictionary(value.proved),
       review: dictionary(value.review),
+      problemSeeds: dictionary(value.problemSeeds),
+      problemCurrent: dictionary(value.problemCurrent),
+      problemDrafts: dictionary(value.problemDrafts),
+      problemPasses: dictionary(value.problemPasses),
+      problemViewed: dictionary(value.problemViewed),
+      problemReflections: dictionary(value.problemReflections),
     }
   } catch { return {} }
 }

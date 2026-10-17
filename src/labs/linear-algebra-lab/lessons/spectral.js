@@ -1,7 +1,7 @@
 // Spectral theory: diagonalization, complex eigenvalues (taught with real arithmetic), positive-definite
 // matrices and the spectral theorem behind the SVD. These follow the applied spectral lessons.
 // OpenMAT notes: a transpose quote and a string literal on the same line confuse the parser, so
-// transposes sit on their own lines; e is the constant 2.718…, so it is never used as a variable name.
+// transposes sit on their own lines.
 export const spectralTheory = [
   {
     id: 'laml-diagonalization', after: 'laml-svd-low-rank', module: 'Spectral theory', title: 'Diagonalization: powers become easy', minutes: 35, level: 'Advanced',

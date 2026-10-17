@@ -2,8 +2,8 @@
 import React from 'react'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { executeScript } from '../../engines/openmat/openmatEngine.js'
-import { gradeWorkspace } from './grading.js'
+import { evaluateRun } from './execution.js'
+import { instantiate } from './practice/index.js'
 import { LESSONS } from './curriculum.js'
 import { STORE_KEY, readProgress } from './storage.js'
 import { bellmanTrace, descentTrace, eigen2 } from './Explore.jsx'
@@ -11,10 +11,7 @@ import Lab from './index.jsx'
 
 vi.mock('./runner.js', () => ({ startRun: vi.fn(payload => ({
   promise: Promise.resolve().then(() => {
-    try {
-      const result = executeScript(payload.source)
-      return { result, checks: gradeWorkspace(result.workspace, payload.checks || []) }
-    } catch (error) { return { error: error.message } }
+    try { return evaluateRun(payload) } catch (error) { return { error: error.message } }
   }), cancel: vi.fn(),
 })) }))
 vi.mock('@monaco-editor/react', () => ({ default: ({ value, onChange, options }) => <textarea aria-label={options.ariaLabel} value={value} onChange={e => onChange(e.target.value)} /> }))
@@ -120,5 +117,27 @@ describe('Linear Algebra Lab', () => {
     expect(screen.getByRole('button', { name: new RegExp(`${lesson.title}: .*Built the proof yes`) })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Review/ }))
     expect(screen.getByText(/Question 1 of 1/)).toBeTruthy()
+  })
+
+  it('works a generated problem: the starter fails, a solution passes on unseen draws, and the pass is saved', async () => {
+    render(<Lab />)
+    fireEvent.click(screen.getByRole('tab', { name: /Problem set/ }))
+    expect(screen.getByText('Different problems. Fresh inputs.')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Run & check problem' }))
+    await screen.findByText('Keep experimenting')
+    const family = Object.keys(readProgress().problemSeeds).find(key => key.startsWith(`${LESSONS[0].id}/`))
+    const [, problemId] = family.split('/')
+    const exercise = instantiate(LESSONS[0].id, problemId, readProgress().problemSeeds[family])
+    fireEvent.change(screen.getByLabelText('Your problem code'), { target: { value: exercise.solution } })
+    fireEvent.click(screen.getByRole('button', { name: 'Run & check problem' }))
+    await screen.findByText('All checks passed')
+    expect(screen.getAllByText(/Unseen inputs 2/).length).toBeGreaterThan(0)
+    await waitFor(() => expect(readProgress().problemPasses[LESSONS[0].id][problemId]).toMatchObject({ assisted: false, seed: exercise.seed }))
+  })
+
+  it('shows no problem-set tab for a lesson without problems', () => {
+    localStorage.setItem(STORE_KEY, JSON.stringify({ current: 'laml-svd-low-rank' }))
+    render(<Lab />)
+    expect(screen.queryByRole('tab', { name: /Problem set/ })).toBeNull()
   })
 })
