@@ -211,15 +211,10 @@ export const GRID_DESIGNS = {
         { text: 'The sum of N(end, b) for b = 0 to the budget', right: true, why: 'Every path that paid at most the budget, each counted once, by the tolls it actually paid.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on the same grid with a budget of 1 toll. How many paths are within budget?',
-      args: [[[0, 1, 0], [0, 0, 1], [1, 0, 0]], 1], answer: 4,
-      misconceptions: [
-        { answer: 3, feedback: 'That is the paths paying exactly 1 toll. The path that pays none is within a budget of 1 too.' },
-        { answer: 6, feedback: 'That is every path. Two of them pass both tolls on the upper right.' },
-      ],
-      explain: '1 path pays no toll and 3 pay exactly one: 1 + 3 = 4. Right, right, down, down and right, down, right, down each pay 2.',
-    },
+    apply: { cell: [5, 2], misconceptions: [
+      { answer: 4, feedback: 'That is every path to the end with at most 1 toll. This cell counts paths that paid exactly 1: from above and from the left in the b = 1 layer.' },
+      { answer: 2, feedback: 'That is only the paths from the left. The cell above, N(1,2,1) = 1, adds its paths too: the end has no toll, so both stay in layer 1.' },
+    ] },
   },
 
   'grid-direction': {
@@ -262,15 +257,10 @@ export const GRID_DESIGNS = {
         { text: 'D(end, down)', why: 'The best path may end moving right, as right, right after a down does.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: costs [0, 1, 1], [3, 0, 0] and a turn fee of 2. What is the lowest total?',
-      args: [[[0, 1, 1], [3, 0, 0]], 2], answer: 4,
-      misconceptions: [
-        { answer: 2, feedback: 'That leaves out the turn fee: right, right, down still turns once.' },
-        { answer: 1, feedback: 'Right, down, right enters 1 + 0 + 0 but turns twice, paying 4 in fees.' },
-      ],
-      explain: 'Right, right, down: 1 + 1 + 0 plus one turn, 2, is 4. Right, down, right is 1 + 4 = 5, and down, right, right is 3 + 2 = 5.',
-    },
+    apply: { cell: [4, 2], misconceptions: [
+      { answer: 8, feedback: 'That goes straight from D(2,1,right) = 8. Arriving at (2,1) moving down and then turning right is cheaper: 4 + 2.' },
+      { answer: 4, feedback: 'That forgets the turn fee: switching from down to right costs 2 more.' },
+    ] },
   },
 
   'max-square': {
@@ -356,14 +346,8 @@ export const GRID_DESIGNS = {
         { text: 'D(0, 0, last column)', right: true, why: 'That is the start, both corners of the top row.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on [2, 0, 2], [1, 5, 1], [9, 1, 9]. What is the largest total?',
-      args: [[[2, 0, 2], [1, 5, 1], [9, 1, 9]]], answer: 28,
-      misconceptions: [
-        { answer: 32, feedback: 'Both robots on the middle 5 collect it once, not twice.' },
-        { answer: 27, feedback: 'Both on the 5 collects it only once. If one takes the 5 and the other a 1, both can still reach a 9.' },
-      ],
-      explain: '2 + 2 on the top row; one robot takes the 5 and the other a 1; from there both reach a corner 9. 4 + 6 + 18 = 28.',
-    },
+    apply: { cell: [3, 2], misconceptions: [
+      { answer: 10, feedback: 'That adds only one robot’s next cell. The best pair of next cells is columns 0 and 2 of the bottom row, D(2,0,2) = 4 + 5 = 9.' },
+    ] },
   },
 }

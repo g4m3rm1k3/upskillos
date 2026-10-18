@@ -3,7 +3,7 @@
 // could type. The random inputs go through the same parser as the input box.
 import { describe, expect, it } from 'vitest'
 import { TRACES, INPUTS, show, defaultInput } from './tables.js'
-import { formatField, parseInput, randomField } from './traceInputs.js'
+import { formatField, parseInput, randomInput } from './traceInputs.js'
 import { LESSONS } from './lessons/index.js'
 import { SOLUTIONS } from './lessons/reference-solutions.js'
 import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
@@ -20,9 +20,20 @@ function lisBrute(a) {
   }
   return best
 }
+// Restricted Damerau (optimal string alignment): every script of edits on disjoint letters, consumed from
+// the front, where the table works from the back. The lesson's oracle allows a swapped pair to be edited
+// again, which the restricted table does not.
+const osaBrute = (a, b) => (!a ? b.length : !b ? a.length : Math.min(
+  osaBrute(a.slice(1), b) + 1, osaBrute(a, b.slice(1)) + 1, osaBrute(a.slice(1), b.slice(1)) + (a[0] === b[0] ? 0 : 1),
+  a.length > 1 && b.length > 1 && a[0] === b[1] && a[1] === b[0] ? osaBrute(a.slice(2), b.slice(2)) + 1 : Infinity))
+// Weighted edits as the cheapest alignment, column by column from the front (the lesson's oracle searches
+// over strings, which takes minutes at these prices).
+const weightedBrute = (a, b, ins, del, sub) => (!a ? b.length * ins : !b ? a.length * del : Math.min(
+  weightedBrute(a.slice(1), b, ins, del, sub) + del, weightedBrute(a, b.slice(1), ins, del, sub) + ins,
+  weightedBrute(a.slice(1), b.slice(1), ins, del, sub) + (a[0] === b[0] ? 0 : sub)))
 // The grid-paths challenge adds diagonal moves; the table (like the lesson) is right and down only.
 const pathsBrute = (r, c) => (r === 1 || c === 1 ? 1 : pathsBrute(r - 1, c) + pathsBrute(r, c - 1))
-const ORACLE = { lcs: lcsBrute, 'edit-distance': editBrute, lis: lisBrute, 'grid-paths': pathsBrute }
+const ORACLE = { lcs: lcsBrute, 'edit-distance': editBrute, lis: lisBrute, 'grid-paths': pathsBrute, damerau: osaBrute, 'weighted-edit': weightedBrute }
 
 function expected(id, args) {
   if (ORACLE[id]) return ORACLE[id](...args)
@@ -71,7 +82,7 @@ describe('live DP tables', () => {
       const random = rng(id.length * 7919)
       let tried = 0
       for (let i = 0; i < 200 && tried < 25; i++) {
-        const value = Object.fromEntries(spec.fields.map(f => [f.key, f.kind === 'words' ? input[f.key] : randomField(f, random)]))
+        const value = randomInput(spec, random, input)
         const parsed = parseInput(spec, Object.fromEntries(spec.fields.map(f => [f.key, formatField(f, value[f.key])])))
         if (parsed.error) continue
         if (id === 'edit-distance' && value.a.length + value.b.length > 9) continue
@@ -95,6 +106,16 @@ describe('the input box', () => {
     expect(parseInput(INPUTS['triangle-path'], { triangle: '1; 2 3; 4 5' }).error).toMatch(/Row 2 needs 3/)
     expect(parseInput(INPUTS['obstacle-paths'], { grid: '000; 01' }).error).toMatch(/same number/)
     expect(parseInput(INPUTS['balanced-parentheses'], { s: '(a)' }).error).toMatch(/“\(”/)
+    expect(parseInput(INPUTS['boolean-parenthesization'], { expr: 'TT&F' }).error).toMatch(/Alternate T or F and an operator/)
+    expect(parseInput(INPUTS['expression-extrema'], { expr: '1-3*' }).error).toMatch(/starting and ending with a digit/)
+    expect(parseInput(INPUTS['k-partitions'], { values: '1, 2', k: '3' }).error).toMatch(/one segment per item/)
+    expect(parseInput(INPUTS.interleaving, { a: 'ab', b: 'c', c: 'abcd' }).error).toMatch(/c needs 3 letters/)
+    expect(parseInput(INPUTS.regex, { s: 'a', p: '*a' }).error).toMatch(/must follow a letter/)
+    expect(parseInput(INPUTS['weighted-intervals'], { jobs: '3 2 5' }).error).toMatch(/end after it starts/)
+    expect(parseInput(INPUTS['deadline-scheduling'], { jobs: '4 1 3' }).error).toMatch(/longer than its deadline/)
+    expect(parseInput(INPUTS['text-justification'], { words: '3, 9', width: '6' }).error).toMatch(/fit on a line/)
+    expect(parseInput(INPUTS['group-knapsack'], { groups: '2 5, 3; 1 4', capacity: '3' }).error).toMatch(/two whole numbers, weight and value/)
+    expect(parseInput(INPUTS['group-knapsack'], { groups: '2 5, 3 7; 1 4', capacity: '3' }).value.groups).toEqual([[[2, 5], [3, 7]], [[1, 4]]])
   })
   it('reads grids typed with or without spaces', () => {
     expect(parseInput(INPUTS['obstacle-paths'], { grid: '010; 0 0 0' }).value.grid).toEqual([[0, 1, 0], [0, 0, 0]])

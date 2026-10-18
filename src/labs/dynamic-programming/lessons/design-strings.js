@@ -126,12 +126,10 @@ export const STRING_DESIGNS = {
         { text: 'The largest S anywhere', right: true, why: 'Every common substring ends at some pair of positions.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on “abcd” and “acd”. How long is the longest common substring?',
-      args: ['abcd', 'acd'], answer: 2,
-      misconceptions: [{ answer: 3, feedback: '“acd” is a subsequence of “abcd”, not a substring: “b” sits between a and c.' }],
-      explain: '“cd”: S grows 1, 2 along that diagonal, and every mismatch resets to 0.',
-    },
+    apply: { cell: [5, 5], misconceptions: [
+      { answer: 1, feedback: 'That counts only the e. The d just before it matches too: S(4,4) = 1, so the run is “de”.' },
+      { answer: 3, feedback: 'The run stops at c ≠ f: S(3,3) = 0. “cde” is not in “abfde”.' },
+    ] },
   },
 
   'edit-distance': {
@@ -210,12 +208,9 @@ export const STRING_DESIGNS = {
         { text: 'E(n, m) divided by the number of edits', why: 'The question is total cost.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: substitute costs 7, delete 2, insert 3. What does turning “a” into “b” cost?',
-      args: ['a', 'b', 3, 2, 7], answer: 5,
-      misconceptions: [{ answer: 7, feedback: 'Substituting costs 7, but deleting a and inserting b costs 2 + 3.' }],
-      explain: 'min(substitute 7, delete then insert 2 + 3) = 5.',
-    },
+    apply: { cell: [1, 1], misconceptions: [
+      { answer: 3, feedback: 'Substituting costs 3. Deleting the a and inserting the b costs 1 + 1.' },
+    ] },
   },
 
   damerau: {
@@ -254,12 +249,9 @@ export const STRING_DESIGNS = {
         { text: 'E(n, m), always the true distance with unrestricted swaps', why: '“ca” → “abc” costs 3 here but 2 with unrestricted edits (swap to “ac”, insert b); the full version needs more state.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on “xy” → “yx”. How many edits?',
-      args: ['xy', 'yx'], answer: 1,
-      misconceptions: [{ answer: 2, feedback: 'Two substitutions work, but one swap is enough.' }],
-      explain: 'The last two letters are the reverse of each other: E(0, 0) + 1 = 1.',
-    },
+    apply: { cell: [2, 2], misconceptions: [
+      { answer: 2, feedback: 'That is two substitutions, or a delete and an insert. “ab” and “ba” are the same two letters reversed: one swap, E(0,0) + 1.' },
+    ] },
   },
 
   'shortest-supersequence': {
@@ -298,12 +290,9 @@ export const STRING_DESIGNS = {
         { text: 'n + m', why: 'That is writing them one after the other, sharing nothing.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on “abc” and “bc”. How short can it be?',
-      args: ['abc', 'bc'], answer: 3,
-      misconceptions: [{ answer: 5, feedback: '“bc” is already inside “abc”.' }],
-      explain: '“abc” contains “bc”: 3 + 2 − 2 = 3.',
-    },
+    apply: { cell: [3, 2], misconceptions: [
+      { answer: 5, feedback: 'That writes the shared last a twice. Equal last letters can be one letter serving both strings: 1 + S(2,1).' },
+    ] },
   },
 
   'distinct-subsequences': {
@@ -342,12 +331,10 @@ export const STRING_DESIGNS = {
         { text: 'The sum of the last column', why: 'That counts ways for every source prefix, so each way is counted several times.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: in how many ways can “aaaa” spell “aa”?',
-      args: ['aaaa', 'aa'], answer: 6,
-      misconceptions: [{ answer: 3, feedback: 'Positions count: choosing letters 1 and 3 is different from 2 and 4. There are C(4, 2) choices.' }],
-      explain: 'Any 2 of the 4 positions: 6.',
-    },
+    apply: { cell: [5, 4], misconceptions: [
+      { answer: 1, feedback: 'That only skips the third b. It equals target letter 4, so also count the ways that use it: N(4,3) = 2.' },
+      { answer: 2, feedback: 'That only counts the ways that use the third b. Skipping it still leaves N(4,4) = 1 way.' },
+    ] },
   },
 
   'unique-subsequences': {
@@ -387,12 +374,9 @@ export const STRING_DESIGNS = {
         { text: 'The sum of every U(i)', why: 'That counts strings of every prefix again and again.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: how many different subsequence strings does “aaa” have, counting the empty one?',
-      args: ['aaa'], answer: 4,
-      misconceptions: [{ answer: 8, feedback: '8 counts positions. The different strings are “”, a, aa, aaa.' }],
-      explain: 'U = 1, 2, 3, 4: each new a doubles, minus the copies its previous a already made.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 8, feedback: 'Doubling counts strings that end in a twice: those made with the first a are made again with the second. Subtract U(0) = 1, the empty string plus a.' },
+    ] },
   },
 
   interleaving: {
@@ -429,12 +413,9 @@ export const STRING_DESIGNS = {
         { text: 'Any true cell in the last row', why: 'Only the corner uses all of both sources.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: can “aadbbcbcac” be formed by interleaving “aabcc” and “dbbca”?',
-      kind: 'yesno', args: ['aabcc', 'dbbca', 'aadbbcbcac'], answer: true,
-      misconceptions: [{ answer: false, feedback: 'Try a, a from the first, d, b, b from the second, then c, b, c from the first and second in turn.' }],
-      explain: 'Yes: aa (a) + dbb (b) + c (a) + b (a) + c (b) + a (b) + c (a).',
-    },
+    apply: { cell: [2, 2], misconceptions: [
+      { answer: false, feedback: 'c’s letter 4 is “a”, the next letter of a. With one a and “ax” used, I(1,2) = T, so a’s second a can supply it.' },
+    ] },
   },
 
   wildcard: {
@@ -471,12 +452,9 @@ export const STRING_DESIGNS = {
         { text: 'Any true cell in the last column', why: 'The whole string must be matched, not a prefix.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: does the pattern “?*” match the empty string?',
-      kind: 'yesno', args: ['', '?*'], answer: false,
-      misconceptions: [{ answer: true, feedback: 'The * can match nothing, but the ? needs exactly one letter.' }],
-      explain: 'M(0, 1) is false because ? needs a letter, and M(0, 2) reads it.',
-    },
+    apply: { cell: [2, 3], misconceptions: [
+      { answer: false, feedback: 'The last * can take the d: M(1,3) = T, since “*a*” matches “a” with that * empty.' },
+    ] },
   },
 
   regex: {
@@ -513,12 +491,9 @@ export const STRING_DESIGNS = {
         { text: 'M(n, m − 1)', why: 'That leaves the last symbol unused.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: does “mis*is*p*.” match “mississippi”?',
-      kind: 'yesno', args: ['mississippi', 'mis*is*p*.'], answer: false,
-      misconceptions: [{ answer: true, feedback: '“mis*” takes “miss” and “is*” takes “iss”, leaving “ippi” for “p*.”: p’s and then one letter, but “ippi” starts with i and is four letters.' }],
-      explain: 'No. “mis*” matches “miss”, “is*” matches “iss”, and “p*.” would have to match “ippi”: no p’s at the start, and “.” is only one letter.',
-    },
+    apply: { cell: [2, 4], misconceptions: [
+      { answer: false, feedback: 'Zero more a’s fails, but “a*” can take this a as well: M(1,4) = T.' },
+    ] },
   },
 
   'palindrome-subsequence': {
@@ -640,12 +615,10 @@ export const STRING_DESIGNS = {
         { text: 'The number of palindromes in the string', why: 'That counts pieces of every kind, not a cutting.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on “abcbm”. What is the fewest cuts?',
-      args: ['abcbm'], answer: 2,
-      misconceptions: [{ answer: 4, feedback: 'That cuts between every letter. “bcb” is a palindrome: a | bcb | m.' }],
-      explain: 'a | bcb | m: C(5) = C(4) + 1 where C(4) = C(1) + 1 = 1.',
-    },
+    apply: { cell: [0, 5], misconceptions: [
+      { answer: 2, feedback: 'That makes the last piece “b” alone: C(4) + 1. “baab” is a palindrome, so the last piece can start at 1: C(1) + 1 = 0 + 1.' },
+      { answer: 0, feedback: 'No cuts would mean “abaab” is a palindrome, but backwards it reads “baaba”.' },
+    ] },
   },
 
   'palindrome-count': {
@@ -684,12 +657,10 @@ export const STRING_DESIGNS = {
         { text: 'The sum of N over all intervals', why: 'Each palindrome would be counted once for every interval containing it.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: how many nonempty palindromic subsequences, by position, does “aaa” have?',
-      args: ['aaa'], answer: 7,
-      misconceptions: [{ answer: 3, feedback: '3 counts different strings. By position, every nonempty choice of a’s is a palindrome: 2³ − 1.' }],
-      explain: 'Every nonempty subsequence of “aaa” is a palindrome: 7.',
-    },
+    apply: { cell: [0, 2], misconceptions: [
+      { answer: 3, feedback: 'That is only the palindromes that skip an end. Equal ends add “aba” (around the b) and “aa”.' },
+      { answer: 4, feedback: 'One more: the two a’s on their own make “aa”.' },
+    ] },
   },
 
   'affine-gap': {
@@ -729,12 +700,10 @@ export const STRING_DESIGNS = {
         { text: 'M(n, m)', why: 'The best alignment may end with a gap.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: align “ab” with “ba”. Mismatch 1, open 3, extend 1. What is the lowest cost?',
-      args: ['ab', 'ba', 1, 3, 1], answer: 2,
-      misconceptions: [{ answer: 6, feedback: 'Gaps cost 3 to open. Two mismatches cost only 1 each.' }],
-      explain: 'a/b and b/a: two mismatches, 2. Any gap would cost at least 3.',
-    },
+    apply: { cell: [10, 1], misconceptions: [
+      { answer: 6, feedback: 'That opens the gap again after X(2,1). X(2,1) already ends in a gap in b, so this one extends it: 3 + 1.' },
+      { answer: 9, feedback: 'That opens a gap after M(2,1) = 6. Extending the gap that X(2,1) = 3 ends with is cheaper.' },
+    ] },
   },
 
   'local-alignment': {
@@ -773,11 +742,8 @@ export const STRING_DESIGNS = {
         { text: 'H(n, m)', why: 'That ends the alignment at both strings’ ends.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: +2 match, −1 mismatch, −1 gap. Best local score of “xaay” and “baab”?',
-      args: ['xaay', 'baab', 2, 1, 1], answer: 4,
-      misconceptions: [{ answer: 2, feedback: 'Two a’s in a row match two a’s in a row: 2 + 2.' }],
-      explain: '“aa” with “aa”: two matches, 4.',
-    },
+    apply: { cell: [4, 4], misconceptions: [
+      { answer: 2, feedback: 'That starts a fresh alignment at the c. Extending the “ab” match before it, H(3,3) = 4, is better: 4 + 2.' },
+    ] },
   },
 }

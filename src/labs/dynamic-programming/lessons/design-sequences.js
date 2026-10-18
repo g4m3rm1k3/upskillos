@@ -127,12 +127,9 @@ export const SEQUENCE_DESIGNS = {
         { text: 'The sum of N(i) over every i whose L(i) is the largest', right: true, why: 'Every longest subsequence ends at one of those positions, counted once there.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on [1, 2, 2]. How many longest increasing subsequences, by position?',
-      args: [[1, 2, 2]], answer: 2,
-      misconceptions: [{ answer: 1, feedback: 'As strings both are “1 2”, but they use different positions, and positions are what is counted.' }],
-      explain: 'Both 2s have L = 2 and N = 1. The answer adds them: 2.',
-    },
+    apply: { cell: [1, 4], misconceptions: [
+      { answer: 1, feedback: 'Two predecessors tie at the best length, L(2) = L(3) = 3 (values 5 and 4): add both of their counts.' },
+    ] },
   },
 
   'weighted-lis': {
@@ -172,12 +169,10 @@ export const SEQUENCE_DESIGNS = {
         { text: 'The largest W(i)', right: true, why: 'Every subsequence ends somewhere.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: keys [1, 2, 3], weights [4, −10, 5]. What is the largest total?',
-      args: [[1, 2, 3], [4, -10, 5]], answer: 9,
-      misconceptions: [{ answer: -1, feedback: 'That takes all three. The −10 can be skipped: 1 then 3.' }],
-      explain: 'W = 4, 4 − 10 = −6, then 5 + max(0, 4, −6) = 9.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 13, feedback: 'That extends W(1) = 12, but key 5 is not below key 3. Only keys 1 and 2 can come before it.' },
+      { answer: 5, feedback: 'That is W(2), the subsequence before it. Position 3 adds its own weight, 3.' },
+    ] },
   },
 
   bitonic: {
@@ -216,12 +211,9 @@ export const SEQUENCE_DESIGNS = {
         { text: 'The largest up(i) plus the largest down(j)', why: 'Those may be at different positions, in the wrong order.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on [5, 1, 4, 2, 3, 1]. How long is the longest rise-then-fall subsequence?',
-      args: [[5, 1, 4, 2, 3, 1]], answer: 4,
-      misconceptions: [{ answer: 5, feedback: 'Check it rises strictly and then falls strictly, in the list’s order.' }],
-      explain: 'Peak at 4: up = 2 (1, 4) and down = 3 (4, 2, 1), so 2 + 3 − 1 = 4.',
-    },
+    apply: { cell: [2, 3], misconceptions: [
+      { answer: 7, feedback: 'That adds up(3) and down(3) and counts the peak, value 10, twice. Subtract 1.' },
+    ] },
   },
 
   'multidimensional-chains': {
@@ -260,12 +252,9 @@ export const SEQUENCE_DESIGNS = {
         { text: 'L of the largest envelope', why: 'The largest envelope may not fit around anything; the best chain can end elsewhere.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on (1, 1), (1, 2), (2, 3), (3, 4). How long is the longest chain?',
-      args: [[[1, 1], [1, 2], [2, 3], [3, 4]]], answer: 3,
-      misconceptions: [{ answer: 4, feedback: '(1, 1) does not fit in (1, 2): their widths are equal.' }],
-      explain: '(1, 1) or (1, 2), then (2, 3), then (3, 4): 3.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 4, feedback: '6×4 has the same width as 6×7, so it cannot go inside it: both dimensions must be strictly smaller.' },
+    ] },
   },
 
   'arithmetic-subsequence': {
@@ -304,12 +293,9 @@ export const SEQUENCE_DESIGNS = {
         { text: 'The largest A(n − 1, d)', why: 'The best can end before the last value.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on [1, 3, 5, 8, 7]. How long is the longest arithmetic subsequence?',
-      args: [[1, 3, 5, 8, 7]], answer: 4,
-      misconceptions: [{ answer: 3, feedback: '1, 3, 5 has step 2; does a later value continue it?' }],
-      explain: '1, 3, 5, 7: A(7, 2) = A(5, 2) + 1 = 4.',
-    },
+    apply: { cell: [4, 4], misconceptions: [
+      { answer: 2, feedback: 'That starts a new pair 7, 10. But 4, 7 already has step 3: A(2,3) = 2, so 4, 7, 10 has length 3.' },
+    ] },
   },
 
   'alternating-subsequence': {
@@ -348,12 +334,9 @@ export const SEQUENCE_DESIGNS = {
         { text: 'up(n − 1) + down(n − 1)', why: 'Those are two different wiggles ending at the same place.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on [1, 2, 3, 4]. How long is the longest wiggle?',
-      args: [[1, 2, 3, 4]], answer: 2,
-      misconceptions: [{ answer: 4, feedback: 'It only rises; after one rise it would need a fall.' }],
-      explain: 'Any two values rise once; no fall ever follows. 2.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 3, feedback: 'That extends up(2), a wiggle that ended rising into 5. A rise must follow a fall: read down(2) = 3.' },
+    ] },
   },
 
   'divisible-subset': {
@@ -392,11 +375,8 @@ export const SEQUENCE_DESIGNS = {
         { text: 'The largest D(i)', right: true, why: 'Every chain has a top value.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on [1, 2, 4, 9, 8]. How large is the largest subset?',
-      args: [[1, 2, 4, 9, 8]], answer: 4,
-      misconceptions: [{ answer: 5, feedback: '9 is not divisible by 2, 4 or 8.' }],
-      explain: '1, 2, 4, 8. 9 joins only 1.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 4, feedback: 'That counts 3, but 3 does not divide 16. Only 4 and 8 do: 4, 8, 16.' },
+    ] },
   },
 }

@@ -21,7 +21,8 @@ Last reconciled: 2026-09-26
 - [x] A lesson for every concept; 69 independently checked Python/JavaScript challenges with saved drafts and passes.
 - [x] (2026-10-17) Visual, hands-on walkthroughs to the [lab quality standard](lab-quality-standard.md): a live table to watch, fill by typing or fill in your own order, on any input (31 lessons); a recursion call tree with prediction and memo collapse (15 lessons); Run with printed output beside Run & check; Open in CodeLens past Foundations.
 - [x] (2026-10-17) "Design it yourself" for all 87 Core and Structured lessons, every number checked by brute force; DP progress synced to the account (`oc-dp-lab`) with a ✓ on every solved lesson.
-- [ ] Visuals for the remaining families, answer walk-back, bug hunts, spaced review, and full lessons for the Advanced to Specialist rows. See the [plan](dynamic-programming-lab.md#plan).
+- [x] (2026-10-18) Live tables for every Core and Structured lesson but LCS reconstruction (85 lessons): interval tables filled diagonal by diagonal, two-string grids, state machines, and three-index tables as stacked layers. Each agrees with a brute-force answer on its example and 25 random inputs, and each lesson's design ends on one of its cells.
+- [ ] Answer walk-back (with LCS reconstruction), bug hunts, spaced review, and full lessons for the Advanced to Specialist rows. See the [plan](dynamic-programming-lab.md#plan).
 
 This is the master plan for contributor experience, application orientation, and the LMS direction. Keep this section current as work lands. The generated [project inventory](generated/project-inventory.md) is the source of truth for catalog counts and duplicate-content findings; do not copy its changing file lists here.
 

@@ -52,6 +52,19 @@ export function parseField(field, raw) {
       if (!words.every(w => /^[a-z]{1,8}$/.test(w))) return { error: `${field.label}: lowercase letters only, up to 8 each.` }
       return { value: [...new Set(words)] }
     }
+    case 'groups': {
+      const groups = text.split(/[;\n]+/).map(g => g.trim()).filter(Boolean)
+      if (groups.length < field.len[0] || groups.length > field.len[1]) return { error: `${field.label}: give ${field.len[0]} to ${field.len[1]} groups, separated by “;”.` }
+      const value = []
+      for (const g of groups) {
+        const options = g.split(',').map(o => numbers(o))
+        if (!options.every(o => o.length === 2 && o.every(isInt))) return { error: `“${g}”: each option is two whole numbers, weight and value, and options are separated by commas.` }
+        const nums = options.map(o => o.map(Number))
+        for (const x of nums.flat()) { const bad = inRange(x, field); if (bad) return { error: bad } }
+        value.push(nums)
+      }
+      return { value }
+    }
     case 'grid':
     case 'matrix': {
       const { value, error } = parseRows(text, field)
@@ -86,6 +99,8 @@ export function formatField(field, value) {
     case 'matrix':
     case 'triangle':
       return value.map(r => r.join(' ')).join('; ')
+    case 'groups':
+      return value.map(g => g.map(o => o.join(' ')).join(', ')).join('; ')
     default:
       return String(value)
   }
@@ -101,6 +116,14 @@ export function parseInput(spec, texts) {
   }
   const bad = spec.rule?.(input)
   return bad ? { error: bad } : { value: input }
+}
+
+// A random input for a whole spec. A spec whose fields depend on each other (c interleaves a and b;
+// an expression alternates symbols and operators) brings its own generator, `random(r)`, where r(a, b)
+// is a whole number from a to b. Word lists are kept as they are.
+export function randomInput(spec, rng = Math.random, current = {}) {
+  if (spec.random) return spec.random((a, b) => a + Math.floor(rng() * (b - a + 1)))
+  return Object.fromEntries(spec.fields.map(f => [f.key, f.kind === 'words' ? current[f.key] : randomField(f, rng)]))
 }
 
 // A random value inside a field's limits, kept small enough to draw ("Surprise me", and the tests).

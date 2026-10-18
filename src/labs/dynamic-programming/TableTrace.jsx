@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { TRACES, INPUTS, show, defaultInput } from './tables.js'
-import { formatField, parseInput, randomField } from './traceInputs.js'
+import { formatField, parseInput, randomInput } from './traceInputs.js'
 import './trace.css'
 
 // The live DP table, three ways:
@@ -164,7 +164,7 @@ function Fill({ trace, W, H, id, onFinish }) {
   const check = e => {
     e.preventDefault()
     const g = parseCell(guess)
-    if (g !== undefined && (g === step.value || (typeof g === 'number' && typeof step.value === 'number' && Math.abs(g - step.value) < 1e-9))) {
+    if (g !== undefined && (g === step.value || (typeof g === 'number' && typeof step.value === 'number' && Math.abs(g - step.value) < (Number.isInteger(step.value) ? 1e-9 : 0.006)))) {
       setFeedback({ good: true, text: `Yes: ${formula(t, step)}` }); advance(); return
     }
     setWrongHere(w => w + 1)
@@ -258,7 +258,7 @@ function InputEditor({ id, input, onApply }) {
   }
   const surprise = () => {
     for (let attempt = 0; attempt < 30; attempt++) {
-      const value = Object.fromEntries(spec.fields.map(f => [f.key, f.kind === 'words' ? input[f.key] : randomField(f)]))
+      const value = randomInput(spec, Math.random, input)
       const { error: bad } = parseInput(spec, Object.fromEntries(spec.fields.map(f => [f.key, formatField(f, value[f.key])])))
       if (bad) continue
       const t = TRACES[id](value).table

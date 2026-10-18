@@ -41,12 +41,10 @@ export const SCHEDULING_DESIGNS = {
         { text: 'The most valuable single job', why: 'Several smaller compatible jobs can be worth more.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: the same jobs, but the long job is worth 10. What is the largest total?',
-      args: [[[0, 2, 4], [2, 4, 5], [0, 4, 10]]], answer: 10,
-      misconceptions: [{ answer: 9, feedback: 'Now the long job alone is worth more than the two short ones.' }],
-      explain: 'D(3) = max(D(2) = 9, 10 + D(0) = 10) = 10.',
-    },
+    apply: { cell: [0, 4], misconceptions: [
+      { answer: 15, feedback: 'That adds D(3) = 9, but job 3, [3,5), overlaps [4,7). Only jobs that end by 4 can come before it: D(2) = 4.' },
+      { answer: 9, feedback: 'That skips the job. Taking it gives 6 + D(2) = 10, which is more.' },
+    ] },
   },
 
   'deadline-scheduling': {
@@ -86,12 +84,10 @@ export const SCHEDULING_DESIGNS = {
         { text: 'D(n, the latest deadline)', why: 'The best set may finish earlier.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: jobs (2, 5, deadline 2) and (1, 4, deadline 2). What is the most you can earn?',
-      args: [[[2, 5, 2], [1, 4, 2]]], answer: 5,
-      misconceptions: [{ answer: 9, feedback: 'Both need 3 units of time, but both deadlines are 2.' }],
-      explain: 'Only one job fits by time 2; the better one earns 5.',
-    },
+    apply: { cell: [3, 4], misconceptions: [
+      { answer: 12, feedback: 'All three jobs take 5 hours, and this cell is exactly 4. Finishing the last job at 4 leaves 2 hours before it: D(2,2) = 5.' },
+      { answer: 7, feedback: 'Jobs 1 and 3 together take 3 hours, not 4. This cell counts exactly 4 hours used.' },
+    ] },
   },
 
   'stock-states': {
@@ -130,12 +126,9 @@ export const SCHEDULING_DESIGNS = {
         { text: 'max(cash, hold) after the last day', why: 'hold has paid for a share that was never sold; it is never larger than cash at the end.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on prices [3, 1, 4]. What is the largest profit?',
-      args: [[3, 1, 4]], answer: 3,
-      misconceptions: [{ answer: 1, feedback: 'Buying on the first day at 3 is not required; buy at 1.' }],
-      explain: 'Buy at 1, sell at 4: 3.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 5, feedback: 'Selling needs a share. The best way to hold one before day 3 is hold(2) = −1 (bought at 1), so selling gives −1 + 5.' },
+    ] },
   },
 
   'stock-k': {
@@ -172,12 +165,9 @@ export const SCHEDULING_DESIGNS = {
         { text: 'cash[k] after the last day', why: 'Using exactly k trades may be worse than fewer.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: prices [5, 2, 7, 1, 4], at most 1 trade. What is the largest profit?',
-      args: [[5, 2, 7, 1, 4], 1], answer: 5,
-      misconceptions: [{ answer: 8, feedback: 'That is two trades, 2 → 7 and 1 → 4. Only one is allowed.' }],
-      explain: 'Buy at 2, sell at 7: 5.',
-    },
+    apply: { cell: [2, 3], misconceptions: [
+      { answer: 5, feedback: 'That sells without paying for the share. hold[0](2) = −3 already includes buying at 3: −3 + 5 = 2.' },
+    ] },
   },
 
   'stock-cooldown': {
@@ -213,12 +203,9 @@ export const SCHEDULING_DESIGNS = {
         { text: 'hold after the last day', why: 'That has paid for a share never sold.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: prices [1, 3, 1, 3], one day of cooldown. What is the largest profit?',
-      args: [[1, 3, 1, 3], 1, 0], answer: 2,
-      misconceptions: [{ answer: 4, feedback: 'Selling on day 2 and buying on day 3 breaks the cooldown.' }],
-      explain: 'One trade, 1 → 3: 2. The second needs a rest day first.',
-    },
+    apply: { cell: [0, 4], misconceptions: [
+      { answer: 2, feedback: 'That buys straight after yesterday’s sale, from sold(3) = 2. The cooldown forbids it: buy only from rest(3) = 1.' },
+    ] },
   },
 
   'batch-scheduling': {
@@ -258,12 +245,10 @@ export const SCHEDULING_DESIGNS = {
         { text: 'The smallest D(i)', why: 'D(0) = 0 would always win; every job must run.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: two jobs of length 1, setup fee 3. What is the cheapest total?',
-      args: [[1, 1], 3], answer: 7,
-      misconceptions: [{ answer: 8, feedback: 'Two batches pay two fees: 4 + 4. One batch is 3 + 2².' }],
-      explain: 'One batch: 3 + 4 = 7.',
-    },
+    apply: { cell: [0, 4], misconceptions: [
+      { answer: 8, feedback: 'That is only the last batch, 4 + 2². The first three jobs cost D(3) = 16 before it.' },
+      { answer: 26, feedback: 'That makes the last batch jobs 3 and 4: D(2) + 4 + 3². Starting it at job 4 is cheaper: 16 + 4 + 4.' },
+    ] },
   },
 
   'text-justification': {
@@ -302,12 +287,10 @@ export const SCHEDULING_DESIGNS = {
         { text: 'D(n)', why: 'That charges the last line too.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: word lengths [2, 2], width 5. What is the cheapest total?',
-      args: [[2, 2], 5], answer: 0,
-      misconceptions: [{ answer: 9, feedback: 'Both words fit on one line (2 + 1 + 2 = 5), and the last line is free.' }],
-      explain: 'One line of length 5, which is the last line: 0.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 16, feedback: 'That puts word 3 on a line alone: D(2) + 4². Words 2 and 3 share a line 5 wide: D(1) + 1² = 9 + 1.' },
+      { answer: 1, feedback: 'That is only the last line’s cost. The first line, word 1 alone, costs D(1) = 3² = 9 before it.' },
+    ] },
   },
 
   'segmented-regression': {
@@ -347,11 +330,8 @@ export const SCHEDULING_DESIGNS = {
         { text: 'The smallest E(0, i)', why: 'That fits only some of the points with one line.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: y = 0, 2, 4, 3, 2, 1, penalty 2. What is the cheapest total?',
-      args: [[0, 2, 4, 3, 2, 1], 2], answer: 4,
-      misconceptions: [{ answer: 12, feedback: 'Six segments pay six penalties. Two straight runs need only two.' }],
-      explain: 'Rising 0, 2, 4 and falling 3, 2, 1: two exact lines, 2 + 2 = 4.',
-    },
+    apply: { cell: [0, 4], misconceptions: [
+      { answer: 3, feedback: 'That is D(3) alone. Point 4 still needs a segment: either a new one (+ 3, and its error 0) or a longer last segment with a larger error.' },
+    ] },
   },
 }

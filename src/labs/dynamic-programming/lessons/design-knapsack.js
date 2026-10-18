@@ -464,12 +464,10 @@ export const KNAPSACK_DESIGNS = {
         { text: 'The smaller of D(n, weight limit) and D(n, volume limit) from two separate tables', why: 'Each separate table ignores the other limit, so even the smaller may break one.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: items (2, 1, 3), (3, 2, 4), (4, 3, 6); weight limit 5, volume limit 3. What is the largest total value?',
-      args: [[[2, 1, 3], [3, 2, 4], [4, 3, 6]], 5, 3], answer: 7,
-      misconceptions: [{ answer: 6, feedback: 'The 6 alone fits, but the first two together weigh 5 and take 3 units of volume.' }],
-      explain: '(2, 1, 3) + (3, 2, 4) uses weight 5 and volume 3 exactly: 7. Any pair with the third item breaks a limit.',
-    },
+    apply: { cell: [17, 3], misconceptions: [
+      { answer: 3, feedback: 'That leaves item 2 out. Taking it uses weight 3 and volume 2, leaving D(1,2,1) = 3 for item 1: 4 + 3.' },
+      { answer: 4, feedback: 'That takes item 2 alone. With weight 2 and volume 1 left, item 1 still fits: D(1,2,1) = 3.' },
+    ] },
   },
 
   'group-knapsack': {
@@ -508,12 +506,9 @@ export const KNAPSACK_DESIGNS = {
         { text: 'D(G, C), but with the skip term removed', why: 'That is the exactly-one-per-group variant. Here a group may be skipped.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: group 1 offers (2, 5) or (3, 7); group 2 offers (1, 4). Capacity 3. What is the largest total value?',
-      args: [[[[2, 5], [3, 7]], [[1, 4]]], 3], answer: 9,
-      misconceptions: [{ answer: 7, feedback: '(3, 7) fills the capacity alone. (2, 5) leaves room for group 2’s (1, 4).' }],
-      explain: '(2, 5) from group 1 and (1, 4) from group 2 weigh 3: 9.',
-    },
+    apply: { cell: [3, 2], misconceptions: [
+      { answer: 5, feedback: 'That takes nothing from group 3. Its option 1/2 fits on top of D(2,1) = 4: 2 + 4.' },
+    ] },
   },
 
   'exact-capacity': {

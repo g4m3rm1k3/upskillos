@@ -237,12 +237,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'The sum of the frequencies', why: 'That is the cost if every key were the root, which is impossible.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: two keys searched 1 and 4 times. What is the lowest total cost?',
-      args: [[1, 4]], answer: 6,
-      misconceptions: [{ answer: 9, feedback: 'That roots the first key. Root the one searched 4 times.' }],
-      explain: 'Root the second key: 4 · 1 + 1 · 2 = 6.',
-    },
+    apply: { cell: [0, 2], misconceptions: [
+      { answer: 4, feedback: 'That is only the subtrees. Every key in 0 … 2 sits one level lower than in its subtree, so add their frequencies once more: 3 + 1 + 2 = 6.' },
+      { answer: 11, feedback: 'That roots key 1, the balanced tree: 6 + 5. Rooting key 0, searched most, gives 6 + 4.' },
+    ] },
   },
 
   'boolean-parenthesization': {
@@ -278,12 +276,9 @@ export const INTERVAL_DESIGNS = {
         { text: 'T(0, n − 1) + F(0, n − 1)', why: 'That counts every parenthesization.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: how many ways can “T and F or T” come out true?',
-      args: [[true, false, true], ['and', 'or']], answer: 2,
-      misconceptions: [{ answer: 1, feedback: 'Both work: (T and F) or T, and T and (F or T).' }],
-      explain: '(T and F) or T = true; T and (F or T) = true: 2.',
-    },
+    apply: { cell: [0, 2], misconceptions: [
+      { answer: 1, feedback: 'Both bracketings come out true: T | (F & T) = T | F, and (T | F) & T = T & T. Add the ways from every last operator.' },
+    ] },
   },
 
   'expression-extrema': {
@@ -319,12 +314,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'The maximum minus the minimum', why: 'That is a spread, not a value of the expression.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: the largest value of 2 − 3 − 4?',
-      args: [[2, 3, 4], ['-', '-']], answer: 3,
-      misconceptions: [{ answer: -5, feedback: 'That is (2 − 3) − 4. 2 − (3 − 4) = 2 + 1.' }],
-      explain: '2 − (3 − 4): the right side’s minimum is −1, so 2 − (−1) = 3.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 4, feedback: 'That is (1 − 3) × (2 − 4). Ending with the first “−” does better: 1 minus the smallest the rest can be, 3 × (2 − 4) = −6.' },
+      { answer: -1, feedback: 'That subtracts the right side’s value 3 × 2 − 4 = 2. The largest difference subtracts the right side’s smallest value, min(1,3) = −6.' },
+    ] },
   },
 
   'strange-printer': {
@@ -360,12 +353,9 @@ export const INTERVAL_DESIGNS = {
         { text: 'The number of different letters', why: '“aba” has 2 letters and needs 2 turns, but “abab” has 2 and needs 3.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: how many turns to print “abcabc”?',
-      args: ['abcabc'], answer: 5,
-      misconceptions: [{ answer: 6, feedback: 'The first a can be printed over positions 1 to 4 in one turn, sharing with the second a.' }],
-      explain: 'One a over “abca”, then b and c on top, then the final b and c: 5.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 4, feedback: 'That prints the first a alone: 1 + D(1,3). The a at 3 can come from the same stroke, leaving “bc” to print on top: D(1,2) + D(3,3) = 2 + 1.' },
+    ] },
   },
 
   'remove-boxes': {
@@ -401,12 +391,9 @@ export const INTERVAL_DESIGNS = {
         { text: 'The largest D(0, n − 1, k)', why: 'There are no extra boxes outside the row.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on [2, 1, 2, 1, 2]. What is the most you can earn?',
-      args: [[2, 1, 2, 1, 2]], answer: 11,
-      misconceptions: [{ answer: 5, feedback: 'One at a time earns 5. Clearing the two 1s first lets the three 2s close up: 3² = 9.' }],
-      explain: 'Each 1 alone (1 + 1), then the three 2s together (9): 11.',
-    },
+    apply: { cell: [5, 3], misconceptions: [
+      { answer: 9, feedback: 'That removes the two 1s now: 4 + D(0,2,0). Clearing the 2 between them first lets box 1 join them, three 1s: D(2,2,0) + D(0,1,2) = 1 + 10.' },
+    ] },
   },
 
   'k-partitions': {
@@ -445,12 +432,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'The smallest D(g, n) over g ≤ k', why: 'The question asks for exactly k segments.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: cut [2, 2] into exactly 2 segments. What is the cost?',
-      args: [[2, 2], 2], answer: 8,
-      misconceptions: [{ answer: 16, feedback: '16 is one segment, (2 + 2)². Two segments cost 2² + 2².' }],
-      explain: '[2] and [2]: 4 + 4 = 8.',
-    },
+    apply: { cell: [2, 3], misconceptions: [
+      { answer: 26, feedback: 'That starts the last segment at item 1: D(1,1) + (2 + 3)² = 1 + 25. Starting it at item 2 is cheaper: D(1,2) + 3² = 9 + 9.' },
+      { answer: 9, feedback: 'That is only the last segment, 3². The first two items are a segment too, costing D(1,2) = (1 + 2)² = 9.' },
+    ] },
   },
 
   'partition-max': {
@@ -490,11 +475,9 @@ export const INTERVAL_DESIGNS = {
         { text: 'The total divided by k', why: 'That is a lower bound, reached only if a perfect split exists.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: cut [1, 2, 3] into 2 segments. What is the smallest largest total?',
-      args: [[1, 2, 3], 2], answer: 3,
-      misconceptions: [{ answer: 5, feedback: 'That cuts after 1. Cutting after 2 gives 3 and 3.' }],
-      explain: '[1, 2] and [3]: both 3.',
-    },
+    apply: { cell: [2, 3], misconceptions: [
+      { answer: 9, feedback: 'That starts the last segment at item 2: max(D(1,2), 5) = max(9, 5). Starting it at item 1 gives max(7, 2 + 5) = 7.' },
+      { answer: 5, feedback: 'That is only the last segment. The cell holds the largest segment, and the first one, 7 + 2 = 9, is larger.' },
+    ] },
   },
 }
