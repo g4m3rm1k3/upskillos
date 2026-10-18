@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { TRACES, INPUTS, show, defaultInput } from './tables.js'
 import { formatField, parseInput, randomInput } from './traceInputs.js'
+import { WALKS, spell } from './walks.js'
 import './trace.css'
 
 // The live DP table, three ways:
@@ -10,6 +11,9 @@ import './trace.css'
 //              names the likely slip; "hard" hides which cells it reads.
 //   Fill order the learner clicks cells in any order; a cell fills only once everything it reads is
 //              filled, otherwise the missing cells flash. Any order that works is a topological order.
+//   Walk back  on the finished table, from the answer back to a base case: which choice made each cell
+//              (walks.js). The choices, read forwards, are the solution itself. The learner can pick each
+//              cell the value came from instead of being shown.
 // The input can be changed (or drawn at random), and the table is recomputed from the recurrence.
 
 const key = ([r, c]) => `${r},${c}`
@@ -85,7 +89,7 @@ function Grid({ t, values, marks = {}, arrows = [], onCell, W, H, popKey, title 
             : <div key={k} className={cls} style={style} role="cell" aria-label={label}><span key={marks[k]?.includes('is-current') ? popKey : 0}>{v !== undefined ? show(v) : marks[k]?.includes('is-ask') ? '?' : ''}</span></div>
         }))}
         <svg className="dp-tt-svg" width={C * W} height={R * H} aria-hidden="true">
-          <defs>{['read', 'missing'].map(tone => <marker key={tone} id={`dp-tt-head-${tone}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" className={`dp-tt-head is-${tone}`} /></marker>)}</defs>
+          <defs>{['read', 'missing', 'path'].map(tone => <marker key={tone} id={`dp-tt-head-${tone}`} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" className={`dp-tt-head is-${tone}`} /></marker>)}</defs>
           {arrows.map((a, i) => <Arrows key={i} {...a} W={W} H={H} />)}
         </svg>
       </div>
@@ -243,6 +247,54 @@ function Order({ trace, W, H }) {
   </div>
 }
 
+function WalkBack({ trace, id, W, H }) {
+  const t = trace.table, walk = WALKS[id]
+  const stepOf = useMemo(() => Object.fromEntries(t.steps.map(s => [key(s.at), s])), [t])
+  const values = useMemo(() => ({ ...baseValues(t), ...Object.fromEntries(t.steps.map(s => [key(s.at), s.value])) }), [t])
+  const [path, setPath] = useState([])
+  const [here, setHere] = useState(trace.answer)
+  const [choose, setChoose] = useState(false)
+  const [feedback, setFeedback] = useState(null)
+  const options = here ? walk.back(trace, here) : []
+  const done = !options.length
+  const take = option => { setPath(p => [...p, { at: here, option }]); setHere(option.from); setFeedback(null) }
+  const undo = () => { setHere(path.at(-1).at); setPath(p => p.slice(0, -1)); setFeedback(null) }
+  const restart = () => { setPath([]); setHere(trace.answer); setFeedback(null) }
+  const step = here ? stepOf[key(here)] : null
+  const click = at => {
+    if (!choose || done) return
+    const pick = options.find(o => o.from && key(o.from) === key(at))
+    if (pick) { take(pick); return }
+    if (step?.reads.some(r => key(r) === key(at))) setFeedback(`${t.name(...at)} = ${show(values[key(at)])} is read by ${t.name(...here)}, but its value did not win. The rule was ${formula(t, step)}: which term gave ${show(step.value)}?`)
+    else setFeedback(`${t.name(...here)} can only get its value from a cell it reads${step?.reads.length ? `: ${step.reads.map(r => t.name(...r)).join(', ')}` : ''}.`)
+  }
+  const marks = {}
+  path.forEach(({ at }) => { marks[key(at)] = 'is-path' })
+  if (here) { if (choose || done) marks[key(here)] = 'is-current'; else { step?.reads.forEach(r => { marks[key(r)] = 'is-read' }); marks[key(here)] = 'is-current' } }
+  if (!path.length && here) marks[key(here)] += ' is-answer'
+  const arrows = path.filter(p => p.option.from).map(p => ({ from: [p.option.from], to: p.at, tone: 'path' }))
+  if (here && !choose && options[0]?.from) arrows.push({ from: [options[0].from], to: here })
+  const solution = spell(id, path)
+  return <div className="dp-tt-mode">
+    <label className="dp-tt-toggle"><input type="checkbox" checked={choose} onChange={e => { setChoose(e.target.checked); setFeedback(null) }} /> Let me choose: click the cell each value came from</label>
+    <Grid t={t} values={values} marks={marks} arrows={arrows} onCell={choose && !done ? click : undefined} W={W} H={H} popKey={path.length} title={trace.title} />
+    <div className="dp-tt-explain" aria-live="polite">
+      {here && <p><strong>{t.name(...here)} = {show(values[key(here)])}.</strong> {done ? 'A base case: nothing before it, so the walk stops here.' : choose ? (options.some(o => !o.from) ? 'It may also end here.' : 'Where did this value come from? Click that cell.') : <>It came from this choice: <strong>{options[0].says}</strong>.{options.length > 1 && <> (A tie: {options.slice(1).map(o => o.says).join('; ')} gives the same value, so that way works too.)</>}</>}</p>}
+      {!here && <p>The walk ends here: that choice needs nothing before it.</p>}
+      {feedback && <p className="dp-tt-feedback is-bad" role="status">{feedback}</p>}
+      {path.length > 0 && <ol className="dp-tt-walk">{path.map((p, k) => <li key={k}><code>{t.name(...p.at)}</code> {p.option.says}</li>)}</ol>}
+      {(solution || done) && <p className={done ? 'dp-tt-answer' : ''}>{walk.result}{done ? ', read forwards' : ' so far'}: <strong>{solution || '(nothing)'}</strong></p>}
+    </div>
+    <div className="dp-tt-controls">
+      {!done && !choose && <button type="button" className="dp-primary" onClick={() => take(options[0])}>Next step ↩</button>}
+      {!done && choose && options.filter(o => !o.from).map(o => <button key={o.says} type="button" onClick={() => take(o)}>{o.says}</button>)}
+      <button type="button" onClick={undo} disabled={!path.length}>◀ Undo</button>
+      <button type="button" onClick={restart}>Start again</button>
+      <span className="dp-tt-count">{path.length} step{path.length === 1 ? '' : 's'} back</span>
+    </div>
+  </div>
+}
+
 function InputEditor({ id, input, onApply }) {
   const spec = INPUTS[id]
   const texts0 = () => Object.fromEntries(spec.fields.map(f => [f.key, formatField(f, input[f.key])]))
@@ -299,12 +351,13 @@ export default function TableTrace({ id }) {
     </div>
     <p className="dp-tt-setup">{trace.setup}</p>
     <div className="dp-tt-tabs" role="tablist" aria-label="How to use the table">
-      {[['watch', '▶ Watch it fill'], ['fill', '✎ You fill it'], ['order', '⇄ Fill order']].map(([m, label]) =>
+      {[['watch', '▶ Watch it fill'], ['fill', '✎ You fill it'], ['order', '⇄ Fill order'], ...(WALKS[id] ? [['walk', '↩ Walk back']] : [])].map(([m, label]) =>
         <button key={m} type="button" role="tab" aria-selected={mode === m} className={mode === m ? 'is-active' : ''} onClick={() => setMode(m)}>{label}</button>)}
     </div>
     {mode === 'watch' && <Watch key={inputKey} trace={trace} W={W} H={H} />}
     {mode === 'fill' && <Fill key={inputKey} trace={trace} W={W} H={H} id={id} onFinish={() => setFinished(readStore(id))} />}
     {mode === 'order' && <Order key={inputKey} trace={trace} W={W} H={H} />}
+    {mode === 'walk' && <WalkBack key={inputKey} trace={trace} id={id} W={W} H={H} />}
     {INPUTS[id] && <details className="dp-tt-details">
       <summary>Change the input and rebuild the table</summary>
       <InputEditor id={id} input={input} onApply={setInput} />

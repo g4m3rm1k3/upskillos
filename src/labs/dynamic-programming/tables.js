@@ -419,6 +419,38 @@ export const TRACES = {
     }
     return { title: `“${a}” and “${b}”`, setup: 'D(i, j): the longest common subsequence of the first i and first j letters.', table: t, answer: [a.length, b.length], args: [a, b] }
   },
+  'lcs-reconstruct': ({ a = 'abcbdab', b = 'bdcaba' } = {}) => {
+    const t = pairs(a, b, 'D'), n = a.length, m = b.length
+    t.rowLabels.push('strings'); t.cells.push(t.colLabels.map(() => null))
+    const name = t.name
+    t.name = (r, c) => (r === n + 1 ? 'strings' : name(r, c))
+    seedEdges(t, a, b, () => 0, () => 0, 'an empty prefix: 0')
+    eachPair(a, b, (i, j) => {
+      if (a[i - 1] === b[j - 1]) t.set(i, j, 1 + t.get(i - 1, j - 1), [[i - 1, j - 1]], `“${a[i - 1]}” = “${b[j - 1]}”: 1 + D(${i - 1},${j - 1}) = 1 + ${t.get(i - 1, j - 1)}`)
+      else t.set(i, j, Math.max(t.get(i - 1, j), t.get(i, j - 1)), [[i - 1, j], [i, j - 1]], `“${a[i - 1]}” ≠ “${b[j - 1]}”: max(D(${i - 1},${j}), D(${i},${j - 1})) = max(${t.get(i - 1, j)}, ${t.get(i, j - 1)})`)
+    })
+    // Walk back from the last cell along every move that keeps the length, collecting strings in a set.
+    const memo = new Map()
+    const strings = (i, j) => {
+      const k = `${i},${j}`
+      if (!memo.has(k)) {
+        let out = new Set([''])
+        if (i && j) {
+          if (a[i - 1] === b[j - 1]) out = new Set([...strings(i - 1, j - 1)].map(x => x + a[i - 1]))
+          else {
+            out = new Set()
+            if (t.get(i - 1, j) === t.get(i, j)) strings(i - 1, j).forEach(x => out.add(x))
+            if (t.get(i, j - 1) === t.get(i, j)) strings(i, j - 1).forEach(x => out.add(x))
+          }
+        }
+        memo.set(k, out)
+      }
+      return memo.get(k)
+    }
+    const found = [...strings(n, m)].sort()
+    t.set(n + 1, m, found.length, [[n, m]], `walk back from D(${n},${m}) = ${t.get(n, m)}, following every tie: ${found.map(x => `“${x}”`).join(', ')}`)
+    return { title: `“${a}” and “${b}”`, setup: 'First the LCS length table, D(i, j) for every pair of prefixes. Then walk back from the last cell: a match is in the subsequence; on a mismatch, go to a neighbour with the same length, and on a tie, follow both. The different strings collected are the answer.', table: t, answer: [n + 1, m], args: [a, b] }
+  },
   'edit-distance': ({ a = 'horse', b = 'ros' } = {}) => {
     const t = table(['∅', ...a.split('').map((ch, i) => `${i + 1} ${ch}`)], ['∅', ...b.split('').map((ch, j) => `${j + 1} ${ch}`)], (r, c) => `E(${r},${c})`)
     for (let i = 0; i <= a.length; i++) t.seed(i, 0, i, `${i} deletions`)
@@ -1088,6 +1120,7 @@ export const INPUTS = {
   'value-knapsack': { fields: [ints('weights', 'Weights', 1, 12, [1, 5]), ints('values', 'Values', 0, 4, [1, 5]), int('capacity', 'Capacity', 0, 30)], rule: sameLength },
   lcs: { fields: [text('a', 'First', 'a-z', [1, 8]), text('b', 'Second', 'a-z', [1, 10])] },
   'edit-distance': { fields: [text('a', 'From', 'a-z', [1, 8]), text('b', 'To', 'a-z', [1, 10])] },
+  'lcs-reconstruct': { fields: [text('a', 'First', 'a-z', [1, 7]), text('b', 'Second', 'a-z', [1, 7])] },
   lis: { fields: values(0, 99, [1, 12]) },
   'matrix-chain': { fields: [ints('dims', 'Sizes d₀, d₁, … (matrix i is dᵢ × dᵢ₊₁)', 1, 20, [3, 7])] },
   'burst-balloons': { fields: values(0, 9, [1, 6]) },

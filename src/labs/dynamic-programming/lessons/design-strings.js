@@ -82,12 +82,10 @@ export const STRING_DESIGNS = {
         { text: 'D(n, m)', why: 'That is the length, not how many strings have it.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on “ab” and “ba”. How many different longest common subsequences?',
-      args: ['ab', 'ba'], answer: 2,
-      misconceptions: [{ answer: 1, feedback: 'The length is 1, and both “a” and “b” have it.' }],
-      explain: 'The last letters differ, and both neighbours have length 1: one side gives “a”, the other “b”.',
-    },
+    apply: { cell: [8, 6], misconceptions: [
+      { answer: 4, feedback: '4 is the length, D(7,6). The question is how many different strings of that length the walk back finds: follow both neighbours at every tie.' },
+      { answer: 1, feedback: 'That follows one way back. At a mismatch where both neighbours keep the length, both must be followed, and they lead to different strings.' },
+    ] },
   },
 
   'common-substring': {

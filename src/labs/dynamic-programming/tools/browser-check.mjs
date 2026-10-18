@@ -1,7 +1,7 @@
 // The DP lab in a real browser: reuse this every session instead of writing a new one. It starts its
 // own dev server (and always stops it), opens every lesson that has a live table or a call tree, goes
 // to its walkthrough, plays the table and the tree, fills one cell by typing, tries the fill-order
-// game, and saves a screenshot of each. Every lesson with "Design it yourself" is designed start to
+// game, walks the answer back where it can, and saves a screenshot of each. Every lesson with "Design it yourself" is designed start to
 // finish, with one wrong pick per decision. `--only` takes lesson ids, plus `design` and `run`. Any page error, console error or missing piece is reported.
 //
 //   node src/labs/dynamic-programming/tools/browser-check.mjs [out-folder] [--only id1,id2]
@@ -13,6 +13,7 @@ import { CONCEPTS } from '../curriculum.js'
 import { TRACES } from '../tables.js'
 import { TREE_FOR } from '../trees.js'
 import { DESIGNS, applyCell } from '../lessons/designs.js'
+import { WALKS } from '../walks.js'
 
 const args = process.argv.slice(2)
 const onlyArg = args.includes('--only') ? args[args.indexOf('--only') + 1] : null
@@ -75,6 +76,14 @@ try {
       await tt.getByRole('button', { name: 'Which cell is ready?' }).click()
       await tt.locator('.dp-tt-cell.is-hint').click()
       await tt.screenshot({ path: path.join(out, `${id}-order.png`) })
+      if (WALKS[id]) {
+        // Walk back from the answer to a base case; the solution must appear, read forwards.
+        await tt.getByRole('tab', { name: '↩ Walk back' }).click()
+        const next = tt.getByRole('button', { name: 'Next step ↩' })
+        for (let k = 0; k < 60 && await next.isVisible().catch(() => false); k++) await next.click()
+        if (!(await tt.getByText(/read forwards/).isVisible().catch(() => false))) problems.push(`${id}: the walk back did not reach a solution`)
+        await tt.screenshot({ path: path.join(out, `${id}-walk.png`) })
+      }
       const overflow = await page.evaluate(() => { const m = document.querySelector('.dp-detail'); return m.scrollWidth > m.clientWidth + 2 })
       if (overflow) problems.push(`${id}: the lesson scrolls sideways`)
     }

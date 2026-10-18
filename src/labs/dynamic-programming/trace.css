@@ -176,6 +176,11 @@
   border: 2px dashed var(--dp-red);
 }
 
+.dp-tt-cell.is-path > span {
+  border: 2px solid var(--dp-primary);
+  background: rgba(139, 92, 246, 0.16);
+}
+
 .dp-tt-cell.is-hint > span {
   border: 2px solid var(--dp-green);
   animation: dp-tt-pulse 1s infinite;
@@ -214,6 +219,20 @@
 .dp-tt-arrow.is-missing { stroke: var(--dp-red); stroke-dasharray: 5 4; }
 .dp-tt-head.is-read { fill: var(--dp-sky); }
 .dp-tt-head.is-missing { fill: var(--dp-red); }
+.dp-tt-arrow.is-path { stroke: var(--dp-primary); stroke-width: 2.5; }
+.dp-tt-head.is-path { fill: var(--dp-primary); }
+
+/* Walk back: the choices made, from the answer back. */
+.dp-tt-walk {
+  margin: 8px 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 3px;
+}
+.dp-tt-walk code {
+  color: var(--dp-primary);
+  margin-right: 4px;
+}
 
 .dp-tt-controls {
   display: flex;

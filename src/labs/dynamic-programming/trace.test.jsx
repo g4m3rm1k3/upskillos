@@ -137,3 +137,34 @@ describe('call tree', () => {
     expect([...order].map(s => s.textContent)).toEqual(['P(0,0)', 'P(0,1)', 'P(0,2)', 'P(1,0)', 'P(1,1)', 'P(1,2)', 'P(2,0)', 'P(2,1)', 'P(2,2)'])
   })
 })
+
+describe('live table: walk back the answer', () => {
+  it('steps from the answer to the start and reads the solution off forwards', () => {
+    render(<TableTrace id="zero-one-knapsack" />)
+    fireEvent.click(screen.getByRole('tab', { name: '↩ Walk back' }))
+    expect(screen.getByText('D(3,6) = 9.')).toBeTruthy()
+    expect(screen.getByText(/It came from this choice:/)).toBeTruthy()
+    while (screen.queryByRole('button', { name: 'Next step ↩' })) fireEvent.click(screen.getByRole('button', { name: 'Next step ↩' }))
+    expect(screen.getByText(/A base case/)).toBeTruthy()
+    expect(screen.getByText('item 1, item 3')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '◀ Undo' }))
+    expect(screen.getByRole('button', { name: 'Next step ↩' })).toBeTruthy()
+  })
+  it('lets the learner pick each cell, and explains a cell that did not give the value', () => {
+    render(<TableTrace id="zero-one-knapsack" />)
+    fireEvent.click(screen.getByRole('tab', { name: '↩ Walk back' }))
+    fireEvent.click(screen.getByLabelText(/Let me choose/))
+    // D(3,6) = max(skip: D(2,6) = 8, take: 6 + D(2,2) = 9): skipping did not win.
+    fireEvent.click(cell('D(2,6)'))
+    expect(screen.getByText(/D\(2,6\) = 8 is read by D\(3,6\), but its value did not win/)).toBeTruthy()
+    fireEvent.click(cell('D(0,0)'))
+    expect(screen.getByText(/can only get its value from a cell it reads: D\(2,6\), D\(2,2\)/)).toBeTruthy()
+    fireEvent.click(cell('D(2,2)'))
+    expect(screen.getByText('D(2,2) = 3.')).toBeTruthy()
+    expect(screen.getByText(/pack item 3/)).toBeTruthy()
+  })
+  it('is offered only where a walk is defined', () => {
+    render(<TableTrace id="fibonacci" />)
+    expect(screen.queryByRole('tab', { name: '↩ Walk back' })).toBeNull()
+  })
+})
