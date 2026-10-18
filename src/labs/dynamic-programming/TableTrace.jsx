@@ -255,6 +255,10 @@ function WalkBack({ trace, id, W, H }) {
   const [here, setHere] = useState(trace.answer)
   const [choose, setChoose] = useState(false)
   const [feedback, setFeedback] = useState(null)
+  const final = t.get(...trace.answer)
+  if (final === false || (typeof final === 'number' && !Number.isFinite(final))) {
+    return <div className="dp-tt-mode"><p className="dp-tt-explain">Nothing to walk back: the answer, <strong>{t.name(...trace.answer)} = {show(final)}</strong>, says this input has no solution. Change the input to one that has.</p></div>
+  }
   const options = here ? walk.back(trace, here) : []
   const done = !options.length
   const take = option => { setPath(p => [...p, { at: here, option }]); setHere(option.from); setFeedback(null) }

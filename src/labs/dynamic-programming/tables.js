@@ -913,7 +913,7 @@ export const TRACES = {
       t.set(2, d, Math.max(r, s), [[2, d - 1], [1, d - 1]], `max(keep resting: rest(${d - 1}), yesterday’s sale cools down: sold(${d - 1})) = max(${show(r)}, ${show(s)})`)
     })
     const n = p.length, answer = t.get(1, n) > t.get(2, n) ? [1, n] : [2, n]
-    return { title: `Prices ${list(p)}, one day’s cooldown${fee ? `, fee ${fee}` : ''}`, setup: 'Three states a day: hold (a share), sold (sold today, so tomorrow you cannot buy), and rest (free to buy). Buying reads only yesterday’s rest, never yesterday’s sold: that is the cooldown. The answer is the better of sold and rest on the last day.', table: t, answer, args: [p, 1, fee] }
+    return { title: `Prices ${list(p)}, one day’s cooldown${fee ? `, fee ${fee}` : ''}`, setup: 'Three states a day: hold (a share), sold (sold today, so tomorrow you cannot buy), and rest (free to buy). Buying reads only yesterday’s rest, never yesterday’s sold: that is the cooldown. The answer is the better of sold and rest on the last day.', table: t, answer, args: [p, 1, fee], input: { prices: p, fee } }
   },
   'batch-scheduling': ({ lengths: a = [2, 1, 1, 2], setup = 4 } = {}) => {
     const n = a.length, prefix = [0]
@@ -1090,7 +1090,16 @@ export const INPUTS = {
   'max-subarray': { fields: values(-99, 99) },
   'max-product': { fields: values(-9, 9, [1, 8]) },
   'decode-ways': { fields: [text('s', 'Digits', '0-9', [1, 10])] },
-  'word-break': { fields: [text('s', 'Text', 'a-z', [1, 12]), { key: 'words', label: 'Words', kind: 'words', len: [1, 6] }] },
+  'word-break': {
+    fields: [text('s', 'Text', 'a-z', [1, 12]), { key: 'words', label: 'Words', kind: 'words', len: [1, 6] }],
+    // Text made of the words, with one letter changed half the time, so both answers come up.
+    random: r => {
+      const words = [['cat', 'cats', 'and', 'sand', 'dog'], ['a', 'ab', 'abc', 'cd', 'bcd'], ['go', 'goal', 'al', 'pal', 'pa']][r(0, 2)]
+      let s = Array.from({ length: r(1, 3) }, () => words[r(0, words.length - 1)]).join('').slice(0, 12)
+      if (r(0, 1)) { const k = r(0, s.length - 1); s = s.slice(0, k) + (s[k] === 'a' ? 'o' : 'a') + s.slice(k + 1) }
+      return { s, words }
+    },
+  },
   'word-break-count': { fields: [text('s', 'Text', 'a-z', [1, 12]), { key: 'words', label: 'Words', kind: 'words', len: [1, 6] }] },
   'grid-paths': { fields: [int('rows', 'Rows', 1, 7), int('cols', 'Columns', 1, 8)] },
   'obstacle-paths': { fields: [{ key: 'grid', label: 'Grid (1 = blocked)', kind: 'grid', rows: [1, 7], cols: [1, 8] }] },

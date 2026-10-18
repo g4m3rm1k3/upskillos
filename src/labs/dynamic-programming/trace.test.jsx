@@ -168,3 +168,14 @@ describe('live table: walk back the answer', () => {
     expect(screen.queryByRole('tab', { name: '↩ Walk back' })).toBeNull()
   })
 })
+
+describe('live table: walk back with no solution', () => {
+  it('says so instead of walking', () => {
+    render(<TableTrace id="exact-capacity" />)
+    fireEvent.click(screen.getByText('Change the input and rebuild the table'))
+    fireEvent.change(screen.getByLabelText('Capacity to fill'), { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Rebuild the table' }))
+    fireEvent.click(screen.getByRole('tab', { name: '↩ Walk back' }))
+    expect(screen.getByText(/Nothing to walk back/)).toBeTruthy()
+  })
+})

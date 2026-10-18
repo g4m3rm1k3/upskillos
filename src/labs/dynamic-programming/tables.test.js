@@ -79,6 +79,8 @@ describe('live DP tables', () => {
       const spec = INPUTS[id], input = defaultInput(id)
       const texts = Object.fromEntries(spec.fields.map(f => [f.key, formatField(f, input[f.key])]))
       expect(parseInput(spec, texts)).toEqual({ value: input })
+      // ...and it is the lesson example: rebuilding from it gives the same arguments.
+      expect(TRACES[id](input).args, `${id}: default input`).toEqual(example.args)
       const random = rng(id.length * 7919)
       let tried = 0
       for (let i = 0; i < 200 && tried < 25; i++) {
