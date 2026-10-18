@@ -88,7 +88,7 @@ const browser = await chromium.launch()
 try {
   page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
   page.on('pageerror', e => problems.push(`page error: ${e}`))
-  page.on('console', m => { if (m.type() === 'error' && !/WebSocket|chorus|favicon|Firebase|firestore/i.test(m.text())) problems.push(`console: ${m.text().slice(0, 200)}`) })
+  page.on('console', m => { if (m.type() === 'error' && !/WebSocket|chorus|favicon|Firebase|firestore|Trystero/i.test(m.text())) problems.push(`console: ${m.text().slice(0, 200)}`) })
   await page.addInitScript(() => { try { localStorage.setItem('oc-tour-seen', '1') } catch { /* */ } })
   for (let i = 0; i < 90; i++) { try { await page.goto(URL, { timeout: 60000 }); break } catch { await new Promise(r => setTimeout(r, 2000)) } }
   await page.getByRole('heading', { name: 'ML Foundations' }).first().waitFor({ timeout: 180000 })
@@ -205,6 +205,13 @@ try {
     if (lesson.pieces.length && !(await page.locator('.mlf-nav', { hasText: lesson.title }).locator('.mlf-nav-n', { hasText: '✓' }).isVisible().catch(() => false))) problems.push(`${lesson.id}: no ✓ in the sidebar after passing every challenge`)
     console.log(`${lesson.id}: done`)
   }
+  // The puzzle board: its own page, a click on a piece, and the learner's program below.
+  await page.locator('.mlf-nav', { hasText: 'The puzzle board' }).click()
+  await page.getByRole('heading', { name: 'The puzzle board' }).waitFor({ timeout: 10000 }).catch(() => problems.push('the puzzle board page did not open'))
+  await page.locator('.mlf-tile', { hasText: 'sweep_values' }).first().click()
+  if (!(await page.getByText(/lends an idea to/).first().isVisible().catch(() => false))) problems.push('the puzzle board shows no idea links for sweep_values')
+  await shot('board')
+  await sideways('board')
   await page.locator('.mlf-header').screenshot({ path: path.join(out, 'header.png') })
   await page.locator('.mlf-sidebar').screenshot({ path: path.join(out, 'sidebar.png') })
 

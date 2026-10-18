@@ -31,7 +31,7 @@ export function stageDone(id, content, record) {
   return record.stages[id] === true
 }
 
-export default function LessonView({ meta, content, record, update, stage, setStage, mine, onOpen, next }) {
+export default function LessonView({ meta, content, record, update, stage, setStage, mine, onOpen, next, board }) {
   const stages = stagesOf(content)
   const current = stages.some(([id]) => id === stage) ? stage : 'try'
   const markStage = id => update(r => ({ ...r, stages: { ...r.stages, [id]: true } }))
@@ -113,6 +113,7 @@ export default function LessonView({ meta, content, record, update, stage, setSt
             <Markdown>{content.keep.card}</Markdown>
             {content.keep.pieces.length > 0 && <p className="mlf-muted">In your toolbox: {content.keep.pieces.map(p => <span key={p} className={`mlf-tool${mine[p] ? ' mine' : ''}`}><code>{p}</code> {mine[p] ? '✓ yours' : '· lab version until you pass it'}</span>)}</p>}
           </div>
+          {board}
           <h3>Remember</h3>
           <ul className="mlf-remember">{content.keep.remember.map((r, i) => <li key={i}><Markdown inline>{r}</Markdown></li>)}</ul>
           <h3>The names in machine learning</h3>

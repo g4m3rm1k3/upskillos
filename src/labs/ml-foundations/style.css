@@ -369,3 +369,38 @@
 .mlf-slot { width: 46px; height: 46px; border: 1px dashed var(--mlf-line-bright); border-radius: 6px; display: grid; place-items: center; font-family: var(--mlf-mono); font-weight: 700; }
 .mlf-slot.full { border-style: solid; background: var(--mlf-card); }
 .mlf-slot.picked { background: var(--mlf-accent); color: var(--mlf-accent-ink); }
+
+/* ---- the puzzle board ---- */
+.mlf-board { border: 1px solid var(--mlf-line); border-radius: 12px; padding: 12px 14px; background: var(--mlf-panel); display: flex; flex-direction: column; gap: 12px; }
+.mlf-board-head p { margin: 0 0 2px; }
+.mlf-board-parts { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 12px; }
+.mlf-board-part { display: flex; flex-direction: column; gap: 8px; }
+.mlf-board-part-title { margin: 0; font-weight: 700; font-size: 13px; color: var(--mlf-blue); }
+.mlf-board-lesson { border: 1px solid var(--mlf-line); border-radius: 8px; padding: 6px 8px; background: var(--mlf-card); }
+.mlf-board-lesson.here { border-color: var(--mlf-amber); box-shadow: 0 0 0 1px var(--mlf-amber) inset; }
+.mlf-board-lesson-name { border: 0 !important; background: none !important; padding: 0 !important; font-size: 12.5px; color: var(--mlf-muted); text-align: left; }
+.mlf-board-lesson-name:hover { color: var(--mlf-text); text-decoration: underline; }
+.mlf-tiles { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 4px; }
+.mlf-tile { font-size: 12px !important; padding: 3px 8px !important; border-radius: 6px !important; }
+.mlf-tile code { background: none; padding: 0; }
+.mlf-tile.mine { border-color: var(--mlf-good) !important; color: var(--mlf-good); background: rgba(52, 211, 153, 0.1) !important; }
+.mlf-tile.here { border-color: var(--mlf-amber) !important; color: var(--mlf-amber); }
+.mlf-tile.lab { color: var(--mlf-muted); }
+.mlf-tile.picked { box-shadow: 0 0 0 2px var(--mlf-blue); }
+.mlf-board-detail { border-top: 1px solid var(--mlf-line); padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.mlf-board-detail p { margin: 0; }
+.mlf-sig { font-size: 13px; color: var(--mlf-blue); }
+.mlf-board-links { display: flex; flex-wrap: wrap; gap: 6px 24px; align-items: center; }
+.mlf-board-links > div { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.mlf-tile-link { font-size: 12px !important; padding: 1px 7px !important; border-radius: 999px !important; }
+.mlf-tile-link code { background: none; padding: 0; }
+.mlf-tile-link.mine { border-color: var(--mlf-good) !important; color: var(--mlf-good); }
+.mlf-board-ideas { margin: 0; padding-left: 18px; font-size: 13.5px; }
+.mlf-board-ideas li { margin-bottom: 4px; }
+.mlf-board-program { margin: 0; background: #071014; border-radius: 8px; padding: 8px 0; font-size: 12.5px; }
+.mlf-board-program figcaption { padding: 0 12px 6px; }
+.mlf-board-line { display: flex; align-items: center; gap: 8px; padding: 0 10px; border-left: 3px solid transparent; }
+.mlf-board-line pre { margin: 0; flex: 1; white-space: pre; overflow-x: auto; font-family: var(--mlf-mono); }
+.mlf-board-line.dark { opacity: 0.45; }
+.mlf-board-line.lit { border-left-color: var(--mlf-good); background: rgba(52, 211, 153, 0.07); }
+.mlf-board-line.here { border-left-color: var(--mlf-amber); background: rgba(251, 191, 36, 0.12); opacity: 1; }
