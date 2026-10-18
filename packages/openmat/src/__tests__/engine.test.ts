@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { executeScript, normalizeVector, buildLinspace, rrefMatrix, polyfit, polyval } from '../index.js'
+import { detectMatlabCompatibilityWarnings, executeScript, normalizeVector, buildLinspace, rrefMatrix, polyfit, polyval } from '../index.js'
 
 // ── executeScript — primary API ───────────────────────────────────────────────
 
@@ -329,6 +329,11 @@ describe('executeScript — compatibility warnings', () => {
     const r = executeScript('syms x; y = x^2;')
     expect(r.compatibilityWarnings.length).toBeGreaterThan(0)
   })
+  it('ignores words inside strings and comments, but not transposes next to them', () => {
+    expect(executeScript("disp('Rank of the weather table:')\nx = 1; % a table of values").compatibilityWarnings).toEqual([])
+    expect(executeScript("A = [1 2; 3 4];\nB = A';\ndisp('it''s a table')").compatibilityWarnings).toEqual([])
+    expect(detectMatlabCompatibilityWarnings("A = [1 2]; t = table(A')").length).toBe(1)
+  })
 })
 
 // ── Pure utility functions ────────────────────────────────────────────────────
@@ -483,5 +488,29 @@ describe('one-output and multi-output linear algebra', () => {
     expect(w.R[1][1]).toBeCloseTo(Math.SQRT2, 10)
     expect((w.back as number[][]).flat().map(v => +v.toFixed(10))).toEqual([4, 2, 2, 3])
     expect(() => executeScript('R=chol([1 2;2 1]);')).toThrow(/positive definite/)
+  })
+})
+
+describe('executeScript — MATLAB compatibility fixes', () => {
+  const value = (r: any, name: string) => r.workspace.find((w: any) => w.name === name)?.value
+  it('bar(x, y) draws y at the positions x', () => {
+    const fig = JSON.parse(executeScript("bar([1 2 3], [5 2 0.5])\ntitle('t')").figureJson as string)
+    const bars = fig.elements.find((e: any) => e.type === 'bars')
+    expect(bars.values).toEqual([5, 2, 0.5])
+    expect(bars.labels).toEqual(['1', '2', '3'])
+    expect(JSON.parse(executeScript('bar([4 1])').figureJson as string).elements.find((e: any) => e.type === 'bars').values).toEqual([4, 1])
+  })
+  it('find(x, n) returns only the first n matches', () => {
+    const r = executeScript('v = [0 3 0 5 7];\na = find(v > 2, 1);\nb = find(v, 2);\nc = find(v);')
+    expect(value(r, 'a')).toBe(2)
+    expect(value(r, 'b')).toEqual([2, 4])
+    expect(value(r, 'c')).toEqual([2, 4, 5])
+  })
+  it("norm(A, 'fro'), norm(A, 1) and norm(A, Inf) for matrices and vectors", () => {
+    const r = executeScript("A = [1 -2; 3 4];\nf = norm(A, 'fro');\no = norm(A, 1);\ni = norm(A, Inf);\nv = norm([3 4], 'fro');")
+    expect(value(r, 'f')).toBeCloseTo(Math.sqrt(30), 12)
+    expect(value(r, 'o')).toBeCloseTo(6, 12)
+    expect(value(r, 'i')).toBeCloseTo(7, 12)
+    expect(value(r, 'v')).toBeCloseTo(5, 12)
   })
 })

@@ -1,5 +1,7 @@
 # Linear Algebra Lab: session handoff
 
+> **Active again (2026-10-18).** The owner un-parked the lab: it matters for their own work. They also asked to extend OpenMAT when a lesson needs it. Engine changes go in `packages/openmat/src` with a test in `packages/openmat/src/__tests__/engine.test.ts`; the app and the tests load the source directly, and `dist/` is untracked.
+
 Start every Linear Algebra Lab session by reading this file, then the phase you are building in [linear-algebra-lab-gentle-plan.md](linear-algebra-lab-gentle-plan.md) (design rules and build order). [linear-algebra-lab.md](linear-algebra-lab.md) holds the older design notes and engine conventions. Don't re-read finished lesson files unless the new work touches them.
 
 At the end of a session, update this file (state, next step, anything learned) and the plan's build-order entry, then stop so the owner can clear the chat. **One phase per session.**
@@ -14,25 +16,33 @@ At the end of a session, update this file (state, next step, anything learned) a
 - **One heavy run at a time.** Never overlap vitest runs, builds or the browser check.
 - Plain language in replies. Make technical decisions without asking.
 
-## State of the project (2026-10-17, end of Phase 5)
+## State of the project (2026-10-18, end of Phase 6a)
 
 - **Committed:** Phases 1–4 (Phase 4 went in with commit `535a3f01`).
-- **Done but NOT committed:** Phase 5. Its files (under `src/labs/linear-algebra-lab/` unless noted):
-  - New: `lessons/svd.js`, `practice/svd.js`, `explore/svd.jsx`.
-  - Modified: `curriculum.js`, `curriculum.test.js`, `practice.test.js`, `index.test.jsx`, `explore.test.jsx`, `Explore.jsx`, `lab.css`, `practice/index.js`, `lessons/core.js`, `lessons/enrich.js`, `lessons/spectral.js`, `lessons/uses.js`, plus `docs/linear-algebra-lab-gentle-plan.md` and this file.
+- **Done but NOT committed:** Phase 5 and Phase 6a. Their files:
+  - Lab (`src/labs/linear-algebra-lab/`). New: `lessons/svd.js`, `practice/svd.js`, `explore/svd.jsx`. Modified: `curriculum.js`, `curriculum.test.js`, `practice.test.js`, `index.test.jsx`, `explore.test.jsx`, `Explore.jsx`, `lab.css`, `practice/index.js`, `lessons/core.js`, `lessons/enrich.js`, `lessons/spaces.js`, `lessons/spectral.js`, `lessons/uses.js`.
+  - Engine: `packages/openmat/src/engine.ts`, `packages/openmat/src/compat.ts`, `packages/openmat/src/__tests__/engine.test.ts`.
+  - Docs: `docs/linear-algebra-lab-gentle-plan.md` and this file.
   - Any untracked `docs/notebooks/*` files belong to another session. Don't stage them.
-- **Size:** 67 lessons in 13 modules over 4 stages (`STAGES` in `curriculum.js`). Every lesson but the opening tour has a problem set.
-- **Last checks (2026-10-17):**
-  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 650 passed.
-  - `npm run catalog:check`: current (the 14 content problems that were already there).
-  - Browser check at 1400 px, light and dark: the photo playground (all three pictures), the photo lesson's opening, and the "Inside the SVD" demo. No page errors.
-  - The production build and typecheck were last run at the Phase 3 commit, not since.
-- **The SVD module now**, in order: `laml-svd-photo` (new), `laml-svd-low-rank` (rewritten as "Inside the SVD: patterns, strengths and choosing k"), `laml-covariance-pca` (kept here, now with a why story and an angle linking PCA to the SVD), `laml-spectral-svd-theorem` (now has `after: 'laml-covariance-pca'`). `svdLessons` sits before `core` in the base list so the photo lesson comes first.
-- **Also fixed:** the "LU with pivoting" demo in `lessons/core.js` used `bar([1 2],x)`, which drew the bar labels instead of x (see the engine quirks below).
+- **Size:** 67 lessons in 13 modules over 4 stages (`STAGES` in `curriculum.js`).
+- **Reworked in the gentle style (why, uses, angles):** all of Stages 1 and 2, and in Stage 3 every module except "Least squares and data". The `gentle curve` test in `curriculum.test.js` lists the reworked modules; add each module to it once it is done.
+- **Last checks (2026-10-18):**
+  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 654 passed.
+  - `npm run typecheck`: clean.
+  - `npm run catalog:check`: current on 2026-10-17 (the 14 content problems that were already there). No lessons were added since.
+  - Browser check: span and rank in light and dark mode, no page errors.
+  - The production build was last run at the Phase 3 commit.
 
-## Next: Phase 6
+## Next: Phase 6b, "Best fit"
 
-Re-sequence Stage 3, move the applied lessons into Stage 4 tracks, fix the 15 `GUESSABLE` families, replace the "mastery" wording, and add the `track` and `derive` features. Read the Phase 6 entry in the plan first.
+Read the Phase 6 entry in the plan. In short:
+1. Rename the module "Least squares and data" to "Best fit". Module names are not progress keys, but update `STAGES`, `BY_MODULE` in `Explore.jsx` and every lesson's `module`.
+2. A new opening lesson: find your position from noisy GPS satellites (more equations than unknowns, so no exact answer: find the closest).
+3. Make least squares, QR, Gram–Schmidt and orthogonal matrices gentler; add why stories, case studies and angles; add the module to the `gentle curve` test.
+4. Move `laml-regression-validation` and `laml-ridge-scaling` to "Math for machine learning".
+5. Lab suite, browser check, then update the plan and this file.
+
+Then 6c (Stage 4 tracks and the "mastery" wording) and 6d (guessable families, Derive it).
 
 ## How the lab is built
 
@@ -57,9 +67,9 @@ Re-sequence Stage 3, move the applied lessons into Stage 4 tracks, fix the 15 `G
   - `u*u'` of flat vectors gives a dot product. Use `reshape` for outer products.
   - Don't put a transpose quote and a string on the same line. Use `transpose(V)`.
   - Avoid complex numbers.
-  - `bar(x, y)` draws x and ignores y. Write `bar(y)`.
-  - `find(x, 1)` ignores the count and returns every match. For "the first k where …", write `sum(x < target) + 1`.
-  - `norm(A, 'fro')` fails. Write `sqrt(sum(sum(E.^2)))`.
+  - Fixed in the engine on 2026-10-18: `bar(x, y)` now draws y; `find(x, n)` returns the first n matches; `norm(A, 'fro')`, `norm(A, 1)` and `norm(A, Inf)` work for matrices. Older lessons still use the workarounds, which are fine.
+  - Also fixed on 2026-10-18: the "MATLAB table/file I/O" and other compatibility warnings no longer fire on words inside strings or comments, such as `disp('a table')`.
+  - `reshape` fills row by row, not column by column as MATLAB does: `reshape([1 2 3 4], 2, 2)` gives `[1 2; 3 4]` here and `[1 3; 2 4]` in MATLAB. Only use it to turn a vector into one row or one column until this is fixed.
   - Column slices such as `A(:,1:1)` and `reshape(v, 3, 1)` stored in a variable become flat vectors. An outer product works inline (`reshape(u, m, 1)*reshape(v, 1, n)`) or through the SVD form `U(:,1:k)*S(1:k,1:k)*transpose(V(:,1:k))`, which also works for k = 1.
   - Don't name a variable after a built-in function (for example `floor`).
 - **Maths in text** is KaTeX between `$…$`. Inside JS single-quoted strings, backslashes must be doubled (`'$\\lambda$'`), or use the `t` = `String.raw` template. A test renders every snippet.

@@ -2,46 +2,46 @@
 // mathematics works with OpenMat's flat vector representation.
 export const core = [
   {
-    id: 'laml-span-rank', module: 'Spaces and bases', title: 'Span, independence, and redundant features', minutes: 30, level: 'Intermediate',
-    objective: 'Identify a redundant feature column, compute rank, and reconstruct a target from an independent basis.',
+    id: 'laml-span-rank', module: 'Spaces and bases', title: 'Span and rank: how many real directions?', minutes: 25, level: 'Intermediate',
+    why: { title: 'Two thermometers, one fact', story: 'A weather log stores each temperature twice: once in Celsius and once in Fahrenheit. The table has two columns but only one piece of information. Spotting that matters. A model fitted to both columns cannot decide how to share the credit between them, and its answers swing wildly. The rank of a table counts how many genuinely different directions its columns hold. The span is everything you can build from them.' },
+    objective: 'Describe the span of some columns as everything they can build, spot a redundant column, count the real directions with rank, and test whether a target can be built.',
     prose: [
-      'A sensor table has columns [1;0;1], [0;1;1], and [1;1;2]. The third column is exactly the first plus the second. Saving it adds a feature name, but adds no new direction that a linear model can express.',
-      'The span of several vectors is the set of all weighted sums of those vectors. A target lies in the span if some weights reconstruct it exactly. A basis is an independent set that spans the same space. Independence means that no vector in the set can be written as a combination of the others.',
-      'Rank counts independent directions, rather than columns or nonzero entries. Here three columns have rank 2. Leading columns in a reduced matrix identify independent columns of the original matrix. Use the original columns for a basis; row reduction changes their coordinates.',
-      'A feature table can be wide yet have little rank because duplicated or derived measurements carry the same information. Near dependence is harder: a tiny amount of noise can make rank appear full while solving becomes sensitive. Later lessons use singular values and scaling to diagnose that situation.',
-      'The expression A(:,[1 2]) selects all rows and columns 1 and 2. A colon alone means every index along that dimension. The plot compares the original third feature with its reconstruction across observations; matching curves demonstrate redundancy, not three independent directions.',
+      'Take some columns of numbers and mix them: multiply each by a weight and add. The result is a **combination** of the columns. The set of every combination you can make is their **span**: everything those columns can build. Two arrows in the plane that point different ways span the whole plane. Two arrows along the same line span only that line.',
+      'A weather log has three columns over five days: a column of ones (it lets a model add a constant), the temperature in Celsius, and the temperature in Fahrenheit. Fahrenheit is 32 times the ones column plus 1.8 times the Celsius column. So the Fahrenheit column is a combination of the other two, and anything you can build with it you can already build without it. It is **redundant**.',
+      'Columns with no redundancy, where none is a combination of the others, are called **independent**. The **rank** of a table is the number of independent directions among its columns. The weather table has 3 columns but rank 2. In code, `rank(A)` counts them. A new column raises the rank only when it brings a direction the others cannot build.',
+      'Can a target column be built from some columns B? Solve B·w = target for the weights w and check the leftover, B·w − target. A zero leftover means the target is in the span. A nonzero leftover means it is not, and the best you can do is get close, which is what least squares does in the next module.',
+      'Real data is rarely this tidy. If the Fahrenheit readings are rounded to whole degrees, the column is no longer an exact combination and the rank becomes 3, although the column still adds almost nothing new. The SVD module measures this "almost" with the singular values. `A(:,[1 2])` picks out columns 1 and 2: the colon means every row.',
     ],
-    procedure: ['Inspect how each feature column is constructed and test suspected combinations.', 'Reduce A or compute rank(A), then select independent original columns as B.', 'Solve B*weights=target and inspect the reconstruction error rather than assuming every target belongs to the span.'],
-    prediction: { question: 'If a fourth feature is twice the third feature, does the rank increase from 2 to 3?', answer: 'No. The fourth feature remains in the same span; a new column increases rank only when it adds an independent direction.' },
+    procedure: ['Look at how each column was made and test any suspected combination.', 'Count the independent directions with rank(A).', 'Keep independent columns B, solve B*w = target, and check that B*w − target is zero before claiming the target is in the span.'],
+    prediction: { question: 'A fourth column is added: the temperature in kelvin, which is Celsius plus 273.15. Does the rank go up from 2 to 3?', answer: 'No. Kelvin is 273.15 times the ones column plus the Celsius column, so it adds no new direction. The rank stays 2.' },
     demo: {
-      code: String.raw`A=[1 0 1;0 1 1;1 1 2];
-B=A(:,[1 2]);
-target=A(:,3);
-weights=B\target;
-rebuilt=B*weights;
-disp(rank(A));
-disp(rref(A));
-disp(weights);
-plot([1 2 3],target);
-hold on;
-plot([1 2 3],rebuilt);
-title('A third feature adds no new direction');
-xlabel('Observation');
-ylabel('Feature value');
-legend('Original third column','First plus second');`,
-      explain: [{ code: 'B=A(:,[1 2])', meaning: 'Keep the first two original features as a candidate basis.' }, { code: 'weights=B\\target', meaning: 'Find weights [1,1] that reconstruct the target from those basis columns.' }, { code: 'rank(A)', meaning: 'Count independent directions. The answer is 2 even though A has three columns.' }, { code: 'rebuilt=B*weights', meaning: 'Use the computed weights to test the geometric claim against actual values.' }],
+      code: String.raw`C = [-5; 0; 10; 20; 30];
+F = 32 + 1.8*C;
+A = [ones(5,1) C F];
+disp('Rank of the weather table:'); disp(rank(A))
+B = A(:,[1 2]);
+weights = B\F
+rebuilt = B*weights;
+leftover = norm(rebuilt - F)`,
+      draw: String.raw`plot(1:5, F)
+hold on
+plot(1:5, rebuilt)
+title('Fahrenheit is already built from the ones column and Celsius')
+xlabel('Day'); ylabel('Temperature in Fahrenheit'); legend('Recorded column', '32 x ones + 1.8 x Celsius'); grid on`,
+      explain: [{ code: 'A = [ones(5,1) C F];', meaning: 'Three columns side by side: ones, Celsius and Fahrenheit.' }, { code: 'rank(A)', meaning: 'Count the independent directions: 2, although there are 3 columns.' }, { code: 'weights = B\\F', meaning: 'Find the weights that build Fahrenheit from the first two columns: 32 and 1.8.' }, { code: 'leftover = norm(rebuilt - F)', meaning: 'Zero, apart from rounding: a number like 1e-14 means 0.00000000000001. Fahrenheit is in the span of the other two columns.' }],
     },
     challenge: {
-      prompt: 'For feature table A, store its rank in featureRank. Select original columns 1 and 3 into basis, solve basis*weights=target, and store the reconstruction residual in residual.',
-      setup: 'A=[1 2 0;0 0 1;1 2 1];\ntarget=[4;1;5];',
-      starter: 'featureRank=3;\nbasis=A(:,[1 2]);\nweights=[0;0];\nresidual=basis*weights-target;',
-      solution: String.raw`featureRank=rank(A);
-basis=A(:,[1 3]);
-weights=basis\target;
-residual=basis*weights-target;`,
-      checks: [{ name: 'featureRank', expected: 2, tolerance: 1e-6, message: 'The second feature is twice the first; it contributes no new direction.' }, { name: 'basis', expected: [[1, 0], [0, 1], [1, 1]], tolerance: 1e-6, message: 'Use independent columns from the original matrix.' }, { name: 'weights', expected: [4, 1], tolerance: 1e-6, message: 'Choose weights that reconstruct all three target coordinates.' }, { name: 'residual', expected: [0, 0, 0], tolerance: 1e-6, message: 'The target belongs to this span, so every reconstruction residual should vanish.' }],
-      hints: ['Compare column 2 with column 1 before counting independent directions.', 'Columns 1 and 3 are independent; select them with A(:,[1 3]).', 'Use weights=basis\\target and subtract target from basis*weights to verify your result.'],
-      transfer: 'Try target=[4;1;6]. Explain why the least-squares result now leaves a nonzero residual even though the matrix rank is unchanged.',
+      prompt: 'In the table A, column 2 is twice column 1. Store the rank of A in featureRank. Put the independent columns 1 and 3 into basis, solve basis*weights = target, and store the leftover residual = basis*weights - target.',
+      setup: 'A = [1 2 0; 0 0 1; 1 2 1];\ntarget = [4; 1; 5];',
+      starter: 'featureRank = 3;\nbasis = A(:,[1 2]);\nweights = [0; 0];\nresidual = basis*weights - target;',
+      solution: String.raw`featureRank = rank(A);
+basis = A(:,[1 3]);
+weights = basis\target;
+residual = basis*weights - target;`,
+      checks: [{ name: 'featureRank', expected: 2, tolerance: 1e-6, message: 'Column 2 is twice column 1, so it adds no new direction.' }, { name: 'basis', expected: [[1, 0], [0, 1], [1, 1]], tolerance: 1e-6, message: 'Take columns 1 and 3 of the original table with A(:,[1 3]).' }, { name: 'weights', expected: [4, 1], tolerance: 1e-6, message: 'Four of column 1 and one of column 3 build the target.' }, { name: 'residual', expected: [0, 0, 0], tolerance: 1e-6, message: 'The target is in the span, so nothing is left over.' }],
+      cases: [{ setup: 'A = [1 2 0; 0 0 1; 1 2 1];\ntarget = [2; 3; 5];', checks: [{ name: 'weights', expected: [2, 3], tolerance: 1e-6, message: 'A different target in the same span.' }, { name: 'residual', expected: [0, 0, 0], tolerance: 1e-6, message: 'It can be built exactly too.' }] }],
+      hints: ['Compare column 2 with column 1 before counting.', 'Columns 1 and 3 are independent: A(:,[1 3]).', 'weights = basis\\target; then residual = basis*weights - target;'],
+      transfer: 'Try target = [4; 1; 6]. The rank of A has not changed, so why is the leftover no longer zero? What does that say about whether this target is in the span?',
     },
   },
   {

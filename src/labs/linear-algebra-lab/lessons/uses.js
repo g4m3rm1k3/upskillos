@@ -340,9 +340,69 @@ export const USES = {
     { who: 'cs', title: 'Computing the SVD', story: 'Numerical libraries do not form AᵀA, which squares the rounding error. They reduce A to a two-diagonal form and then iterate, but the theorem in this lesson is what they are computing.' },
     { who: 'math', title: 'Polar decomposition', story: 'The SVD gives A = (UVᵀ)(VΣVᵀ): a rotation times a symmetric stretch. Every linear map is a stretch along perpendicular axes followed by a rigid turn.' },
   ],
+  'laml-span-rank': [
+    { who: 'ml', title: 'Duplicate features', story: 'Price in dollars and in euros, or a total next to its parts: such columns make a model\'s coefficients unstable. Checking the rank of the feature table before fitting catches them.' },
+    { who: 'general', title: 'Ingredients and mixtures', story: 'If one ingredient is just a mix of two others you already stock, you can drop it and still make every recipe. Rank counts the ingredients you really need.' },
+    { who: 'mech', title: 'Enough supports?', story: 'A structure is held in place only if its supports can resist every direction of motion. If the support forces span fewer directions than needed, the structure can slide or spin.' },
+    { who: 'ee', title: 'Independent measurements', story: 'Three voltmeters that each read a sum of the same two voltages give only two independent facts. The rank of the measurement matrix says how many unknowns can really be found.' },
+    { who: 'cs', title: 'Error-correcting codes', story: 'A code adds redundant combinations of the data bits. Because they lie in a known span, a received word that is not in that span reveals an error.' },
+    { who: 'math', title: 'Spanning sets', story: 'Span and independence are the two halves of the idea of a basis: enough vectors to reach everything, and none wasted.' },
+  ],
+  'laml-subspaces-3d': [
+    { who: 'general', title: 'What a drone can reach', story: 'With two thrust directions, a drone can only move within the plane they span. Any target off that plane needs a third thruster.' },
+    { who: 'cs', title: 'Graphics: is a point on the plane?', story: 'Games test whether a point lies on a wall or floor with one dot product against the plane\'s normal, the same test as in this lesson.' },
+    { who: 'mech', title: 'Forces in a plane', story: 'Two cables can only pull within the plane they span. A load out of that plane cannot be held by them alone.' },
+    { who: 'physics', title: 'Normals and flux', story: 'How much of a flow passes through a surface depends on the component along the surface\'s normal vector.' },
+    { who: 'math', title: 'Subspaces', story: 'Lines and planes through the origin are the subspaces of three-dimensional space. A plane that misses the origin is not one: it does not contain zero.' },
+  ],
+  'laml-basis-dimension': [
+    { who: 'general', title: 'Three numbers for a colour', story: 'Screens mix colours from red, green and blue light because human colour vision has three dimensions: the eye has three kinds of colour sensor.' },
+    { who: 'ml', title: 'How many features are really there?', story: 'A table with 50 columns may have a rank of 8. A basis of 8 columns carries the same information with less to store and less to overfit.' },
+    { who: 'mech', title: 'Degrees of freedom', story: 'A rigid body in space has six degrees of freedom: three ways to move and three ways to turn. That six is the dimension of its possible small motions.' },
+    { who: 'ee', title: 'Signals from a few building blocks', story: 'Many signals are well described by a few basic shapes, such as sine waves. Choosing that basis well is the heart of signal compression.' },
+    { who: 'math', title: 'Every basis has the same size', story: 'The fact that every basis of a space has the same number of vectors is what makes the word "dimension" meaningful at all.' },
+  ],
+  'laml-change-of-basis': [
+    { who: 'cs', title: 'Camera and world coordinates', story: 'A 3D game stores every object in its own coordinates, then converts to world coordinates and to the camera\'s view, one change of basis after another.' },
+    { who: 'mech', title: 'Principal axes', story: 'Stress and inertia are simplest along their principal axes. Engineers rotate into that basis to read off the main stresses or the axes a body spins about smoothly.' },
+    { who: 'physics', title: 'Choosing good axes', story: 'Physics problems are often solved by picking axes along a slope, an orbit or a symmetry, so that most components vanish.' },
+    { who: 'ml', title: 'Whitening and PCA', story: 'PCA rewrites data in the basis of its principal directions, where the new coordinates are uncorrelated.' },
+    { who: 'math', title: 'Similar matrices', story: 'Matrices that describe the same map in different bases are called similar. They share the same eigenvalues, determinant and trace.' },
+  ],
+  'laml-vector-spaces': [
+    { who: 'ee', title: 'Signals as vectors', story: 'A sampled signal is a vector, and filters are matrices. Adding two signals and scaling one are the vector operations of this lesson.' },
+    { who: 'ml', title: 'Fitting curves', story: 'Fitting a quadratic to data is linear algebra on its three coefficients. The matrix V of this lesson is the design matrix of polynomial regression.' },
+    { who: 'physics', title: 'Waves add', story: 'Two waves passing through each other simply add. That superposition is the statement that solutions of the wave equation form a vector space.' },
+    { who: 'cs', title: 'Animation curves', story: 'Smooth paths in animation and fonts (Bézier curves) are combinations of a few fixed polynomial building blocks, weighted by control points.' },
+    { who: 'math', title: 'Abstract vector spaces', story: 'Functions, matrices and sequences are all vector spaces. Proving a fact once for all vector spaces proves it for every one of them.' },
+  ],
+  'laml-four-subspaces': [
+    { who: 'ee', title: 'Kirchhoff\'s laws', story: 'In a circuit\'s incidence matrix, the left nullspace holds the current loops and the nullspace the voltage patterns that do nothing. Kirchhoff\'s laws are statements about these subspaces.' },
+    { who: 'mech', title: 'Mechanisms and self-stress', story: 'In a truss, nullspace vectors are motions with no stretching (a mechanism), and left-nullspace vectors are internal forces that need no load (self-stress).' },
+    { who: 'ml', title: 'What a model cannot see', story: 'Inputs in the nullspace of a linear model change nothing in its output. Knowing that space tells you which input changes the model ignores.' },
+    { who: 'cs', title: 'Network flows', story: 'Flows around a network that conserve traffic at every junction form the nullspace of its incidence matrix.' },
+    { who: 'math', title: 'The fundamental theorem', story: 'The four subspaces, their dimensions and their right angles make up what Gilbert Strang calls the fundamental theorem of linear algebra.' },
+  ],
 }
 
 export const ANGLES = {
+  'laml-span-rank': [
+    { title: 'Everything you can build', body: 'The span is a set of reachable points. Adding a redundant column is like adding a recipe that can already be made from what you have: the menu does not grow.' },
+    { title: 'Count the new directions', body: 'Add the columns one at a time. Each one either brings a new direction (rank goes up by 1) or lies in the span of the earlier ones (rank stays the same).' },
+    { title: 'As an equation', body: 'Columns are dependent when some weights, not all zero, give $c_1\mathbf a_1 + c_2\mathbf a_2 + c_3\mathbf a_3 = \mathbf 0$. For the weather table: $32\cdot\text{ones} + 1.8\cdot C - F = \mathbf 0$.' },
+  ],
+  'laml-basis-dimension': [
+    { title: 'Nothing missing, nothing extra', body: 'A spanning set can reach everything but may waste vectors. An independent set wastes nothing but may miss things. A basis is both at once.' },
+    { title: 'Coordinates are an address', body: 'In a basis every vector has exactly one list of weights. Without independence, one point would have many addresses.' },
+  ],
+  'laml-change-of-basis': [
+    { title: 'Two languages for one point', body: 'Map coordinates and avenue coordinates describe the same café. $B$ translates from avenue language to map language, and $B^{-1}$ translates back.' },
+    { title: 'Change, act, change back', body: '$A = BDB^{-1}$ read right to left: translate into the basis where the map is simple, apply the simple map, translate back.' },
+  ],
+  'laml-four-subspaces': [
+    { title: 'Inputs split in two', body: 'Every input splits into a part in the row space, which $A$ keeps, and a part in the nullspace, which $A$ destroys. Rank plus nullity counts both.' },
+    { title: 'Outputs split in two', body: 'Every output space splits into the column space, which $A$ can reach, and the left nullspace, the checks that every reachable output passes.' },
+  ],
   'laml-svd-photo': [
     { title: 'Layers like transparencies', body: 'Print each layer on a clear sheet and stack them. The first sheet already shows the broad shapes; each extra sheet sharpens the picture a little less than the one before.' },
     { title: 'A recipe instead of a list', body: 'A layer does not store pixels. It stores a recipe: "row $i$ is this bright, column $j$ is this bright, multiply them". Recipes are short; lists of pixels are long.' },

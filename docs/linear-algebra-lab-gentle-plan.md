@@ -123,8 +123,17 @@ N = new lesson, E = existing lesson (reworked where noted).
    - Lessons in [lessons/svd.js](../src/labs/linear-algebra-lab/lessons/svd.js); why stories, case studies and angles for all four; 12 new problem families ([practice/svd.js](../src/labs/linear-algebra-lab/practice/svd.js)).
    - Playground: "Compress a photo (SVD)" with three built-in pictures (landscape, tartan, static), a k slider, the k-th layer on its own, the strengths, storage and error.
    - The 3-lesson test exception is gone; every lesson but the opening tour now has a problem set.
-6. **Phase 6:**
-   - re-sequence Stage 3;
-   - move the applied lessons into Stage 4 tracks;
-   - fix the 15 guessable problem families;
-   - replace the remaining "mastery" wording.
+6. **Phase 6**, split into four smaller phases on 2026-10-18:
+   - **6a (done, 2026-10-18): Spaces and bases, gentler.**
+     - `laml-span-rank` rewritten (the Celsius/Fahrenheit weather table).
+     - Why stories, case studies and angles for all 6 lessons.
+     - New order: span and rank, planes, basis, change of basis, polynomials, four subspaces.
+     - OpenMAT fixes:
+       - `bar(x, y)`, `find(x, n)` and the matrix norms `'fro'`, 1 and `Inf`;
+       - compatibility warnings no longer fire on words inside strings or comments.
+   - **6b: "Least squares and data" becomes "Best fit".** Open with the GPS story (noisy satellites, more equations than unknowns). Make QR, Gram–Schmidt and orthogonal matrices gentler. Move regression validation and ridge to the machine-learning track.
+   - **6c: Stage 4.**
+     - Add the `track` field and group the tracks in the sidebar.
+     - Move the applied lessons into tracks: machine learning, decisions, graphics and 3D, engineering.
+     - Replace the remaining "mastery" wording, including the module name "Mastery studio".
+   - **6d: fix the 15 guessable problem families, and add the `derive` (Derive it) stepper.**

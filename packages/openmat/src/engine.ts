@@ -295,6 +295,11 @@ export function createExecutionEngine(options: EngineOptions = {}): {
         const values = normalizeVector(yRaw)
         if (!plotState.hold) { plotState.series = []; plotState.annotations = [] }
         plotState.series.push({ kind: "bar", x: [], y: [], labels, values })
+      } else if (args.length >= 2 && yRaw != null && typeof yRaw !== "string") {
+        // bar(x, y): heights y, one bar per position in x (MATLAB order).
+        const positions = normalizeVector(xRaw), vals = normalizeVector(yRaw)
+        if (!plotState.hold) { plotState.series = []; plotState.annotations = [] }
+        plotState.series.push({ kind: "bar", x: [], y: [], values: vals, labels: vals.map((_, i) => String(positions[i] ?? i + 1)) })
       } else {
         const vals = normalizeVector(xRaw)
         if (!plotState.hold) { plotState.series = []; plotState.annotations = [] }
@@ -544,7 +549,12 @@ export function createExecutionEngine(options: EngineOptions = {}): {
   parser.set("var",    (v: any, f?: any) => statVar(v, f))
   parser.set("sort",   (v: any, d?: any) => statSort(v, d))
   parser.set("unique", (v: any) => statUnique(v))
-  parser.set("find",   (v: any) => statFind(v))
+  parser.set("find",   (v: any, n?: any) => {
+    if (n == null) return statFind(v)
+    // find(v, n): the first n matches; a single match is a scalar, as in MATLAB.
+    const first = statFind(v).slice(0, Number(n))
+    return first.length === 1 ? first[0] : first
+  })
   parser.set("any",    (v: any) => statAny(v))
   parser.set("all",    (v: any) => statAll(v))
   parser.set("cumsum", (v: any) => cumulative(v, (a: number, b: number) => a + b, null))
@@ -595,13 +605,19 @@ export function createExecutionEngine(options: EngineOptions = {}): {
   parser.set("pinv",  (A: any) => toPlain(math.pinv(A)))
   parser.set("norm",  (A: any, p?: any) => {
     const plain = toPlain(A)
+    const kind = p == null ? null : String(p).toLowerCase()
     if (!Array.isArray(plain) || !Array.isArray((plain as any)[0])) {
       const v = normalizeVector(A)
-      const pv = p == null ? 2 : (String(p) === "Inf" ? Infinity : Number(p))
+      const pv = p == null || kind === "fro" ? 2 : (kind === "inf" ? Infinity : Number(p))
       return pv === Infinity ? Math.max(...v.map(Math.abs))
            : pv === 1       ? v.reduce((s: number, x: number) => s + Math.abs(x), 0)
            :                  Math.pow(v.reduce((s: number, x: number) => s + Math.abs(x)**pv, 0), 1/pv)
     }
+    const rows = plain as number[][]
+    // Matrix norms: Frobenius, largest column sum (1), largest row sum (Inf); otherwise the 2-norm.
+    if (kind === "fro") return Math.sqrt(rows.flat().reduce((s, x) => s + Number(x) ** 2, 0))
+    if (kind === "1") return Math.max(...rows[0].map((_, j) => rows.reduce((s, row) => s + Math.abs(Number(row[j])), 0)))
+    if (kind === "inf" || p === Infinity) return Math.max(...rows.map(row => row.reduce((s, x) => s + Math.abs(Number(x)), 0)))
     return realValue(toPlain(math.norm(A)))
   })
 

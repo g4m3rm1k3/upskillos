@@ -5,67 +5,8 @@
 // the comma form [u, w] does not and the outer product u*u' returns a dot product, so both are avoided.
 export const spaces = [
   {
-    id: 'laml-vector-spaces', after: 'laml-lu-pivoting', module: 'Spaces and bases', title: 'Polynomials are vectors too', minutes: 30, level: 'Intermediate',
-    objective: 'Represent polynomials as coefficient vectors, combine them with vector arithmetic, and test whether a collection is a vector space.',
-    prose: [
-      'A shop models demand with two curves: p(t) = 1 + 2t and q(t) = 3 − t + t², where t counts hours after opening. Adding them gives 4 + t + t². Doubling p gives 2 + 4t. These are the two moves we make with vectors: add, and scale.',
-      'Write each polynomial by its coefficients, constant first. Then p becomes [1; 2; 0] and q becomes [3; −1; 1]. Adding these coefficient vectors gives [4; 1; 1], which is exactly the coefficient list of p + q. The arithmetic never needed to know these were curves.',
-      'A **vector space** is any collection where adding two members, or scaling one by a number, keeps you inside the collection. The familiar rules must also hold: there is a zero member, and the order of addition does not matter. Polynomials of degree at most 2 form a vector space. Each member needs three numbers, so it behaves exactly like ordinary three-dimensional vectors.',
-      'To evaluate a polynomial at several times at once, build a matrix V. Its columns are 1, t and t², sampled at those times. Then `V*c` lists the values of the polynomial with coefficients c. Because this is a matrix product, the values of a sum are the sum of the values.',
-      'Not every collection qualifies. Polynomials whose constant term is exactly 1 fail: adding two of them gives constant term 2. A quick test has three parts. Is zero in the collection? Do sums stay inside? Do multiples stay inside?',
-    ],
-    procedure: ['Fix an order for the coefficients (constant, t, t², …) and write each object as a coefficient vector.', 'Add, scale and combine the coefficient vectors exactly as you would ordinary vectors.', 'Translate back, or evaluate at sample times with a matrix whose columns are the building blocks.'],
-    prediction: { question: 'Do the polynomials with p(0) = 0 form a vector space? What about those with p(0) = 1?', answer: 'p(0) = 0 does: zero is in it, and sums and multiples still vanish at 0. p(0) = 1 does not: the sum of two such polynomials has value 2 at 0.' },
-    demo: {
-      code: String.raw`t = [0; 1; 2; 3; 4];
-V = [ones(5,1) t t.^2];
-p = [1; 2; 0];
-q = [3; -1; 1];
-s = p + q;
-disp('Coefficients of p + q:'); disp(s)
-disp('Values of the sum minus sum of values:'); disp(V*s - (V*p + V*q))
-plot(t, V*p)
-hold on
-plot(t, V*q)
-plot(t, V*s)
-title('Adding coefficient vectors adds the curves')
-xlabel('Hours after opening t')
-ylabel('Demand')
-legend('p(t) = 1 + 2t', 'q(t) = 3 - t + t^2', 'p + q')`,
-      explain: [{ code: 'V = [ones(5,1) t t.^2];', meaning: 'Each column samples one building block (1, t and t²) at the five times.' }, { code: 's = p + q;', meaning: 'Add the polynomials by adding their coefficients. The result is [4; 1; 1].' }, { code: 'disp(V*s - (V*p + V*q))', meaning: 'Evaluating the sum equals summing the evaluations, so every entry is 0.' }],
-    },
-    challenge: {
-      prompt: 'Represent f(t) = 2 − t + 3t² and g(t) = 1 + 4t as coefficient vectors f and g, constant first. Store h = 3f − 2g, and store values = V*h, the values of h at the times in t.',
-      setup: 't = [0; 1; 2];\nV = [ones(3,1) t t.^2];',
-      starter: 'f = [0; 0; 0];\ng = [0; 0; 0];\nh = 3*f - 2*g;\nvalues = V*h;',
-      solution: 'f = [2; -1; 3];\ng = [1; 4; 0];\nh = 3*f - 2*g;\nvalues = V*h;',
-      checks: [{ name: 'h', expected: [4, -11, 9], tolerance: 1e-9, message: 'Combine the coefficient vectors: 3 times f minus 2 times g.' }, { name: 'values', expected: [4, 2, 18], tolerance: 1e-9, message: 'Multiply V by the coefficients of h.' }],
-      cases: [{ setup: 't = [1; 2; 3; 4];\nV = [ones(4,1) t t.^2];', checks: [{ name: 'values', expected: [2, 18, 52, 104], tolerance: 1e-9, message: 'The same h, evaluated at four new times.' }] }],
-      hints: ['Write the constant term first, then the coefficient of t, then the coefficient of t².', 'g has no t² term, so its last entry is 0.', 'f = [2; -1; 3]; g = [1; 4; 0]; then h = 3*f - 2*g; values = V*h;'],
-      transfer: 'Pick three polynomials of degree at most 2. Write their coefficients as the columns of a 3 × 3 matrix, typed row by row, and compute its rank. Explain what rank 3 says about building any quadratic from your three.',
-    },
-    notation: [
-      { tex: String.raw`p(t) = c_0 + c_1 t + c_2 t^2 \;\longleftrightarrow\; \mathbf c = (c_0, c_1, c_2)`, say: 'A quadratic is described completely by its three coefficients.' },
-      { tex: String.raw`p + q \;\leftrightarrow\; \mathbf c_p + \mathbf c_q, \qquad \alpha p \;\leftrightarrow\; \alpha\,\mathbf c_p`, say: 'Adding or scaling polynomials is adding or scaling their coefficient vectors.' },
-      { tex: String.raw`V\mathbf c = \begin{bmatrix} p(t_1) \\ \vdots \\ p(t_n) \end{bmatrix}, \qquad V_{i\cdot} = \begin{bmatrix} 1 & t_i & t_i^2 \end{bmatrix}`, say: 'Evaluating at the sample times is one matrix product.' },
-    ],
-    quiz: [
-      { q: 'Which collection is a vector space?', options: ['Polynomials of degree at most 2 with $p(0) = 0$', 'Polynomials of degree at most 2 with $p(0) = 1$', 'Polynomials of degree exactly 2', 'Polynomials with only positive coefficients'], answer: 0, why: 'Only the first contains zero and is closed under addition and scaling. Degree exactly 2 fails because $t^2 + (-t^2) = 0$.' },
-      { q: 'With coefficients ordered (constant, $t$, $t^2$), which vector represents $5t - t^2$?', options: ['$(0, 5, -1)$', '$(5, -1, 0)$', '$(-1, 5, 0)$', '$(5, 0, -1)$'], answer: 0, why: 'There is no constant term, the $t$ coefficient is 5 and the $t^2$ coefficient is $-1$.' },
-    ],
-    proof: {
-      claim: 'The polynomials of degree at most 2 with $p(0) = 0$ form a vector space.',
-      given: 'They sit inside all polynomials of degree at most 2, where the arithmetic rules already hold. So three checks are enough: zero, sums and multiples.',
-      steps: [
-        { ask: 'Is the zero polynomial in the collection?', options: ['Yes: it takes the value 0 everywhere, including at $t = 0$', 'No: the zero polynomial has no degree', 'Only if we also allow degree 3'], answer: 0, why: 'The zero polynomial is $0 + 0t + 0t^2$, and its value at 0 is 0.' },
-        { ask: 'Take $p$ and $q$ with $p(0) = q(0) = 0$. What is $(p + q)(0)$?', options: ['$p(0) + q(0) = 0$', '$p(0)\\,q(0) = 0$', 'It cannot be determined'], answer: 0, why: 'Polynomials add value by value, so the sum also vanishes at 0.', hint: 'How is the value of a sum of functions defined?' },
-        { ask: 'For a number $\\alpha$, what is $(\\alpha p)(0)$?', options: ['$\\alpha\\,p(0) = 0$', '$\\alpha$', '$p(\\alpha)$'], answer: 0, why: 'Scaling multiplies every value by $\\alpha$, and $\\alpha \\cdot 0 = 0$.' },
-      ],
-      conclusion: 'Zero is inside, and sums and multiples stay inside, so the collection is a vector space. The same test fails for $p(0) = 1$ at the very first check.',
-    },
-  },
-  {
-    id: 'laml-subspaces-3d', after: 'laml-vector-spaces', module: 'Spaces and bases', title: 'Lines and planes through the origin', minutes: 30, level: 'Intermediate',
+    id: 'laml-subspaces-3d', after: 'laml-lu-pivoting', module: 'Spaces and bases', title: 'Lines and planes through the origin', minutes: 30, level: 'Intermediate',
+    why: { title: 'Where can it reach?', story: 'A drone with two fixed thrusters, a robot arm whose joints push in only two directions, or a diet built from two foods: each can reach only a flat sheet of possibilities. Knowing that sheet, and testing in one step whether a goal lies on it, tells you whether the goal is possible before you try.' },
     objective: 'Describe the span of two vectors in three dimensions as a plane, find its normal vector, and test whether a point lies in it.',
     prose: [
       'A camera drone has two thrusters. One pushes along u = [1; 0; 1] and the other along w = [0; 1; 1]. Running them with strengths a and b moves the drone by a·u + b·w. With a = 2 and b = 3 it reaches [2; 3; 5]. Can it reach [0; 2; 1]?',
@@ -124,6 +65,7 @@ ylabel('Distance from the plane')`,
   },
   {
     id: 'laml-basis-dimension', after: 'laml-subspaces-3d', module: 'Spaces and bases', title: 'Basis and dimension: just enough directions', minutes: 30, level: 'Intermediate',
+    why: { title: 'Just enough building blocks', story: 'A printer mixes most colours from three inks, and a GPS position needs exactly three numbers. A basis is a set of building blocks with nothing wasted, and the dimension is how many blocks any such set must have. It tells a designer how many measurements, sensors or parameters a problem really needs: fewer cannot do the job, and more are redundant.' },
     objective: 'Choose a basis from a set of spanning vectors, find the dimension, and compute the unique coordinates of a vector in that basis.',
     prose: [
       'A paint mixer stocks four pigments, written as amounts of three base dyes: [1; 0; 0], [0; 1; 0], [1; 1; 0] and [0; 0; 1]. The third pigment is just the first two mixed. Any colour you can make with it, you can make without it.',
@@ -185,6 +127,7 @@ ylabel('Rank (dimension reached)')`,
   },
   {
     id: 'laml-change-of-basis', after: 'laml-basis-dimension', module: 'Spaces and bases', title: 'Coordinates depend on the basis', minutes: 35, level: 'Intermediate',
+    why: { title: 'The right point of view', story: 'A crystal is easiest to describe along its own axes, a satellite along its orbit, a robot hand in the frame of the hand. Engineers switch between such coordinate systems all day. A problem that is a tangle in one set of coordinates can fall apart into a few simple, separate pieces in another. That idea drives eigenvectors, the SVD and the Fourier transform.' },
     objective: 'Convert between standard coordinates and coordinates in another basis, and rewrite a matrix that is simple in that basis.',
     prose: [
       'A city has diagonal avenues. Walking one block along an avenue moves you b₁ = [2; 1] on the east–north map; one block along a cross street moves you b₂ = [−1; 1]. The café at map position [3; 3] is 2 avenue blocks and 1 street block from the origin: 2·[2; 1] + 1·[−1; 1] = [3; 3].',
@@ -246,7 +189,69 @@ axis equal`,
     },
   },
   {
-    id: 'laml-four-subspaces', after: 'laml-change-of-basis', module: 'Spaces and bases', title: 'Four subspaces and rank–nullity', minutes: 35, level: 'Advanced',
+    id: 'laml-vector-spaces', after: 'laml-change-of-basis', module: 'Spaces and bases', title: 'Polynomials are vectors too', minutes: 30, level: 'Intermediate',
+    why: { title: 'Curves, sounds and signals are vectors too', story: 'A sound clip is a long list of air pressures, a curve is a few coefficients, and a photo is a grid of brightness values. Everything learned about arrows (adding, scaling, spans and bases) works on all of them, because they add and scale in the same way. That is why the same linear algebra fits curves to data, mixes audio tracks and compresses images.' },
+    objective: 'Represent polynomials as coefficient vectors, combine them with vector arithmetic, and test whether a collection is a vector space.',
+    prose: [
+      'A shop models demand with two curves: p(t) = 1 + 2t and q(t) = 3 − t + t², where t counts hours after opening. Adding them gives 4 + t + t². Doubling p gives 2 + 4t. These are the two moves we make with vectors: add, and scale.',
+      'Write each polynomial by its coefficients, constant first. Then p becomes [1; 2; 0] and q becomes [3; −1; 1]. Adding these coefficient vectors gives [4; 1; 1], which is exactly the coefficient list of p + q. The arithmetic never needed to know these were curves.',
+      'A **vector space** is any collection where adding two members, or scaling one by a number, keeps you inside the collection. The familiar rules must also hold: there is a zero member, and the order of addition does not matter. Polynomials of degree at most 2 form a vector space. Each member needs three numbers, so it behaves exactly like ordinary three-dimensional vectors.',
+      'To evaluate a polynomial at several times at once, build a matrix V. Its columns are 1, t and t², sampled at those times. Then `V*c` lists the values of the polynomial with coefficients c. Because this is a matrix product, the values of a sum are the sum of the values.',
+      'Not every collection qualifies. Polynomials whose constant term is exactly 1 fail: adding two of them gives constant term 2. A quick test has three parts. Is zero in the collection? Do sums stay inside? Do multiples stay inside?',
+    ],
+    procedure: ['Fix an order for the coefficients (constant, t, t², …) and write each object as a coefficient vector.', 'Add, scale and combine the coefficient vectors exactly as you would ordinary vectors.', 'Translate back, or evaluate at sample times with a matrix whose columns are the building blocks.'],
+    prediction: { question: 'Do the polynomials with p(0) = 0 form a vector space? What about those with p(0) = 1?', answer: 'p(0) = 0 does: zero is in it, and sums and multiples still vanish at 0. p(0) = 1 does not: the sum of two such polynomials has value 2 at 0.' },
+    demo: {
+      code: String.raw`t = [0; 1; 2; 3; 4];
+V = [ones(5,1) t t.^2];
+p = [1; 2; 0];
+q = [3; -1; 1];
+s = p + q;
+disp('Coefficients of p + q:'); disp(s)
+disp('Values of the sum minus sum of values:'); disp(V*s - (V*p + V*q))
+plot(t, V*p)
+hold on
+plot(t, V*q)
+plot(t, V*s)
+title('Adding coefficient vectors adds the curves')
+xlabel('Hours after opening t')
+ylabel('Demand')
+legend('p(t) = 1 + 2t', 'q(t) = 3 - t + t^2', 'p + q')`,
+      explain: [{ code: 'V = [ones(5,1) t t.^2];', meaning: 'Each column samples one building block (1, t and t²) at the five times.' }, { code: 's = p + q;', meaning: 'Add the polynomials by adding their coefficients. The result is [4; 1; 1].' }, { code: 'disp(V*s - (V*p + V*q))', meaning: 'Evaluating the sum equals summing the evaluations, so every entry is 0.' }],
+    },
+    challenge: {
+      prompt: 'Represent f(t) = 2 − t + 3t² and g(t) = 1 + 4t as coefficient vectors f and g, constant first. Store h = 3f − 2g, and store values = V*h, the values of h at the times in t.',
+      setup: 't = [0; 1; 2];\nV = [ones(3,1) t t.^2];',
+      starter: 'f = [0; 0; 0];\ng = [0; 0; 0];\nh = 3*f - 2*g;\nvalues = V*h;',
+      solution: 'f = [2; -1; 3];\ng = [1; 4; 0];\nh = 3*f - 2*g;\nvalues = V*h;',
+      checks: [{ name: 'h', expected: [4, -11, 9], tolerance: 1e-9, message: 'Combine the coefficient vectors: 3 times f minus 2 times g.' }, { name: 'values', expected: [4, 2, 18], tolerance: 1e-9, message: 'Multiply V by the coefficients of h.' }],
+      cases: [{ setup: 't = [1; 2; 3; 4];\nV = [ones(4,1) t t.^2];', checks: [{ name: 'values', expected: [2, 18, 52, 104], tolerance: 1e-9, message: 'The same h, evaluated at four new times.' }] }],
+      hints: ['Write the constant term first, then the coefficient of t, then the coefficient of t².', 'g has no t² term, so its last entry is 0.', 'f = [2; -1; 3]; g = [1; 4; 0]; then h = 3*f - 2*g; values = V*h;'],
+      transfer: 'Pick three polynomials of degree at most 2. Write their coefficients as the columns of a 3 × 3 matrix, typed row by row, and compute its rank. Explain what rank 3 says about building any quadratic from your three.',
+    },
+    notation: [
+      { tex: String.raw`p(t) = c_0 + c_1 t + c_2 t^2 \;\longleftrightarrow\; \mathbf c = (c_0, c_1, c_2)`, say: 'A quadratic is described completely by its three coefficients.' },
+      { tex: String.raw`p + q \;\leftrightarrow\; \mathbf c_p + \mathbf c_q, \qquad \alpha p \;\leftrightarrow\; \alpha\,\mathbf c_p`, say: 'Adding or scaling polynomials is adding or scaling their coefficient vectors.' },
+      { tex: String.raw`V\mathbf c = \begin{bmatrix} p(t_1) \\ \vdots \\ p(t_n) \end{bmatrix}, \qquad V_{i\cdot} = \begin{bmatrix} 1 & t_i & t_i^2 \end{bmatrix}`, say: 'Evaluating at the sample times is one matrix product.' },
+    ],
+    quiz: [
+      { q: 'Which collection is a vector space?', options: ['Polynomials of degree at most 2 with $p(0) = 0$', 'Polynomials of degree at most 2 with $p(0) = 1$', 'Polynomials of degree exactly 2', 'Polynomials with only positive coefficients'], answer: 0, why: 'Only the first contains zero and is closed under addition and scaling. Degree exactly 2 fails because $t^2 + (-t^2) = 0$.' },
+      { q: 'With coefficients ordered (constant, $t$, $t^2$), which vector represents $5t - t^2$?', options: ['$(0, 5, -1)$', '$(5, -1, 0)$', '$(-1, 5, 0)$', '$(5, 0, -1)$'], answer: 0, why: 'There is no constant term, the $t$ coefficient is 5 and the $t^2$ coefficient is $-1$.' },
+    ],
+    proof: {
+      claim: 'The polynomials of degree at most 2 with $p(0) = 0$ form a vector space.',
+      given: 'They sit inside all polynomials of degree at most 2, where the arithmetic rules already hold. So three checks are enough: zero, sums and multiples.',
+      steps: [
+        { ask: 'Is the zero polynomial in the collection?', options: ['Yes: it takes the value 0 everywhere, including at $t = 0$', 'No: the zero polynomial has no degree', 'Only if we also allow degree 3'], answer: 0, why: 'The zero polynomial is $0 + 0t + 0t^2$, and its value at 0 is 0.' },
+        { ask: 'Take $p$ and $q$ with $p(0) = q(0) = 0$. What is $(p + q)(0)$?', options: ['$p(0) + q(0) = 0$', '$p(0)\\,q(0) = 0$', 'It cannot be determined'], answer: 0, why: 'Polynomials add value by value, so the sum also vanishes at 0.', hint: 'How is the value of a sum of functions defined?' },
+        { ask: 'For a number $\\alpha$, what is $(\\alpha p)(0)$?', options: ['$\\alpha\\,p(0) = 0$', '$\\alpha$', '$p(\\alpha)$'], answer: 0, why: 'Scaling multiplies every value by $\\alpha$, and $\\alpha \\cdot 0 = 0$.' },
+      ],
+      conclusion: 'Zero is inside, and sums and multiples stay inside, so the collection is a vector space. The same test fails for $p(0) = 1$ at the very first check.',
+    },
+  },
+  {
+    id: 'laml-four-subspaces', after: 'laml-vector-spaces', module: 'Spaces and bases', title: 'Four subspaces and rank–nullity', minutes: 35, level: 'Advanced',
+    why: { title: 'What a machine keeps and what it loses', story: 'Every matrix is a machine that turns inputs into outputs. Some inputs vanish without a trace, some outputs can never be produced, and some combinations of the outputs are always zero, which is often a conservation law: what flows into a junction flows out. The four subspaces sort all of this out, and rank–nullity is the bookkeeping that says nothing goes missing.' },
     objective: 'Identify the column space, nullspace, row space and left nullspace of a matrix, compute their dimensions, and use rank–nullity.',
     prose: [
       'A recipe matrix A = [1 2 3; 2 4 6] turns amounts of three ingredients into two nutrient totals. Its second row is twice its first, so every output has its second total equal to twice its first. The outputs fill only a line in the plane, not the whole plane.',
