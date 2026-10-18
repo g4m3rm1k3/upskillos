@@ -43,6 +43,11 @@ function bestCell(t) {
 // "A + B = 3 + 5", or `none` when nothing is added.
 const sumRule = (names, values, none) => (names.length ? `${names.join(' + ')} = ${values.join(' + ')}` : none)
 
+// An interval table: cell (l, r) is the piece from l to r, written name(l,r).
+const intervals = (labels, name) => table(labels, labels, (l, r) => `${name}(${l},${r})`)
+// Every piece l … r with r − l from `gap` up to n − 1, shortest first: the order interval DP fills in.
+function byLength(n, gap, visit) { for (let len = gap; len < n; len++) for (let l = 0; l + len < n; l++) visit(l, l + len) }
+
 export const TRACES = {
   fibonacci: ({ n = 8 } = {}) => {
     const t = line(n, 'F', t => { t.seed(0, 0, 0, 'F(0) = 0'); t.seed(0, 1, 1, 'F(1) = 1') }, (t, i) => [t.get(0, i - 1) + t.get(0, i - 2), [i - 1, i - 2], `F(${i - 1}) + F(${i - 2}) = ${t.get(0, i - 1)} + ${t.get(0, i - 2)}`])
@@ -418,6 +423,86 @@ export const TRACES = {
     }
     return { title: `Values ${list(a)}`, setup: 'L(i): the longest strictly increasing subsequence ending at i. It extends the best earlier one with a smaller value. The answer is the largest L.', table: t, answer: bestCell(t), args: [a] }
   },
+
+  // Interval tables: row l is where a piece starts, column r where it ends, so only the upper triangle is
+  // used. Every cell reads shorter pieces inside it, which lie closer to the diagonal: the fill goes one
+  // diagonal at a time, outward.
+  'matrix-chain': ({ dims: d = [2, 3, 4, 5] } = {}) => {
+    const n = d.length - 1
+    const t = intervals(range(0, n - 1).map(i => `${i} (${d[i]}×${d[i + 1]})`), 'D')
+    for (let i = 0; i < n; i++) t.seed(i, i, 0, 'D(i,i) = 0: one matrix, nothing to multiply')
+    byLength(n, 1, (l, r) => {
+      const ks = range(l, r - 1), costs = ks.map(k => t.get(l, k) + t.get(k + 1, r) + d[l] * d[k + 1] * d[r + 1])
+      t.set(l, r, minOf(costs), ks.flatMap(k => [[l, k], [k + 1, r]]), `min(${ks.map(k => `split after ${k}: D(${l},${k}) + D(${k + 1},${r}) + ${d[l]}·${d[k + 1]}·${d[r + 1]}`).join('; ')}) = min(${costs.join(', ')})`)
+    })
+    return { title: `Sizes ${list(d)}: ${n} matrices`, setup: 'D(l, r): the cheapest way to multiply matrices l to r. The last multiplication splits them after some k: both sides, then d_l · d_{k+1} · d_{r+1} to join them. Row = first matrix, column = last.', table: t, answer: [0, n - 1], args: [d] }
+  },
+  'burst-balloons': ({ values: a = [3, 1, 5, 8] } = {}) => {
+    const p = [1, ...a, 1], m = p.length
+    const t = intervals(p.map((v, i) => (i === 0 || i === m - 1 ? `${i} (wall)` : `${i} (${v})`)), 'D')
+    for (let i = 0; i + 1 < m; i++) t.seed(i, i + 1, 0, 'D(l,l+1) = 0: neighbours, no balloon between them')
+    byLength(m, 2, (l, r) => {
+      const ks = range(l + 1, r - 1), gains = ks.map(k => t.get(l, k) + t.get(k, r) + p[l] * p[k] * p[r])
+      t.set(l, r, maxOf(gains), ks.flatMap(k => [[l, k], [k, r]]), `max(${ks.map(k => `${k} last: D(${l},${k}) + D(${k},${r}) + ${p[l]}·${p[k]}·${p[r]}`).join('; ')}) = max(${gains.join(', ')})`)
+    })
+    return { title: `Balloons ${list(a)}, with a 1 at each end`, setup: 'D(l, r): the most earned bursting every balloon strictly between l and r while l and r still stand. Balloon k burst last earns a_l · a_k · a_r, because by then l and r are its neighbours.', table: t, answer: [0, m - 1], args: [a] }
+  },
+  'cut-stick': ({ n = 10, cuts = [2, 4, 7] } = {}) => {
+    const p = [0, ...[...cuts].sort((x, y) => x - y), n], m = p.length
+    const t = intervals(p.map((v, i) => `${i} (at ${v})`), 'D')
+    for (let i = 0; i + 1 < m; i++) t.seed(i, i + 1, 0, 'D(l,l+1) = 0: no cut inside the piece')
+    byLength(m, 2, (l, r) => {
+      const ks = range(l + 1, r - 1), rest = ks.map(k => t.get(l, k) + t.get(k, r)), best = minOf(rest)
+      t.set(l, r, p[r] - p[l] + best, ks.flatMap(k => [[l, k], [k, r]]), `(${p[r]} − ${p[l]}) + min(${ks.map(k => `first at ${p[k]}: D(${l},${k}) + D(${k},${r})`).join('; ')}) = ${p[r] - p[l]} + min(${rest.join(', ')})`)
+    })
+    return { title: `A stick of length ${n}, cut at ${list([...cuts].sort((x, y) => x - y))}`, setup: 'The cut points are sorted, with 0 and the stick’s end added. D(l, r): the cheapest way to make every cut between points l and r. The first cut costs the piece’s length and leaves two pieces that are cut on their own.', table: t, answer: [0, m - 1], args: [n, cuts] }
+  },
+  'merge-stones': ({ values: a = [4, 3, 1, 4] } = {}) => {
+    const n = a.length
+    const t = intervals(a.map((v, i) => `${i} (${v})`), 'D')
+    for (let i = 0; i < n; i++) t.seed(i, i, 0, 'D(i,i) = 0: already one pile')
+    byLength(n, 1, (l, r) => {
+      const s = a.slice(l, r + 1).reduce((x, y) => x + y, 0), ks = range(l, r - 1), sides = ks.map(k => t.get(l, k) + t.get(k + 1, r))
+      t.set(l, r, s + minOf(sides), ks.flatMap(k => [[l, k], [k + 1, r]]), `${s} + min(${ks.map(k => `D(${l},${k}) + D(${k + 1},${r})`).join('; ')}) = ${s} + min(${sides.join(', ')})`)
+    })
+    return { title: `Piles ${list(a)}`, setup: 'D(l, r): the cheapest way to merge piles l to r into one. The last merge joins the left part’s pile to the right part’s and costs every stone in l … r, whichever split it was.', table: t, answer: [0, n - 1], args: [a] }
+  },
+  'polygon-triangulation': ({ values: w = [1, 2, 3, 4, 5] } = {}) => {
+    const n = w.length
+    const t = intervals(w.map((v, i) => `${i} (${v})`), 'D')
+    for (let i = 0; i + 1 < n; i++) t.seed(i, i + 1, 0, 'D(l,l+1) = 0: an edge, not a polygon')
+    byLength(n, 2, (l, r) => {
+      const ks = range(l + 1, r - 1), costs = ks.map(k => t.get(l, k) + t.get(k, r) + w[l] * w[k] * w[r])
+      t.set(l, r, minOf(costs), ks.flatMap(k => [[l, k], [k, r]]), `min(${ks.map(k => `triangle ${l}-${k}-${r}: D(${l},${k}) + D(${k},${r}) + ${w[l]}·${w[k]}·${w[r]}`).join('; ')}) = min(${costs.join(', ')})`)
+    })
+    return { title: `Vertex weights ${list(w)}`, setup: 'D(l, r): the cheapest triangulation of the polygon on vertices l … r, closed by the edge r–l. That edge is in exactly one triangle, l-k-r, which leaves the polygons l … k and k … r.', table: t, answer: [0, n - 1], args: [w] }
+  },
+  'palindrome-subsequence': ({ s = 'bbbab' } = {}) => {
+    const n = s.length
+    const t = intervals(s.split('').map((ch, i) => `${i} ${ch}`), 'P')
+    for (let i = 0; i < n; i++) t.seed(i, i, 1, 'P(i,i) = 1: one letter reads the same both ways')
+    byLength(n, 1, (i, j) => {
+      if (s[i] === s[j]) {
+        const inside = j - i > 1 ? t.get(i + 1, j - 1) : 0
+        t.set(i, j, 2 + inside, j - i > 1 ? [[i + 1, j - 1]] : [], `“${s[i]}” = “${s[j]}”: 2 + ${j - i > 1 ? `P(${i + 1},${j - 1}) = 2 + ${inside}` : 'nothing inside = 2 + 0'}`)
+      } else t.set(i, j, Math.max(t.get(i + 1, j), t.get(i, j - 1)), [[i + 1, j], [i, j - 1]], `“${s[i]}” ≠ “${s[j]}”: max(drop ${i}: P(${i + 1},${j}), drop ${j}: P(${i},${j - 1})) = max(${t.get(i + 1, j)}, ${t.get(i, j - 1)})`)
+    })
+    return { title: `“${s}”`, setup: 'P(i, j): the longest palindromic subsequence inside s[i..j]. Equal ends can be the outer pair; different ends mean one of them is not used.', table: t, answer: [0, n - 1], args: [s] }
+  },
+  'palindrome-substring': ({ s = 'abba' } = {}) => {
+    const n = s.length
+    const labels = s.split('').map((ch, i) => `${i} ${ch}`)
+    const t = table([...labels, 'count'], labels, (r, c) => (r === n ? 'count' : `T(${r},${c})`))
+    for (let i = 0; i < n; i++) t.seed(i, i, true, 'T(i,i) = T: one letter is a palindrome')
+    byLength(n, 1, (i, j) => {
+      if (s[i] !== s[j]) t.set(i, j, false, [], `“${s[i]}” ≠ “${s[j]}”: the ends differ`)
+      else if (j - i === 1) t.set(i, j, true, [], `“${s[i]}” = “${s[j]}”, nothing inside`)
+      else t.set(i, j, t.get(i + 1, j - 1), [[i + 1, j - 1]], `“${s[i]}” = “${s[j]}”, so it is the inside: T(${i + 1},${j - 1}) = ${show(t.get(i + 1, j - 1))}`)
+    })
+    const all = range(0, n - 1).flatMap(i => range(i, n - 1).map(j => [i, j])), yes = all.filter(at => t.get(...at))
+    t.set(n, n - 1, yes.length, all, `the T cells: ${yes.map(at => `T(${at})`).join(', ')}, ${yes.length} of them`)
+    return { title: `“${s}”`, setup: 'T(i, j): is s[i..j] a palindrome? Its ends must match and its inside must be a palindrome too. The answer is not one cell but how many cells are T, so it gets a row of its own.', table: t, answer: [n, n - 1], args: [s] }
+  },
 }
 
 // What the learner may change in each trace. Field kinds: int, ints (a list), text (letters matching
@@ -468,6 +553,13 @@ export const INPUTS = {
   lcs: { fields: [text('a', 'First', 'a-z', [1, 8]), text('b', 'Second', 'a-z', [1, 10])] },
   'edit-distance': { fields: [text('a', 'From', 'a-z', [1, 8]), text('b', 'To', 'a-z', [1, 10])] },
   lis: { fields: values(0, 99, [1, 12]) },
+  'matrix-chain': { fields: [ints('dims', 'Sizes d₀, d₁, … (matrix i is dᵢ × dᵢ₊₁)', 1, 20, [3, 7])] },
+  'burst-balloons': { fields: values(0, 9, [1, 6]) },
+  'cut-stick': { fields: [int('n', 'Stick length', 10, 20), ints('cuts', 'Cut positions', 1, 9, [1, 5])], rule: i => (new Set(i.cuts).size === i.cuts.length ? null : 'Give each cut position once.') },
+  'merge-stones': { fields: [ints('values', 'Pile sizes', 1, 9, [1, 6])] },
+  'polygon-triangulation': { fields: [ints('values', 'Vertex weights, in order round the polygon', 1, 9, [3, 7])] },
+  'palindrome-subsequence': { fields: [text('s', 'Text', 'a-z', [1, 9])] },
+  'palindrome-substring': { fields: [text('s', 'Text', 'a-z', [1, 8])] },
 }
 
 // A trace's default input, read from its own parameter defaults by running it once with nothing.

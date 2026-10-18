@@ -41,12 +41,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'The cheapest D(l, l + 1)', why: 'That multiplies one pair, not the whole chain.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: sizes 1 × 2, 2 × 3, 3 × 4 (d = 1, 2, 3, 4). What is the cheapest cost?',
-      args: [[1, 2, 3, 4]], answer: 18,
-      misconceptions: [{ answer: 32, feedback: 'That is A · (B · C): 2 · 3 · 4 + 1 · 2 · 4. Try (A · B) · C.' }],
-      explain: '(A · B) · C costs 1 · 2 · 3 + 1 · 3 · 4 = 6 + 12 = 18.',
-    },
+    apply: { cell: [0, 2], misconceptions: [
+      { answer: 90, feedback: 'That splits after matrix 0: A · (B · C) = 0 + 60 + 2·3·5. Splitting after matrix 1 is cheaper.' },
+      { answer: 24, feedback: 'That is D(0,1), the cost of A · B alone. Joining its result to C costs 2·4·5 more.' },
+    ] },
   },
 
   'burst-balloons': {
@@ -82,12 +80,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'D(1, n)', why: 'That leaves out the first and last real balloons, which are the walls of that range.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on a single balloon [5]. What is earned?',
-      args: [[5]], answer: 5,
-      misconceptions: [{ answer: 25, feedback: 'The missing neighbours count as 1: 1 · 5 · 1.' }],
-      explain: 'Padded [1, 5, 1]: the only k is the 5, earning 1 · 5 · 1 = 5.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 8, feedback: 'That bursts balloon 2 (the 1) last. Burst balloon 1 (the 3) last instead: once the 1 is gone it earns 1·3·5.' },
+      { answer: 18, feedback: 'That pays balloon 1 its original neighbours, 1·3·1. Burst last between walls 0 and 3, its neighbours are those walls: 1 and 5.' },
+    ] },
   },
 
   'cut-stick': {
@@ -123,12 +119,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'The sum of D over neighbouring cut points', why: 'Those pieces have no cut inside; they cost 0.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: a stick of length 8 cut once at 3. What does it cost?',
-      args: [8, [3]], answer: 8,
-      misconceptions: [{ answer: 3, feedback: 'A cut costs the length of the piece being cut, the whole stick: 8.' }],
-      explain: 'One cut, in a piece of length 8: 8.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 4, feedback: 'That forgets the first cut itself: whichever cut goes first, it costs the length of the piece, 7.' },
+      { answer: 12, feedback: 'That cuts at 2 first (7 + 5). Cutting at 4 first leaves cheaper pieces: 7 + 4.' },
+    ] },
   },
 
   'merge-stones': {
@@ -165,12 +159,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'D(0, n − 1), with the same table for any K', why: 'With K = 3, a stretch of 2 piles can never become one pile; the table has no way to say so.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on two piles [4, 6]. What does it cost?',
-      args: [[4, 6]], answer: 10,
-      misconceptions: [{ answer: 0, feedback: 'Two piles still need one merge, which costs the new pile’s size.' }],
-      explain: 'One merge: 4 + 6 = 10.',
-    },
+    apply: { cell: [0, 2], misconceptions: [
+      { answer: 4, feedback: 'That forgets the last merge, which costs every stone in piles 0 to 2: 4 + 3 + 1 = 8.' },
+      { answer: 15, feedback: 'That merges piles 0 and 1 first (8 + 7). Merging the 3 and the 1 first is cheaper: 8 + 4.' },
+    ] },
   },
 
   'polygon-triangulation': {
@@ -206,12 +198,10 @@ export const INTERVAL_DESIGNS = {
         { text: 'The cheapest D(l, l + 2)', why: 'Three neighbouring vertices make one triangle, not the whole polygon.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: weights 3, 7, 4, 5. What is the cheapest triangulation?',
-      args: [[3, 7, 4, 5]], answer: 144,
-      misconceptions: [{ answer: 245, feedback: 'That uses the diagonal 7–5. The diagonal 3–4 is cheaper.' }],
-      explain: '3 · 7 · 4 + 3 · 4 · 5 = 84 + 60 = 144.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: 32, feedback: 'That uses triangle 0-1-3. Triangle 0-2-3 is cheaper: 6 + 0 + 12.' },
+      { answer: 12, feedback: 'That prices only triangle 0-2-3 and forgets the polygon 0 … 2 left beside it, which costs 6.' },
+    ] },
   },
 
   'optimal-bst': {

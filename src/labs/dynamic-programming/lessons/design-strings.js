@@ -557,12 +557,10 @@ export const STRING_DESIGNS = {
         { text: 'The largest P(i, i + 1)', why: 'Those are pieces of length 2.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design on “abca”. How long is the longest palindromic subsequence?',
-      args: ['abca'], answer: 3,
-      misconceptions: [{ answer: 2, feedback: 'The ends are both a; between them, one more letter fits.' }],
-      explain: 'Ends equal: 2 + P(“bc”) = 2 + 1 = 3, for “aba” or “aca”.',
-    },
+    apply: { cell: [1, 4], misconceptions: [
+      { answer: 1, feedback: 'That is P(2,3) alone. Equal ends add 2: both b’s can be the outer pair around it.' },
+      { answer: 2, feedback: 'The pair of b’s adds 2, and the inside “ba” still gives one more letter: 2 + 1.' },
+    ] },
   },
 
   'palindrome-substring': {
@@ -601,12 +599,9 @@ export const STRING_DESIGNS = {
         { text: 'T(0, n − 1)', why: 'That only says whether the whole string is one.' },
       ] },
     ],
-    apply: {
-      prompt: 'Use your design: how many palindromic substrings, by position, does “aaa” have?',
-      args: ['aaa'], answer: 6,
-      misconceptions: [{ answer: 3, feedback: 'Each a, then each “aa”, then “aaa”: 3 + 2 + 1.' }],
-      explain: 'Every piece of “aaa” is a palindrome: 3 + 2 + 1 = 6.',
-    },
+    apply: { cell: [0, 3], misconceptions: [
+      { answer: false, feedback: 'The ends are both a, and the inside “bb” is T(1,2) = T, so “abba” is a palindrome.' },
+    ] },
   },
 
   'palindrome-cuts': {

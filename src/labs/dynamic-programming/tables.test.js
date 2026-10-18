@@ -6,6 +6,7 @@ import { TRACES, INPUTS, show, defaultInput } from './tables.js'
 import { formatField, parseInput, randomField } from './traceInputs.js'
 import { LESSONS } from './lessons/index.js'
 import { SOLUTIONS } from './lessons/reference-solutions.js'
+import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
 
 // Answers for traces whose lessons have no reference solution, written without DP (plain recursion
 // or enumeration), so they can't share a mistake with the table.
@@ -25,6 +26,8 @@ const ORACLE = { lcs: lcsBrute, 'edit-distance': editBrute, lis: lisBrute, 'grid
 
 function expected(id, args) {
   if (ORACLE[id]) return ORACLE[id](...args)
+  // Structured lessons have no challenge; their answer keys try every split, order or subsequence.
+  if (!SOLUTIONS[id] && STRUCTURED_ORACLES[id]) return STRUCTURED_ORACLES[id](structuredClone(args))
   return new Function(`${SOLUTIONS[id].JavaScript}; return solve`)()(...structuredClone(args))
 }
 
@@ -53,7 +56,7 @@ describe('live DP tables', () => {
     for (const id of Object.keys(TRACES)) {
       expect(LESSONS[id], id).toBeTruthy()
       expect(INPUTS[id], id).toBeTruthy()
-      expect(SOLUTIONS[id] || ORACLE[id], `${id} needs an independent answer`).toBeTruthy()
+      expect(SOLUTIONS[id] || ORACLE[id] || STRUCTURED_ORACLES[id], `${id} needs an independent answer`).toBeTruthy()
     }
   })
   for (const id of Object.keys(TRACES)) {
