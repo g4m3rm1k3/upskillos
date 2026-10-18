@@ -2,7 +2,7 @@
 // All scripts run in the repository's @opencalc/openmat engine.
 export const applications = [
   {
-    id: 'laml-stable-logistic', module: 'Math for machine learning',
+    id: 'laml-stable-logistic', module: 'Machine learning',
     title: 'Logistic regression without numerical overflow', minutes: 35, level: 'Advanced',
     objective: 'Compute binary probabilities, a stable logistic loss, and its vectorized gradient.',
     prose: [
@@ -67,7 +67,7 @@ w=[0;1000];`, checks: [{ name: 'p', expected: [0,0.5,1], tolerance: 1e-6, messag
     },
   },
   {
-    id: 'laml-backpropagation', module: 'Math for machine learning',
+    id: 'laml-backpropagation', module: 'Machine learning',
     title: 'A neural network is a chain of matrix operations', minutes: 35, level: 'Advanced',
     objective: 'Implement a small neural-network forward pass and verify a backpropagated gradient numerically.',
     prose: [
@@ -137,7 +137,7 @@ gradientError=abs(finiteDifference-gradW(1,1));`,
     },
   },
   {
-    id: 'laml-policy-evaluation', module: 'Dynamic programming',
+    id: 'laml-policy-evaluation', module: 'Decisions',
     title: 'Evaluate a fixed policy two ways', minutes: 35, level: 'Advanced',
     objective: 'Solve a discounted policy-value equation directly and by iteration, then certify the result with a residual.',
     prose: [
@@ -195,7 +195,7 @@ errorBound=residual/(1-gamma);`,
     },
   },
   {
-    id: 'laml-backward-induction', module: 'Dynamic programming',
+    id: 'laml-backward-induction', module: 'Decisions',
     title: 'Finite horizons and backward induction', minutes: 35, level: 'Advanced',
     objective: 'Work backward from a terminal payoff and recover a policy that can change with time.',
     prose: [
@@ -265,7 +265,7 @@ firstPolicy=policy;`,
     },
   },
   {
-    id: 'laml-value-iteration', module: 'Dynamic programming',
+    id: 'laml-value-iteration', module: 'Decisions',
     title: 'Bellman optimality and value iteration', minutes: 35, level: 'Advanced',
     objective: 'Compute an optimal discounted value, extract a greedy policy, and certify its Bellman mismatch.',
     prose: [
@@ -341,8 +341,8 @@ errorBound=residual/(1-gamma);`,
     },
   },
   {
-    id: 'laml-recommendation-studio', module: 'Mastery studio',
-    title: 'Low-rank recommendations with honest holdouts', minutes: 35, level: 'Mastery',
+    id: 'laml-recommendation-studio', module: 'Machine learning',
+    title: 'Low-rank recommendations with honest holdouts', minutes: 35, level: 'Capstone',
     objective: 'Construct a low-rank rating estimate without using a held-out rating, and separate reconstruction error from predictive evidence.',
     prose: [
       'A three-user, three-item ratings table contains six training ratings: 5, 4, 4, 2, 2, and 1. Their mean is 3. Three cells are unavailable during fitting. Fill those cells with the training mean as a simple baseline, then compress the filled table to rank one. One hidden rating is 3 and will be used only after fitting.',
@@ -405,8 +405,8 @@ heldoutTruth=5;`, checks: [{ name: 'fillMean', expected: 3, tolerance: 1e-6, mes
     },
   },
   {
-    id: 'laml-pca-ridge-capstone', module: 'Mastery studio',
-    title: 'Capstone: a PCA and ridge prediction pipeline', minutes: 35, level: 'Mastery',
+    id: 'laml-pca-ridge-capstone', module: 'Machine learning',
+    title: 'Capstone: a PCA and ridge prediction pipeline', minutes: 35, level: 'Capstone',
     objective: 'Fit a training-only PCA projection and ridge model, then evaluate unseen rows without leaking test information.',
     prose: [
       'Four training examples have feature pairs [0,0], [1,2], [2,4], and [3,6], with targets 1, 4, 7, and 10. The two columns measure the same direction at different scales. A one-component projection preserves their variation. Future examples [4,8] and [5,10] must be transformed using the training mean [1.5,3], even though their own mean is different.',
@@ -491,8 +491,8 @@ lambda=1;`, checks: [{ name: 'mu', expected: [1.5,3], tolerance: 1e-6, message: 
     },
   },
   {
-    id: 'laml-policy-iteration-capstone', module: 'Mastery studio',
-    title: 'Capstone: policy iteration as solve and improve', minutes: 35, level: 'Mastery',
+    id: 'laml-policy-iteration-capstone', module: 'Decisions',
+    title: 'Capstone: policy iteration as solve and improve', minutes: 35, level: 'Capstone',
     objective: 'Alternate exact policy evaluation with greedy improvement, then verify both policy and optimality equations.',
     prose: [
       'With rewards [0.5;0] for staying and [0;2] for switching, a policy that always stays values the states at [2.5;0] when the discount is 0.8. Switching from state 2 then becomes attractive. Re-evaluating that improved policy can make switching from state 1 attractive too. One greedy pass from a poor policy need not finish the job.',
@@ -604,8 +604,8 @@ gamma=0.5;`, checks: [{ name: 'policy', expected: [1,2], tolerance: 1e-6, messag
     },
   },
   {
-    id: 'laml-independent-audit', module: 'Mastery studio',
-    title: 'Independent studio: learn rewards, then audit a decision', minutes: 35, level: 'Mastery',
+    id: 'laml-independent-audit', module: 'Decisions',
+    title: 'Independent studio: learn rewards, then audit a decision', minutes: 35, level: 'Capstone',
     objective: 'Combine regularized prediction with discounted control and support conclusions using independent numerical and Bellman evidence.',
     prose: [
       'Three noisy observations at inputs 0, 1, and 2 have measured rewards 1, 2, and 2. Fit a line with an unpenalized intercept and a ridge-penalized slope. Use its predicted rewards at inputs 0 and 2 as the staying rewards of a two-state decision model. A switching action has known rewards [0;3]. The learned model now influences an actual decision.',

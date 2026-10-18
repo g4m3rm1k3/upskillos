@@ -1,11 +1,11 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { LESSONS, MODULES, STAGES, SYNTAX } from './curriculum.js'
+import { LESSONS, MODULES, STAGES, SYNTAX, TRACK_STAGE } from './curriculum.js'
 import { ROLES } from './lessons/uses.js'
 import { startRun } from './runner.js'
 import { readProgress, saveProgress } from './storage.js'
 import Explore from './Explore.jsx'
 import { CodeEditor, CodeView } from './code.jsx'
-import { AnglesCard, MasteryMap, Notation, Proof, QuickCheck, Review, UsesCard, WhyCard } from './Study.jsx'
+import { AnglesCard, ProgressMap, Notation, Proof, QuickCheck, Review, UsesCard, WhyCard } from './Study.jsx'
 import { dueItems, schedule } from './review.js'
 import ProblemSet from './ProblemSet.jsx'
 import { problemsFor } from './practice/index.js'
@@ -152,8 +152,8 @@ ${lesson.demo.draw}` : demo }
     <aside className={`la-sidebar ${menu ? 'la-open' : ''}`} aria-label="Series curriculum">
       <div className="la-brand"><span className="la-brand-icon" aria-hidden="true">A<i>x</i></span><div>Linear Algebra Lab<small>Powered by OpenMAT</small></div></div>
       <div className="la-progress"><div><strong>{doneCount} / {LESSONS.length}</strong><span>challenges checked</span></div><div className="la-bar-track"><i style={{ width: `${100 * doneCount / LESSONS.length}%` }} /></div><progress className="la-sr" aria-label="Challenges passed" max={LESSONS.length} value={doneCount} /><small>{independent} passed without opening a reference</small></div>
-      <div className="la-views"><button type="button" aria-pressed={view === 'map'} onClick={() => openView('map')}><span aria-hidden="true">◫</span> Mastery map</button><button type="button" aria-pressed={view === 'review'} onClick={() => openView('review')}><span aria-hidden="true">↻</span> Review{due ? <b>{due} due</b> : null}</button></div>
-      <nav aria-label="Modules and lessons">{STAGES.map(([stage, stageModules], stageIndex) => <div key={stage} className="la-stage-group"><div className="la-stage-label">Stage {stageIndex + 1} · {stage}</div>{stageModules.map(module => {
+      <div className="la-views"><button type="button" aria-pressed={view === 'map'} onClick={() => openView('map')}><span aria-hidden="true">◫</span> Progress map</button><button type="button" aria-pressed={view === 'review'} onClick={() => openView('review')}><span aria-hidden="true">↻</span> Review{due ? <b>{due} due</b> : null}</button></div>
+      <nav aria-label="Modules and lessons">{STAGES.map(([stage, stageModules], stageIndex) => <div key={stage} className="la-stage-group"><div className="la-stage-label">{TRACK_STAGE === stage ? `${stage} · any order` : `Stage ${stageIndex + 1} · ${stage}`}</div>{stageModules.map(module => {
         const moduleIndex = MODULES.indexOf(module)
         const items = LESSONS.filter(item => item.module === module), finished = items.filter(item => done[item.id]).length
         return <details key={module} open={lesson.module === module || undefined} className="la-module" style={hue(module)}><summary><span className="la-module-num">{pad(moduleIndex + 1)}</span><span className="la-module-name">{module}</span><span className="la-module-count">{finished}/{items.length}</span></summary><ol>{items.map(item => <li key={item.id}><button type="button" aria-current={item.id === lesson.id ? 'step' : undefined} onClick={() => go(item)}><span className={done[item.id] ? 'la-status la-complete' : 'la-status'}>{done[item.id] ? '✓' : pad(LESSONS.indexOf(item) + 1)}</span>{item.title}</button></li>)}</ol></details>
@@ -163,14 +163,14 @@ ${lesson.demo.draw}` : demo }
     <main className="la-main" ref={main}>
       <header className="la-topbar"><button type="button" className="la-menu-button" aria-expanded={menu} onClick={() => setMenu(!menu)}>{menu ? 'Close curriculum' : 'Curriculum'}</button><span className="la-crumb"><i />{lesson.module}<b>›</b>{lesson.title}</span><button type="button" onClick={() => setReference(!reference)} aria-expanded={reference}>{reference ? 'Close syntax guide' : 'Syntax guide'}</button></header>
       <div className="la-content">
-        {view === 'map' && <MasteryMap lessons={LESSONS} modules={MODULES} store={store} onOpen={go} hue={hue} />}
+        {view === 'map' && <ProgressMap lessons={LESSONS} modules={MODULES} store={store} onOpen={go} hue={hue} />}
         {view === 'review' && <Review lessons={LESSONS} store={store} onAnswer={answer} onOpen={go} />}
         {view === 'lesson' && <>
         {index === 0 && <Hero />}
         {!saved && <p role="status" className="la-feedback la-error">Browser storage is unavailable. Your work will last until this lab closes. Copy code you want to keep.</p>}
         {reference && <section className="la-card la-reference"><h2>OpenMAT from zero</h2><p>Code is a sequence of instructions. Run executes them from top to bottom in a fresh workspace. Challenge data runs first. Ctrl/Cmd + Enter runs the focused editor.</p><dl>{SYNTAX.map(([code, meaning]) => <div key={code}><dt><CodeView code={code} inline /></dt><dd>{meaning}</dd></div>)}</dl><p className="la-muted">OpenMAT uses a practical MATLAB-style subset. The examples here are tested in this engine. No installation or paid software is needed.</p></section>}
         <section className="la-lesson-header">
-          <div className="la-meta"><span className="la-chip">{lesson.module}</span><span>Lesson {pad(index + 1)} of {LESSONS.length}</span><span>{lesson.level}</span><span>about {lesson.minutes} min</span></div>
+          <div className="la-meta"><span className="la-chip">{lesson.module}</span><span>Lesson {pad(index + 1)} of {LESSONS.length}</span><span>{lesson.level}</span>{lesson.track && <span className="la-chip">Optional track</span>}<span>about {lesson.minutes} min</span></div>
           <h1>{lesson.title}</h1><p>{lesson.objective}</p>
           {lesson.uses?.some(use => use.who !== 'general') && <div className="la-fields" aria-label="Fields where this is used">{lesson.uses.filter(use => use.who !== 'general').map(use => <span key={use.who}>{ROLES.find(([id]) => id === use.who)?.[1]}</span>)}</div>}
           {done[lesson.id] && <span className="la-earned">✓ {done[lesson.id].assisted ? 'Checked with reference support' : 'Challenge passed'}{done[lesson.id].code !== draft ? ' · draft has changed since that pass' : ''}</span>}
@@ -210,7 +210,7 @@ ${lesson.demo.draw}` : demo }
             <div className="la-given"><span>Given data · runs before your code</span><CodeView code={lesson.challenge.setup} label="Given data" /></div>
             <div className="la-workbench">
               <div><CodeEditor label="Your challenge code" code={draft} onChange={code => edit('drafts', code)} onRun={() => run(true)} disabled={running} dark={colors.dark} />{runButtons(true, 'Run & check challenge', 'Checking…')}
-                <p className="la-muted">Checks inspect the values and shapes you computed. {lesson.challenge.cases?.length ? 'Your same code also runs on transfer datasets.' : 'Use the given data to derive your result.'} Passing records practice evidence; it does not certify mastery.</p></div>
+                <p className="la-muted">Checks inspect the values and shapes you computed. {lesson.challenge.cases?.length ? 'Your same code also runs on transfer datasets.' : 'Use the given data to derive your result.'} Passing records your practice; the transfer question below takes the idea further.</p></div>
               <div className="la-output"><Result value={result} colors={colors} /></div>
             </div>
             <div className="la-support"><h3>Need a foothold?</h3>{lesson.challenge.hints.slice(0, hints).map((hint, i) => <p key={i} className="la-hint"><strong>Hint {i + 1}</strong> {hint}</p>)}<button type="button" disabled={hints >= lesson.challenge.hints.length} onClick={() => setHints(hints + 1)}>{hints ? 'Reveal next hint' : 'Reveal first hint'}</button></div>

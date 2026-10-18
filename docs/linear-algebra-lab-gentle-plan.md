@@ -1,6 +1,6 @@
 # Linear Algebra Lab: gentle-curve redesign plan
 
-Drafted 2026-10-17. Status: Phases 1–5 and 6a–6b done (2026-10-18); 6c and 6d not started. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
+Drafted 2026-10-17. Status: Phases 1–5 and 6a–6c done (2026-10-18); 6d not started. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
 
 ## Goal
 
@@ -142,8 +142,8 @@ N = new lesson, E = existing lesson (reworked where noted).
        - thin `qr(X, 0)`;
        - `norm` of a non-square matrix;
        - accurate `rank` and `cond`.
-   - **6c: Stage 4.**
-     - Add the `track` field and group the tracks in the sidebar.
-     - Move the applied lessons into tracks: machine learning, decisions, graphics and 3D, engineering.
-     - Replace the remaining "mastery" wording, including the module name "Mastery studio".
+   - **6c (done, 2026-10-18): Stage 4 is now "Optional tracks".**
+     - Two tracks, "Machine learning" (6 lessons) and "Decisions" (5 lessons). Each lesson carries `track`, the sidebar shows the group as "any order", and the lesson header shows "Optional track".
+     - "Mastery studio" is gone: its capstones joined their tracks. Level "Mastery" became "Capstone", "Mastery map" became "Progress map", and a test keeps "mastery" out of the lessons.
+     - Graphics and 3D and the engineering track have no lessons yet, so they are not listed.
    - **6d: fix the 15 guessable problem families, and add the `derive` (Derive it) stepper.**

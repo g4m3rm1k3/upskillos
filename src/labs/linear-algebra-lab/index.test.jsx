@@ -99,7 +99,7 @@ describe('Linear Algebra Lab', () => {
     expect(Math.abs(descentTrace(1.1).at(-1) - 2)).toBeGreaterThan(3)
   })
 
-  it('builds a proof step by step, records quick checks and shows both on the mastery map and in review', async () => {
+  it('builds a proof step by step, records quick checks and shows both on the progress map and in review', async () => {
     const lesson = LESSONS.find(item => item.proof)
     localStorage.setItem(STORE_KEY, JSON.stringify({ current: lesson.id }))
     render(<Lab />)
@@ -118,7 +118,7 @@ describe('Linear Algebra Lab', () => {
     expect(screen.getByText(/Proof complete/)).toBeTruthy()
     await waitFor(() => expect(readProgress().proved[lesson.id]).toBeTruthy())
     expect(readProgress().review[`${lesson.id}#0`].box).toBe(1)
-    fireEvent.click(screen.getByRole('button', { name: /Mastery map/ }))
+    fireEvent.click(screen.getByRole('button', { name: /Progress map/ }))
     expect(screen.getByRole('button', { name: new RegExp(`${lesson.title}: .*Built the proof yes`) })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Review/ }))
     expect(screen.getByText(/Question 1 of 1/)).toBeTruthy()

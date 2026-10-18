@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { executeScript } from '../../engines/openmat/openmatEngine.js'
-import { LESSONS, MODULES, STAGES } from './curriculum.js'
+import { LESSONS, MODULES, STAGES, TRACK_STAGE } from './curriculum.js'
 import { ROLES } from './lessons/uses.js'
 import { gradeWorkspace, matchesNumeric } from './grading.js'
 import { cloneable } from './execution.js'
@@ -24,7 +24,7 @@ describe('OpenMAT linear algebra curriculum', () => {
       expect(lesson.challenge.checks.length).toBeGreaterThan(0)
     }
     expect(LESSONS[0].level).toBe('Beginner')
-    expect(LESSONS.at(-1).level).toBe('Mastery')
+    expect(LESSONS.at(-1).level).toBe('Capstone')
   })
 
   for (const lesson of LESSONS) {
@@ -110,6 +110,11 @@ describe('gentle curve', () => {
       expect(roles.has(use.who), `${lesson.id}: ${use.who}`).toBe(true)
       expect(use.story.length).toBeGreaterThan(40)
     }
+  })
+  it('marks the last stage as optional tracks and keeps "mastery" out of the lessons', () => {
+    expect(TRACK_STAGE).toBe(STAGES.at(-1)[0])
+    for (const lesson of LESSONS) expect(lesson.track, lesson.id).toBe(STAGES.at(-1)[1].includes(lesson.module) ? lesson.module : undefined)
+    for (const lesson of LESSONS) expect(JSON.stringify(lesson), lesson.id).not.toMatch(/mastery/i)
   })
   it('renders the maths in stories, case studies and extra angles', () => {
     for (const lesson of LESSONS) {

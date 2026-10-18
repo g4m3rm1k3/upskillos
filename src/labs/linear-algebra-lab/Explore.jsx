@@ -39,7 +39,7 @@ const BY_LESSON = {
   'laml-covariance-pca': 'pca', 'laml-pca-ridge-capstone': 'pca', 'laml-recommendation-studio': 'svd',
   'laml-svd-photo': 'photo', 'laml-svd-low-rank': 'photo', 'laml-spectral-svd-theorem': 'svd', 'laml-symmetric-quadratic': 'transform', 'laml-positive-definite': 'transform',
 }
-const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Best fit': 'fit', 'Calculus meets matrices': 'hill', "Directions that don't turn": 'transform', 'Tensors in the real world': 'transform', 'The SVD: the shape of any matrix': 'photo', 'Math for machine learning': 'descent', 'Dynamic programming': 'bellman', 'Mastery studio': 'bellman' }
+const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Best fit': 'fit', 'Calculus meets matrices': 'hill', "Directions that don't turn": 'transform', 'Tensors in the real world': 'transform', 'The SVD: the shape of any matrix': 'photo', 'Machine learning': 'descent', 'Decisions': 'bellman' }
 export const experimentFor = lesson => BY_LESSON[lesson.id] || BY_MODULE[lesson.module] || 'combine'
 
 export default function Explore({ lesson }) {

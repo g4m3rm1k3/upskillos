@@ -366,7 +366,7 @@
 .la-qed .la-prose p { margin: 0 0 6px !important; }
 .la-qed > span { font-weight: 750; color: var(--c-j); font-size: 14px; }
 
-/* Mastery map and review */
+/* Progress map and review */
 .la-map h1, .la-review h1 { margin: 6px 0 8px; }
 .la-map-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0 26px; }
 .la-map-totals > div { border: 1px solid var(--line); background: var(--paper); border-radius: 14px; padding: 14px 16px; border-top: 4px solid var(--stage); }

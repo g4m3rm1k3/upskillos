@@ -1,4 +1,4 @@
-// Spaced review (Leitner boxes) and the mastery stages, as plain functions of the saved progress.
+// Spaced review (Leitner boxes) and the progress stages, as plain functions of the saved progress.
 // A quiz item's key is `<lesson id>#<index>`; its review entry is { box: 1–5, due: epoch ms }.
 const DAY = 86400000
 export const INTERVAL_DAYS = [0, 1, 3, 7, 21, 60]
@@ -30,7 +30,7 @@ export function schedule(entry, correct, now = Date.now()) {
 
 export const retained = (lesson, store) => (lesson.quiz ?? []).length > 0 && lesson.quiz.every((_, i) => (store.review?.[itemKey(lesson, i)]?.box ?? 0) >= 3)
 
-// The four stages shown on the mastery map. `null` means the lesson has no such stage.
+// The four stages shown on the progress map. `null` means the lesson has no such stage.
 export function stages(lesson, store) {
   return {
     explored: Boolean(store.ran?.[lesson.id]),

@@ -16,33 +16,33 @@ At the end of a session, update this file (state, next step, anything learned) a
 - **One heavy run at a time.** Never overlap vitest runs, builds or the browser check.
 - Plain language in replies. Make technical decisions without asking.
 
-## State of the project (2026-10-18, end of Phase 6b)
+## State of the project (2026-10-18, end of Phase 6c)
 
-- **Committed:** Phases 1–6a (Phases 5 and 6a went in with commit `1bea1e74`).
-- **Done but NOT committed:** Phase 6b. Its files:
-  - Lab (`src/labs/linear-algebra-lab/`). New: `lessons/bestfit.js`, `practice/bestfit.js`. Modified: `curriculum.js`, `curriculum.test.js`, `Explore.jsx`, `practice/index.js`, `lessons/core.js` (least squares and QR moved out), `lessons/enrich.js` (old QR entry removed), `lessons/spaces.js`, `lessons/uses.js`.
-  - Engine: `packages/openmat/src/engine.ts`, `packages/openmat/src/linalg.ts`, `packages/openmat/src/__tests__/engine.test.ts`.
+- **Committed:** Phases 1–6b (Phase 6b went in with commit `5e812edd`).
+- **Done but NOT committed:** Phase 6c. Its files:
+  - Lab (`src/labs/linear-algebra-lab/`): `curriculum.js`, `curriculum.test.js`, `index.jsx`, `index.test.jsx`, `Study.jsx`, `ProblemSet.jsx`, `review.js`, `lab.css`, `Explore.jsx`, `lessons/core.js`, `lessons/applications.js`.
   - Docs: `docs/linear-algebra-lab-gentle-plan.md` and this file.
   - Any untracked `docs/notebooks/*` files belong to another session. Don't stage them.
-- **Size:** 68 lessons in 13 modules over 4 stages (`STAGES` in `curriculum.js`).
-- **Reworked in the gentle style (why, uses, angles):** all of Stages 1, 2 and 3. Stage 4 (the tracks) is next.
+- **Size:** 68 lessons in 12 modules: three stages of core modules, then two optional tracks (`STAGES` in `curriculum.js`).
+- **Optional tracks:** the last entry of `STAGES` is "Optional tracks", exported as `TRACK_STAGE`. Its modules are "Machine learning" (6 lessons) and "Decisions" (5 lessons). Every lesson in them gets `track: <module>` in `curriculum.js`. The sidebar labels the group "Optional tracks · any order", and the lesson header shows an "Optional track" chip.
+- **Wording:** "Mastery studio" is gone (its four capstones joined the track each belongs to), level "Mastery" is now "Capstone", and "Mastery map" is now "Progress map". A test keeps the word "mastery" out of every lesson.
+- **Reworked in the gentle style (why, uses, angles):** all of Stages 1, 2 and 3. The 11 track lessons have none yet.
 - **Last checks (2026-10-18):**
-  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 665 passed.
-  - Other OpenMAT users (`src/labs/ml-lab`, `src/labs/spreadsheet-lab/engine`, `src/tools/math-os`, `src/engines`): all pass except two speed tests that do not use OpenMAT. One is a spreadsheet test with a 3 s limit (it took 3.6 s); the other is the ML lab 27 capstone, which times out after 5 s. Both are slow-machine timing.
+  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 666 passed.
   - `npm run typecheck`: clean.
-  - `npm run catalog:check`: current (the 14 content problems that were already there).
-  - Browser check: the GPS lesson in light and dark mode, the QR lesson in dark mode, and the least-squares challenge prompt; no page errors.
+  - `npm run catalog:check`: current at Phase 6b (the 14 content problems that were already there). Phase 6c added no lessons.
+  - Browser check (dark mode): the Decisions capstone lesson, the sidebar and the progress map; no page errors.
+  - Other OpenMAT users were checked at Phase 6b; 6c did not touch the engine.
   - The production build was last run at the Phase 3 commit.
 
-## Next: Phase 6c, Stage 4 tracks
+## Next: Phase 6d, clean-ups
 
 Read the Phase 6 entry in the plan. In short:
-1. Add a `track` field to the Stage 4 lessons and show the tracks as their own group in the sidebar (they are optional, in any order).
-2. Sort the applied lessons into tracks: machine learning (which now includes regression validation and ridge, moved in 6b), decisions (dynamic programming and the capstones), graphics and 3D, engineering. Graphics and engineering have no lessons yet, so either leave them out until they do or plan their first lessons.
-3. Replace the remaining "mastery" wording, including the module name "Mastery studio", the "Mastery map" button and "does not certify mastery" under each challenge.
-4. Lab suite, browser check, then update the plan and this file.
+1. **Prompts and prose where a pair of `*` renders as italics.** For example, "gamma*P1*value" in the policy-iteration capstone shows "P1" in italics. Put code in backticks, as the Best fit prompts do. Search the lesson prose, the challenge prompts and the practice prompts.
+2. **The guessable problem families** (`GUESSABLE` in `practice.test.js`): make each one fail when an answer is hard-coded from one draw, then remove it from the list.
+3. **The Derive-it stepper** (`derive`), if the session has room; otherwise make it Phase 6e.
 
-Then 6d: guessable problem families, the Derive-it stepper, and challenge and problem prompts in older lessons where a pair of `*` (as in `X*beta ... y - X*beta`) renders as italics. Put code in backticks, as the Best fit prompts now do.
+After Phase 6: the 11 track lessons have no why stories, case studies or angles. Graphics and engineering tracks were planned but have no lessons.
 
 ## How the lab is built
 

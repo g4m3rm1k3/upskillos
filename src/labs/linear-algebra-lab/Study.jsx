@@ -1,4 +1,4 @@
-// Notation, quick checks, proofs, the mastery map and spaced review.
+// Notation, quick checks, proofs, the progress map and spaced review.
 import { useMemo, useState } from 'react'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
@@ -87,12 +87,12 @@ export function Proof({ lesson, proved, onComplete }) {
 
 const STAGE_NAMES = [['explored', 'Ran the example'], ['practiced', 'Passed the challenge'], ['proved', 'Built the proof'], ['retained', 'Retained in review']]
 
-export function MasteryMap({ lessons, modules, store, onOpen, hue }) {
+export function ProgressMap({ lessons, modules, store, onOpen, hue }) {
   const all = lessons.map(lesson => stages(lesson, store))
   const count = key => all.filter(s => s[key]).length, possible = key => all.filter(s => s[key] !== null).length
   return <section className="la-map">
-    <div className="la-eyebrow">Your progress</div><h1>Mastery map</h1>
-    <p className="la-muted">Each lesson has up to four marks. Mastery means all of them, and retention is only earned by answering review questions correctly on later days.</p>
+    <div className="la-eyebrow">Your progress</div><h1>Progress map</h1>
+    <p className="la-muted">Each lesson has up to four marks. A lesson is done when all of them are on, and the retention mark is only earned by answering review questions correctly on later days.</p>
     <div className="la-map-totals">{STAGE_NAMES.map(([key, name], i) => <div key={key} className={`la-stage-${i}`}><strong>{count(key)}<small>/{possible(key)}</small></strong><span>{name}</span></div>)}</div>
     {modules.map(module => <div key={module} className="la-map-module" style={hue(module)}>
       <h2>{module}</h2>

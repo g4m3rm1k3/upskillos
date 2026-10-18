@@ -29,14 +29,18 @@ export const STAGES = [
   ['See it', ['Vectors: arrows and lists', 'The dot product']],
   ['Use it', ['Matrices are machines', 'Solving many equations']],
   ['Understand it', ['Spaces and bases', 'Best fit', 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world', 'The SVD: the shape of any matrix']],
-  ['Apply it', ['Math for machine learning', 'Dynamic programming', 'Mastery studio']],
+  ['Optional tracks', ['Machine learning', 'Decisions']],
 ]
 export const MODULES = STAGES.flatMap(([, modules]) => modules)
+// The last stage holds optional tracks, taken in any order. Their lessons carry `track`: the track name.
+export const TRACK_STAGE = STAGES.at(-1)[0]
+const TRACKS = STAGES.at(-1)[1]
 
 const assembled = assemble([...stage1, ...stage2, ...svdLessons, ...bestFitLessons, ...core, ...calculus, ...eigenLessons, ...applications], [...spaces, ...spectralTheory])
 const unplaced = assembled.filter(lesson => !MODULES.includes(lesson.module))
 if (unplaced.length) throw new Error(`Lessons in no stage: ${unplaced.map(lesson => lesson.id).join(', ')}`)
 export const LESSONS = MODULES.flatMap(module => assembled.filter(lesson => lesson.module === module))
+  .map(lesson => TRACKS.includes(lesson.module) ? { ...lesson, track: lesson.module } : lesson)
 
 export const SYNTAX = [
   ['x = 3;', 'Store 3 under the name x. The final semicolon hides automatic printing.'],
