@@ -1,6 +1,6 @@
 // Spaces and bases: vector spaces beyond arrows, subspaces in three dimensions, basis and dimension,
-// change of basis and the four fundamental subspaces. Then Gram–Schmidt and orthogonal matrices,
-// which join the least-squares module. Each lesson names the lesson it follows (`after`).
+// change of basis and the four fundamental subspaces. Then orthogonal matrices and Gram–Schmidt,
+// which join the Best fit module before QR. Each lesson names the lesson it follows (`after`).
 // OpenMAT notes: column vectors are stored flat. Side-by-side concatenation such as [u w] works, but
 // the comma form [u, w] does not and the outer product u*u' returns a dot product, so both are avoided.
 export const spaces = [
@@ -311,14 +311,15 @@ axis equal`,
     },
   },
   {
-    id: 'laml-gram-schmidt', after: 'laml-orthogonal-qr', module: 'Least squares and data', title: 'Gram–Schmidt: build perpendicular directions by hand', minutes: 30, level: 'Advanced',
+    id: 'laml-gram-schmidt', after: 'laml-least-squares', module: 'Best fit', title: 'Gram–Schmidt: build perpendicular directions by hand', minutes: 30, level: 'Advanced',
+    why: { title: 'Only the news, please', story: 'Two sensors on a machine both respond to temperature, and one also responds to vibration. Their readings overlap, so it is hard to say what each one adds. Gram–Schmidt keeps the first direction, strips from the second everything the first already explains, and keeps only what is new. The perpendicular directions it builds are exactly the "easy" matrices of the previous lesson, and the next lesson uses them to fit data without losing accuracy.' },
     objective: 'Turn independent vectors into an orthonormal set with Gram–Schmidt, and read off the factors of A = QR.',
     prose: [
       'Two survey questions measure overlapping things. Their answer vectors a₁ = [3; 1] and a₂ = [2; 2] point in similar directions, so their information overlaps. We want two perpendicular unit directions that span the same plane, so each new direction carries only new information.',
       'Step one: keep the direction of a₁ and give it length 1. Dividing by its length gives q₁ = a₁/‖a₁‖. Step two: remove from a₂ the part along q₁. That part is (q₁·a₂)·q₁, exactly the projection from an earlier lesson. What remains, v₂ = a₂ − (q₁·a₂)·q₁, is perpendicular to q₁.',
       'Step three: give v₂ length 1 to get q₂. Now q₁ and q₂ are **orthonormal**: perpendicular unit vectors. With more vectors, repeat: subtract the parts along every q found so far, then normalise. This is the **Gram–Schmidt** process.',
       'The numbers removed along the way record how to rebuild the originals. a₁ = ‖a₁‖·q₁, and a₂ = (q₁·a₂)·q₁ + ‖v₂‖·q₂. Collected in an upper-triangular matrix R, this says A = Q·R, where Q has columns q₁ and q₂. The `qr` function computes the same factors, possibly with some signs flipped.',
-      'Gram–Schmidt needs independent inputs. If a₂ were a multiple of a₁, then v₂ would be zero and could not be normalised. With nearly dependent inputs, roundoff spoils the perpendicularity; library QR uses more careful steps for that reason.',
+      'Gram–Schmidt needs independent inputs. If a₂ were a multiple of a₁, then v₂ would be zero and could not be normalised. With nearly dependent inputs, roundoff spoils the perpendicularity; library QR uses more careful steps for that reason. The next lesson puts Q and R to work on a best fit.',
     ],
     procedure: ['Normalise the first vector: q₁ = a₁/norm(a₁).', 'For each next vector, subtract its projection onto every earlier q, then normalise what remains.', 'Record the removed coefficients and the lengths in an upper-triangular R, so that A = Q*R.'],
     prediction: { question: 'If a₂ were already perpendicular to a₁, what would Gram–Schmidt do to it?', answer: 'Nothing except normalise it: its projection onto q₁ is zero, so v₂ = a₂ and q₂ = a₂/‖a₂‖. The entry R(1,2) would be 0.' },
@@ -375,7 +376,8 @@ axis equal`,
     },
   },
   {
-    id: 'laml-orthogonal-matrices', after: 'laml-gram-schmidt', module: 'Least squares and data', title: 'Orthogonal matrices keep lengths and angles', minutes: 30, level: 'Advanced',
+    id: 'laml-orthogonal-matrices', after: 'laml-least-squares', module: 'Best fit', title: 'Orthogonal matrices keep lengths and angles', minutes: 30, level: 'Advanced',
+    why: { title: 'Moves that never distort', story: 'A robot turns a part, a game camera swings round, a satellite works out which way it is pointing. In each case nothing may be stretched or bent: every length and angle must survive. The matrices that do this have perpendicular unit columns, and they are the easiest matrices there are. Undoing one costs no solve at all, and multiplying by one never magnifies an error. That second fact is why the best-fit methods of this module are built from them.' },
     objective: 'Recognise an orthogonal matrix, use its transpose as its inverse, and verify that it preserves lengths, angles and area.',
     prose: [
       'A robot arm turns a part by 30 degrees. Every distance between two holes on the part is the same afterwards, and every angle between two edges is the same too. Only the position changed. The matrix that does this is Q = [cos θ  −sin θ; sin θ  cos θ] with θ = 30°.',

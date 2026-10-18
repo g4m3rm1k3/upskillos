@@ -7,6 +7,7 @@ import { applications } from './lessons/applications.js'
 import { spaces } from './lessons/spaces.js'
 import { spectralTheory } from './lessons/spectral.js'
 import { svdLessons } from './lessons/svd.js'
+import { bestFitLessons } from './lessons/bestfit.js'
 import { ENRICH } from './lessons/enrich.js'
 import { ANGLES, USES } from './lessons/uses.js'
 
@@ -27,12 +28,12 @@ function assemble(base, additions) {
 export const STAGES = [
   ['See it', ['Vectors: arrows and lists', 'The dot product']],
   ['Use it', ['Matrices are machines', 'Solving many equations']],
-  ['Understand it', ['Spaces and bases', 'Least squares and data', 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world', 'The SVD: the shape of any matrix']],
+  ['Understand it', ['Spaces and bases', 'Best fit', 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world', 'The SVD: the shape of any matrix']],
   ['Apply it', ['Math for machine learning', 'Dynamic programming', 'Mastery studio']],
 ]
 export const MODULES = STAGES.flatMap(([, modules]) => modules)
 
-const assembled = assemble([...stage1, ...stage2, ...svdLessons, ...core, ...calculus, ...eigenLessons, ...applications], [...spaces, ...spectralTheory])
+const assembled = assemble([...stage1, ...stage2, ...svdLessons, ...bestFitLessons, ...core, ...calculus, ...eigenLessons, ...applications], [...spaces, ...spectralTheory])
 const unplaced = assembled.filter(lesson => !MODULES.includes(lesson.module))
 if (unplaced.length) throw new Error(`Lessons in no stage: ${unplaced.map(lesson => lesson.id).join(', ')}`)
 export const LESSONS = MODULES.flatMap(module => assembled.filter(lesson => lesson.module === module))

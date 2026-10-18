@@ -30,7 +30,7 @@ const BY_LESSON = {
   'laml-why-linear-algebra': 'transform', 'laml-arrays': 'combine', 'laml-add-scale': 'combine', 'laml-shopping-bill': 'dot', 'laml-work-force': 'dot',
   'laml-slope': 'zoom', 'laml-gradient': 'hill', 'laml-jacobian': 'curved', 'laml-chain-rule': 'curved', 'laml-vectorized-gradient': 'hill', 'laml-descent-convergence': 'descent',
   'laml-sin-cos': 'circle', 'laml-matrix-vector': 'transform', 'laml-truss': 'truss', 'laml-why-equations': 'eliminate', 'laml-circuit': 'eliminate',
-  'laml-dot-product': 'dot', 'laml-length-distance-cosine': 'combine', 'laml-projection': 'dot', 'laml-orthogonal-qr': 'dot', 'laml-gram-schmidt': 'dot',
+  'laml-dot-product': 'dot', 'laml-length-distance-cosine': 'combine', 'laml-projection': 'dot', 'laml-orthogonal-qr': 'fit', 'laml-gram-schmidt': 'dot',
   'laml-two-multiplications': 'transform', 'laml-markov-state-vectors': 'pagerank', 'laml-pagerank': 'pagerank', 'laml-vibrations': 'modes', 'laml-stress-tensor': 'stress', 'laml-principal-stresses': 'stress', 'laml-mohr-circle': 'stress', 'laml-orthogonal-matrices': 'transform',
   'laml-determinant-area': 'transform', 'laml-elimination': 'eliminate', 'laml-lu-pivoting': 'eliminate', 'laml-invertibility': 'eliminate',
   'laml-span-rank': 'space3d', 'laml-subspaces-3d': 'space3d', 'laml-basis-dimension': 'space3d', 'laml-vector-spaces': 'combine', 'laml-change-of-basis': 'combine',
@@ -39,7 +39,7 @@ const BY_LESSON = {
   'laml-covariance-pca': 'pca', 'laml-pca-ridge-capstone': 'pca', 'laml-recommendation-studio': 'svd',
   'laml-svd-photo': 'photo', 'laml-svd-low-rank': 'photo', 'laml-spectral-svd-theorem': 'svd', 'laml-symmetric-quadratic': 'transform', 'laml-positive-definite': 'transform',
 }
-const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Least squares and data': 'fit', 'Calculus meets matrices': 'hill', "Directions that don't turn": 'transform', 'Tensors in the real world': 'transform', 'The SVD: the shape of any matrix': 'photo', 'Math for machine learning': 'descent', 'Dynamic programming': 'bellman', 'Mastery studio': 'bellman' }
+const BY_MODULE = { 'Vectors: arrows and lists': 'combine', 'The dot product': 'dot', 'Matrices are machines': 'transform', 'Solving many equations': 'eliminate', 'Spaces and bases': 'space3d', 'Best fit': 'fit', 'Calculus meets matrices': 'hill', "Directions that don't turn": 'transform', 'Tensors in the real world': 'transform', 'The SVD: the shape of any matrix': 'photo', 'Math for machine learning': 'descent', 'Dynamic programming': 'bellman', 'Mastery studio': 'bellman' }
 export const experimentFor = lesson => BY_LESSON[lesson.id] || BY_MODULE[lesson.module] || 'combine'
 
 export default function Explore({ lesson }) {

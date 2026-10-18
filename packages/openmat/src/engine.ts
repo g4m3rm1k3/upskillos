@@ -16,7 +16,7 @@ import {
   reshapeArray, repmatArray, histArray, companionRoots,
 } from './stats.js'
 import {
-  rrefMatrix, matrixRank, conditionNumber, determinantValue,
+  rrefMatrix, matrixRank, conditionNumber, determinantValue, singularValues,
   luFactorization, orthonormalBasis, svdDecomp,
 } from './linalg.js'
 import { sprintfFormat, formatValue, buildWorkspaceSnapshot } from './format.js'
@@ -618,7 +618,8 @@ export function createExecutionEngine(options: EngineOptions = {}): {
     if (kind === "fro") return Math.sqrt(rows.flat().reduce((s, x) => s + Number(x) ** 2, 0))
     if (kind === "1") return Math.max(...rows[0].map((_, j) => rows.reduce((s, row) => s + Math.abs(Number(row[j])), 0)))
     if (kind === "inf" || p === Infinity) return Math.max(...rows.map(row => row.reduce((s, x) => s + Math.abs(Number(x)), 0)))
-    return realValue(toPlain(math.norm(A)))
+    // The 2-norm is the largest singular value, which also works for a non-square matrix.
+    return Math.max(...singularValues(A), 0)
   })
 
   // ── Statistics ────────────────────────────────────────────────────────────
@@ -1278,7 +1279,8 @@ export function createExecutionEngine(options: EngineOptions = {}): {
     const { Q, R } = math.qr(A as any)
     let Qp = toPlain(Q) as number[][], Rp = toPlain(R) as number[][]
     if (economy === 0 || economy === "0") {
-      const m = Qp.length, n = Array.isArray(Qp[0]) ? Qp[0].length : 1, k = Math.min(m, n)
+      // Q is square, so the column count comes from R.
+      const m = Qp.length, n = Array.isArray(Rp[0]) ? Rp[0].length : 1, k = Math.min(m, n)
       Qp = Qp.map((row: number[]) => row.slice(0, k))
       Rp = Rp.slice(0, k)
     }
@@ -2129,6 +2131,8 @@ export function executeScript(source: string, options: EngineOptions = {}): Exec
             if (out[j] === ")") d++
             else if (out[j] === "(") { if (!--d) { leftStart = j; break } }
           }
+          // An index or call such as D(1:2,:) belongs to the left operand together with its name.
+          while (leftStart > 0 && /[\w.]/.test(out[leftStart - 1])) leftStart--
           let k = leftStart - 1; while (k >= 0 && out[k] === " ") k--
           if (k >= 0 && out[k] === "-") {
             let pk = k - 1; while (pk >= 0 && out[pk] === " ") pk--

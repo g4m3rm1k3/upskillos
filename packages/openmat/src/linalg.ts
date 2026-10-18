@@ -127,8 +127,39 @@ export function singularValues(A: unknown): number[] {
   const plain = toPlain(A) as unknown
   if (typeof plain === "number") return [Math.abs(plain)]
   if (Array.isArray(plain) && !plain.some(Array.isArray)) return [Math.hypot(...(plain as number[]).map(Number))]
-  const result = computeSvd(A)
-  return normalizeVector(math.diag(result.S)).map(entry => Math.abs(Number(entry)))
+  const matrix = toNumericMatrix(A)
+  if (!matrix?.length) return []
+  return jacobiSingularValues(matrix)
+}
+
+// One-sided Jacobi: rotate pairs of columns until all are perpendicular; the column lengths are then
+// the singular values. Unlike the eigenvalues of AᵀA, this keeps small singular values accurate,
+// which cond and rank depend on.
+function jacobiSingularValues(matrix: number[][]): number[] {
+  const n0 = Math.max(...matrix.map(row => row.length))
+  const rows = matrix.map(row => [...row, ...Array(n0 - row.length).fill(0)].map(Number))
+  const wide = rows.length < n0
+  const m = wide ? n0 : rows.length, n = wide ? rows.length : n0
+  const cols = Array.from({ length: n }, (_, j) => Array.from({ length: m }, (_, i) => (wide ? rows[j][i] : rows[i][j])))
+  const dot = (a: number[], b: number[]) => a.reduce((sum, x, i) => sum + x * b[i], 0)
+  for (let sweep = 0; sweep < 60; sweep++) {
+    let rotated = false
+    for (let i = 0; i < n - 1; i++) for (let j = i + 1; j < n; j++) {
+      const alpha = dot(cols[i], cols[i]), beta = dot(cols[j], cols[j]), gamma = dot(cols[i], cols[j])
+      if (gamma === 0 || Math.abs(gamma) <= 1e-15 * Math.sqrt(alpha * beta)) continue
+      rotated = true
+      const zeta = (beta - alpha) / (2 * gamma)
+      const t = (zeta >= 0 ? 1 : -1) / (Math.abs(zeta) + Math.sqrt(1 + zeta * zeta))
+      const c = 1 / Math.sqrt(1 + t * t), s = c * t
+      for (let k = 0; k < m; k++) {
+        const a = cols[i][k], b = cols[j][k]
+        cols[i][k] = c * a - s * b
+        cols[j][k] = s * a + c * b
+      }
+    }
+    if (!rotated) break
+  }
+  return cols.map(col => Math.sqrt(dot(col, col))).sort((a, b) => b - a)
 }
 
 // ── Rank / condition number / determinant ─────────────────────────────────────
@@ -141,8 +172,9 @@ export function matrixRank(A: unknown, tolerance: number | null = null): number 
 }
 
 export function conditionNumber(A: unknown): number {
-  const s = singularValues(A).filter(entry => entry > 1e-12)
-  if (!s.length) return Infinity
+  // Every singular value counts: a zero one makes the matrix singular, so cond is infinite.
+  const s = singularValues(A)
+  if (!s.length || Math.min(...s) === 0) return Infinity
   return Math.max(...s) / Math.min(...s)
 }
 

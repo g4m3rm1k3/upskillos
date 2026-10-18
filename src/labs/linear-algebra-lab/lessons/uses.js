@@ -383,9 +383,68 @@ export const USES = {
     { who: 'cs', title: 'Network flows', story: 'Flows around a network that conserve traffic at every junction form the nullspace of its incidence matrix.' },
     { who: 'math', title: 'The fundamental theorem', story: 'The four subspaces, their dimensions and their right angles make up what Gilbert Strang calls the fundamental theorem of linear algebra.' },
   ],
+  'laml-best-fit-gps': [
+    { who: 'general', title: 'Your phone\'s blue dot', story: 'The dot on a map app comes from a least-squares fit to every satellite the phone can hear, redone every second. The pale circle around it shows how well the readings agreed.' },
+    { who: 'cs', title: 'Indoor positioning', story: 'Inside a building, phones locate themselves from the signal strengths of several Wi-Fi access points. More access points than unknowns, all noisy: the same fit as in this lesson.' },
+    { who: 'mech', title: 'Surveying a site', story: 'Surveyors measure more angles and distances than they strictly need, then adjust the whole network by least squares so that the small errors are shared out instead of piling up at one corner.' },
+    { who: 'ee', title: 'Locating a fault', story: 'Sensors along a power line note when a fault\'s surge arrives. Each arrival time gives one equation for the fault\'s position, and the extra sensors let the fit shrug off timing noise.' },
+    { who: 'physics', title: 'Finding an earthquake', story: 'Seismometers record when the shaking arrives. Dozens of stations, four unknowns (where, how deep, when): seismologists solve for the source by least squares, exactly like a GPS receiver.' },
+    { who: 'ml', title: 'Sensor fusion', story: 'Robots and drones combine wheel counters, accelerometers and cameras. Each gives an imperfect equation about the same position, and a weighted least-squares fit blends them.' },
+  ],
+  'laml-least-squares': [
+    { who: 'general', title: 'A trend line', story: 'The straight line a spreadsheet draws through a scatter of points is a least-squares fit: the one with the smallest total of squared vertical misses.' },
+    { who: 'ml', title: 'Linear regression', story: 'Linear regression is least squares with many columns, one per feature. The right-angle test Xᵀr = 0 is what the fitting routine solves.' },
+    { who: 'mech', title: 'Calibrating a sensor', story: 'A load cell is checked against known weights. A least-squares line through the readings gives its gain and offset, and the residuals show whether a straight line is good enough.' },
+    { who: 'ee', title: 'Estimating a resistance', story: 'Measure the current at several voltages and fit V = R·I. The slope of the best line is the resistance, with the measurement noise averaged out.' },
+    { who: 'physics', title: 'Orbits from observations', story: 'Gauss fitted the orbit of Ceres from a few noisy sightings. Orbit determination for satellites and asteroids still works this way, with thousands of observations.' },
+    { who: 'math', title: 'Projection onto a subspace', story: 'Least squares is the orthogonal projection of y onto the column space of X. The normal equations say that y minus its projection is perpendicular to that space.' },
+  ],
+  'laml-orthogonal-matrices': [
+    { who: 'cs', title: 'Cameras and characters', story: 'Game engines turn objects and cameras with rotation matrices. Because the inverse is just the transpose, switching between world and camera views costs almost nothing.' },
+    { who: 'mech', title: 'Rigid-body motion', story: 'A rigid part can only turn and slide. Its orientation is an orthogonal matrix, and robot arms chain one rotation per joint to find where the gripper ends up.' },
+    { who: 'physics', title: 'Rotating frames', story: 'Changing to rotated axes leaves lengths, angles and dot products alone, so energy and other physical quantities come out the same in either frame.' },
+    { who: 'ee', title: 'Signal transforms', story: 'The discrete cosine transform behind JPEG and MP3 is an orthogonal matrix. Its transpose undoes it exactly, and it keeps the energy of the signal unchanged.' },
+    { who: 'math', title: 'The orthogonal group', story: 'Orthogonal matrices form a group: products and inverses stay orthogonal. Those with determinant +1 are the rotations.' },
+  ],
+  'laml-gram-schmidt': [
+    { who: 'ml', title: 'Separating correlated features', story: 'Height and weight move together. Orthogonalising them leaves "height" and "weight not explained by height", which is easier to interpret and safer to fit.' },
+    { who: 'ee', title: 'Building a signal basis', story: 'Engineers turn a few chosen waveforms into perpendicular ones, so that a received signal can be split into independent parts with one dot product each.' },
+    { who: 'physics', title: 'Orthogonal polynomials', story: 'Applied to 1, x, x², … with an integral as the dot product, Gram–Schmidt produces the Legendre polynomials used in quantum mechanics and in numerical integration.' },
+    { who: 'cs', title: 'Numerical libraries', story: 'Iterative solvers for huge systems, such as GMRES, build a perpendicular basis step by step with a careful form of Gram–Schmidt.' },
+    { who: 'math', title: 'Every subspace has an orthonormal basis', story: 'Gram–Schmidt proves it: start with any basis and orthogonalise it. That is what makes many proofs about projections possible.' },
+  ],
+  'laml-orthogonal-qr': [
+    { who: 'general', title: 'The software you already use', story: 'When a spreadsheet or statistics package fits a line, it uses QR (or the SVD) behind the scenes, not the textbook normal equations.' },
+    { who: 'ml', title: 'Stable regression', story: 'Features on very different scales, or that nearly repeat each other, make XᵀX badly conditioned. QR-based solvers keep the accuracy that the normal equations would lose.' },
+    { who: 'mech', title: 'Large survey networks', story: 'National survey adjustments involve thousands of measurements. They are solved with orthogonal factorisations so that rounding does not distort the map.' },
+    { who: 'ee', title: 'Adaptive filters', story: 'Echo cancellers and antenna arrays update a least-squares fit with every new sample. QR-based updates keep them stable over millions of steps.' },
+    { who: 'cs', title: 'Eigenvalue algorithms', story: 'The QR algorithm, which repeats QR factorisations, is how libraries compute the eigenvalues of a matrix.' },
+  ],
 }
 
 export const ANGLES = {
+  'laml-best-fit-gps': [
+    { title: 'One unknown: the average', body: 'Measure one length four times and the readings disagree. Least squares with one unknown gives their average, so a best fit is the average grown up: it shares the disagreement out instead of trusting one reading.' },
+    { title: 'On the map', body: 'Each reading is a line on the map: every point $\\mathbf p$ with $\\mathbf d_i\\cdot\\mathbf p = r_i$. Noise shifts each line a little, so they no longer meet. The best fit is the point that is, in total, least far from all of them.' },
+    { title: 'Why more readings help', body: 'Errors come with random signs, so in a sum they partly cancel. Averaging $n$ readings shrinks the typical error by a factor of about $\\sqrt n$: four times as many satellites, roughly half the error.' },
+  ],
+  'laml-least-squares': [
+    { title: 'The closest point', body: 'All possible predictions $X\\boldsymbol\\beta$ form a plane through the origin. The data $\\mathbf y$ sits off the plane. Drop a perpendicular from $\\mathbf y$ to the plane: its foot is the best fit, and the perpendicular itself is the residual.' },
+    { title: 'Why the right angle is best', body: 'Move the prediction along the plane by any $X\\boldsymbol\\delta$. The new leftover is $\\mathbf r - X\\boldsymbol\\delta$, and because $\\mathbf r$ is perpendicular to the plane, Pythagoras gives $\\|\\mathbf r - X\\boldsymbol\\delta\\|^2 = \\|\\mathbf r\\|^2 + \\|X\\boldsymbol\\delta\\|^2$. Any move makes it worse.' },
+    { title: 'As the bottom of a bowl', body: 'The squared total $\\|\\mathbf y - X\\boldsymbol\\beta\\|^2$ is a bowl-shaped function of $\\boldsymbol\\beta$. At the bottom the slope is zero in every direction, and setting those slopes to zero gives the same normal equations. The calculus module makes this precise.' },
+  ],
+  'laml-orthogonal-qr': [
+    { title: 'Why squaring hurts', body: 'If cond$(X) = 10^6$, a solve with $X$ may lose 6 of 16 digits, leaving 10. With $X^TX$ the condition number is $10^{12}$, leaving only 4. QR works with $R$, whose condition number is that of $X$.' },
+    { title: 'Coordinates in a good basis', body: 'In the perpendicular basis $Q$, finding the coordinates of $\\mathbf y$ is one dot product per direction: $Q^T\\mathbf y$. The triangle $R$ then converts those coordinates back into the original columns\' coefficients.' },
+  ],
+  'laml-gram-schmidt': [
+    { title: 'Explain away, keep the rest', body: 'Each new direction is "what this vector says that the earlier ones did not". It is the residual of a small least-squares fit of the new vector on the earlier ones.' },
+    { title: 'Why R is a triangle', body: '$\\mathbf a_1$ uses only $\\mathbf q_1$; $\\mathbf a_2$ uses $\\mathbf q_1$ and $\\mathbf q_2$; $\\mathbf a_k$ uses only the first $k$ directions. Writing those weights in columns gives zeros below the diagonal.' },
+  ],
+  'laml-orthogonal-matrices': [
+    { title: 'Columns are where the axes land', body: 'The columns of $Q$ are the images of the axis arrows. If they are still unit length and still at right angles, the whole grid moved rigidly: nothing stretched.' },
+    { title: 'Inverse for free', body: 'Entry $(i, j)$ of $Q^TQ$ is column $i$ dotted with column $j$: 1 on the diagonal, 0 elsewhere. So $Q^TQ = I$, and the transpose undoes $Q$ without any elimination.' },
+  ],
   'laml-span-rank': [
     { title: 'Everything you can build', body: 'The span is a set of reachable points. Adding a redundant column is like adding a recipe that can already be made from what you have: the menu does not grow.' },
     { title: 'Count the new directions', body: 'Add the columns one at a time. Each one either brings a new direction (rank goes up by 1) or lies in the span of the earlier ones (rank stays the same).' },

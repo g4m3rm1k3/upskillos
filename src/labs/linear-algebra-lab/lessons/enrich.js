@@ -175,16 +175,6 @@ export const ENRICH = {
       { q: 'Why factor once and reuse $L$ and $U$?', options: ['Each new $\\mathbf b$ then costs only two cheap triangular solves', 'It changes the answer', 'It avoids pivoting', 'It makes $A$ symmetric'], answer: 0, why: 'The expensive elimination happens once.' },
     ],
   },
-  'laml-orthogonal-qr': {
-    notation: [
-      { tex: t`A = QR,\qquad Q^TQ = I,\qquad R \text{ upper triangular}`, say: 'Orthonormal columns times a triangular matrix.' },
-      { tex: t`R = Q^TA`, say: 'Because $Q^TQ = I$, the triangular factor is recovered by one product.' },
-    ],
-    quiz: [
-      { q: 'What happens to Gram–Schmidt if the second column is twice the first?', options: ['Its remainder is zero and cannot be normalised', 'It produces a second orthonormal vector anyway', 'The first vector becomes zero', 'R becomes the identity'], answer: 0, why: 'There is no new direction left after removing the projection.' },
-      { q: 'Each entry of $Q^TQ$ is…', options: ['a dot product of two columns of $Q$', 'a length of a row of $Q$', 'an entry of $R$', 'a determinant'], answer: 0, why: 'Row $i$ of $Q^T$ is column $i$ of $Q$.' },
-    ],
-  },
   'laml-least-squares': {
     notation: [
       { tex: t`\hat{\boldsymbol\beta} = \arg\min_{\boldsymbol\beta}\ \|\mathbf y - X\boldsymbol\beta\|^2`, say: 'Choose coefficients that make the squared residual as small as possible.' },

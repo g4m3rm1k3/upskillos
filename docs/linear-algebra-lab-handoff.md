@@ -16,33 +16,33 @@ At the end of a session, update this file (state, next step, anything learned) a
 - **One heavy run at a time.** Never overlap vitest runs, builds or the browser check.
 - Plain language in replies. Make technical decisions without asking.
 
-## State of the project (2026-10-18, end of Phase 6a)
+## State of the project (2026-10-18, end of Phase 6b)
 
-- **Committed:** Phases 1–4 (Phase 4 went in with commit `535a3f01`).
-- **Done but NOT committed:** Phase 5 and Phase 6a. Their files:
-  - Lab (`src/labs/linear-algebra-lab/`). New: `lessons/svd.js`, `practice/svd.js`, `explore/svd.jsx`. Modified: `curriculum.js`, `curriculum.test.js`, `practice.test.js`, `index.test.jsx`, `explore.test.jsx`, `Explore.jsx`, `lab.css`, `practice/index.js`, `lessons/core.js`, `lessons/enrich.js`, `lessons/spaces.js`, `lessons/spectral.js`, `lessons/uses.js`.
-  - Engine: `packages/openmat/src/engine.ts`, `packages/openmat/src/compat.ts`, `packages/openmat/src/__tests__/engine.test.ts`.
+- **Committed:** Phases 1–6a (Phases 5 and 6a went in with commit `1bea1e74`).
+- **Done but NOT committed:** Phase 6b. Its files:
+  - Lab (`src/labs/linear-algebra-lab/`). New: `lessons/bestfit.js`, `practice/bestfit.js`. Modified: `curriculum.js`, `curriculum.test.js`, `Explore.jsx`, `practice/index.js`, `lessons/core.js` (least squares and QR moved out), `lessons/enrich.js` (old QR entry removed), `lessons/spaces.js`, `lessons/uses.js`.
+  - Engine: `packages/openmat/src/engine.ts`, `packages/openmat/src/linalg.ts`, `packages/openmat/src/__tests__/engine.test.ts`.
   - Docs: `docs/linear-algebra-lab-gentle-plan.md` and this file.
   - Any untracked `docs/notebooks/*` files belong to another session. Don't stage them.
-- **Size:** 67 lessons in 13 modules over 4 stages (`STAGES` in `curriculum.js`).
-- **Reworked in the gentle style (why, uses, angles):** all of Stages 1 and 2, and in Stage 3 every module except "Least squares and data". The `gentle curve` test in `curriculum.test.js` lists the reworked modules; add each module to it once it is done.
+- **Size:** 68 lessons in 13 modules over 4 stages (`STAGES` in `curriculum.js`).
+- **Reworked in the gentle style (why, uses, angles):** all of Stages 1, 2 and 3. Stage 4 (the tracks) is next.
 - **Last checks (2026-10-18):**
-  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 654 passed.
+  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 665 passed.
+  - Other OpenMAT users (`src/labs/ml-lab`, `src/labs/spreadsheet-lab/engine`, `src/tools/math-os`, `src/engines`): all pass except two speed tests that do not use OpenMAT. One is a spreadsheet test with a 3 s limit (it took 3.6 s); the other is the ML lab 27 capstone, which times out after 5 s. Both are slow-machine timing.
   - `npm run typecheck`: clean.
-  - `npm run catalog:check`: current on 2026-10-17 (the 14 content problems that were already there). No lessons were added since.
-  - Browser check: span and rank in light and dark mode, no page errors.
+  - `npm run catalog:check`: current (the 14 content problems that were already there).
+  - Browser check: the GPS lesson in light and dark mode, the QR lesson in dark mode, and the least-squares challenge prompt; no page errors.
   - The production build was last run at the Phase 3 commit.
 
-## Next: Phase 6b, "Best fit"
+## Next: Phase 6c, Stage 4 tracks
 
 Read the Phase 6 entry in the plan. In short:
-1. Rename the module "Least squares and data" to "Best fit". Module names are not progress keys, but update `STAGES`, `BY_MODULE` in `Explore.jsx` and every lesson's `module`.
-2. A new opening lesson: find your position from noisy GPS satellites (more equations than unknowns, so no exact answer: find the closest).
-3. Make least squares, QR, Gram–Schmidt and orthogonal matrices gentler; add why stories, case studies and angles; add the module to the `gentle curve` test.
-4. Move `laml-regression-validation` and `laml-ridge-scaling` to "Math for machine learning".
-5. Lab suite, browser check, then update the plan and this file.
+1. Add a `track` field to the Stage 4 lessons and show the tracks as their own group in the sidebar (they are optional, in any order).
+2. Sort the applied lessons into tracks: machine learning (which now includes regression validation and ridge, moved in 6b), decisions (dynamic programming and the capstones), graphics and 3D, engineering. Graphics and engineering have no lessons yet, so either leave them out until they do or plan their first lessons.
+3. Replace the remaining "mastery" wording, including the module name "Mastery studio", the "Mastery map" button and "does not certify mastery" under each challenge.
+4. Lab suite, browser check, then update the plan and this file.
 
-Then 6c (Stage 4 tracks and the "mastery" wording) and 6d (guessable families, Derive it).
+Then 6d: guessable problem families, the Derive-it stepper, and challenge and problem prompts in older lessons where a pair of `*` (as in `X*beta ... y - X*beta`) renders as italics. Put code in backticks, as the Best fit prompts now do.
 
 ## How the lab is built
 
@@ -69,6 +69,8 @@ Then 6c (Stage 4 tracks and the "mastery" wording) and 6d (guessable families, D
   - Avoid complex numbers.
   - Fixed in the engine on 2026-10-18: `bar(x, y)` now draws y; `find(x, n)` returns the first n matches; `norm(A, 'fro')`, `norm(A, 1)` and `norm(A, Inf)` work for matrices. Older lessons still use the workarounds, which are fine.
   - Also fixed on 2026-10-18: the "MATLAB table/file I/O" and other compatibility warnings no longer fire on words inside strings or comments, such as `disp('a table')`.
+  - Fixed in Phase 6b: backslash after an indexed matrix (`D(1:2,:)\r(1:2)`); `[Q, R] = qr(X, 0)` now returns the thin factors; `norm(A)` works for non-square matrices; `rank` and `cond` use accurate singular values (one-sided Jacobi), so a badly conditioned matrix no longer reports `cond` = 1 and a singular one reports `Inf`. The `svd` factors themselves are unchanged.
+  - Mixed `*` and `\` on one line, such as `2*inv(M)\b`, are not grouped as MATLAB groups them. Use brackets or separate lines.
   - `reshape` fills row by row, not column by column as MATLAB does: `reshape([1 2 3 4], 2, 2)` gives `[1 2; 3 4]` here and `[1 3; 2 4]` in MATLAB. Only use it to turn a vector into one row or one column until this is fixed.
   - Column slices such as `A(:,1:1)` and `reshape(v, 3, 1)` stored in a variable become flat vectors. An outer product works inline (`reshape(u, m, 1)*reshape(v, 1, n)`) or through the SVD form `U(:,1:k)*S(1:k,1:k)*transpose(V(:,1:k))`, which also works for k = 1.
   - Don't name a variable after a built-in function (for example `floor`).
@@ -84,5 +86,6 @@ Then 6c (Stage 4 tracks and the "mastery" wording) and 6d (guessable families, D
      - Give `module` only when the module isn't already open: clicking it again closes it.
      - At phone width the sidebar is hidden, so the script can't reach a lesson there.
   3. Stop the server afterwards. TaskStop leaves the node process listening, so also kill the process on port 5199.
-  4. The script lives in the old session's scratchpad. If it is gone, rewrite it: Playwright opens `#/lab/linear-algebra-lab`, maximises, clicks the sidebar lesson buttons (`.la-module li button`) and the tabs, and takes the screenshots.
+  4. The code editor fills in its lines a moment after a tab opens, so a screenshot taken straight away can show only line 1. The copy of the script in the 2026-10-18 Phase 6b scratchpad has a `"text": "<selector>"` step that waits and then prints the element's text. Use `.la-editor .view-lines` to read the editor.
+  5. The script lives in the old session's scratchpad. If it is gone, rewrite it: Playwright opens `#/lab/linear-algebra-lab`, maximises, clicks the sidebar lesson buttons (`.la-module li button`) and the tabs, and takes the screenshots.
 - **Shell gotcha:** Bash heredocs here halve backslashes. Write edit scripts to the scratchpad with the Write tool and run the file, or use Edit.

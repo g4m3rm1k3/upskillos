@@ -1,6 +1,6 @@
 # Linear Algebra Lab: gentle-curve redesign plan
 
-Drafted 2026-10-17. Status: Phases 1–4 done (2026-10-17); Phases 5–6 not started. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
+Drafted 2026-10-17. Status: Phases 1–5 and 6a–6b done (2026-10-18); 6c and 6d not started. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
 
 ## Goal
 
@@ -131,7 +131,17 @@ N = new lesson, E = existing lesson (reworked where noted).
      - OpenMAT fixes:
        - `bar(x, y)`, `find(x, n)` and the matrix norms `'fro'`, 1 and `Inf`;
        - compatibility warnings no longer fire on words inside strings or comments.
-   - **6b: "Least squares and data" becomes "Best fit".** Open with the GPS story (noisy satellites, more equations than unknowns). Make QR, Gram–Schmidt and orthogonal matrices gentler. Move regression validation and ridge to the machine-learning track.
+   - **6b (done, 2026-10-18): "Least squares and data" became "Best fit".**
+     - New opening lesson `laml-best-fit-gps`: noisy satellites, more equations than unknowns, the position that disagrees least.
+     - Rewritten: least squares, opening with Gauss and Ceres and built on the closest point and the right angle. QR (`laml-orthogonal-qr`) is now "QR: solve a best fit without losing digits", covering the condition number, why the normal equations square it, and R·β = Qᵀy.
+     - Orthogonal matrices and Gram–Schmidt have why stories. The order is GPS, least squares, orthogonal matrices, Gram–Schmidt, QR. The lessons are in [lessons/bestfit.js](../src/labs/linear-algebra-lab/lessons/bestfit.js) and `spaces.js`.
+     - Case studies for all 5 lessons, extra angles for all 5, and 6 new problem families for the GPS lesson ([practice/bestfit.js](../src/labs/linear-algebra-lab/practice/bestfit.js)).
+     - Regression validation and ridge moved to "Math for machine learning".
+     - OpenMAT fixes:
+       - backslash after an indexed matrix;
+       - thin `qr(X, 0)`;
+       - `norm` of a non-square matrix;
+       - accurate `rank` and `cond`.
    - **6c: Stage 4.**
      - Add the `track` field and group the tracks in the sidebar.
      - Move the applied lessons into tracks: machine learning, decisions, graphics and 3D, engineering.

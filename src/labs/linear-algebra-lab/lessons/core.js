@@ -87,103 +87,7 @@ residual=A*x-b;`,
     },
   },
   {
-    id: 'laml-orthogonal-qr', module: 'Least squares and data', title: 'Orthogonality and QR: separate overlapping information', minutes: 30, level: 'Intermediate',
-    objective: 'Apply Gram–Schmidt to two independent columns and verify an orthonormal basis and its QR factorization.',
-    prose: [
-      'The features [1;1;0] and [1;1;2] overlap in their first two entries. Subtract the first direction from the second and the leftover points only along [0;0;2]. This separates shared information from new information.',
-      'Two vectors are orthogonal when their dot product is zero. A unit vector has length 1. An orthonormal collection has both properties: every vector has unit length, and distinct vectors are perpendicular. For an orthonormal basis Q, the matrix Q\' *Q is the identity.',
-      'Gram–Schmidt first normalizes the initial column into q1. It measures the second column along q1 using q1\' *b, subtracts that component, and normalizes the remainder into q2. If the remainder is zero, the second column was dependent and cannot supply a new basis direction.',
-      'The factorization A=Q*R records this process. Q holds perpendicular unit directions; R stores the weights needed to reconstruct each original column. Numerical software usually computes QR with more stable transformations than basic Gram–Schmidt, but this small example exposes exactly what the factors mean.',
-      'A(:,1) selects the first column. An apostrophe transposes a real matrix; for real vectors the expression q1\' *b computes the dot product. The bracket expression [q1 q2] places the two vectors side by side. The plotted coordinates are not themselves angles: use the printed Q\' *Q to verify perpendicularity.',
-    ],
-    procedure: ['Normalize the first column: q1=a/norm(a).', 'Subtract the second column’s projection on q1, then normalize that remainder.', 'Build Q from the unit columns and compute R=Q\' *A.', 'Check Q\' *Q against the identity and Q*R against the original matrix.'],
-    prediction: { question: 'What happens if the second column becomes exactly twice the first?', answer: 'Its perpendicular remainder is zero. Normalizing that remainder would divide by zero, so there is no second independent direction.' },
-    demo: {
-      code: String.raw`A=[1 1;1 1;0 2];
-a=A(:,1);
-b=A(:,2);
-q1=a/norm(a);
-remainder=b-q1*(q1'*b);
-q2=remainder/norm(remainder);
-Q=[q1 q2];
-R=Q'*A;
-disp(Q'*Q);
-disp(R);
-disp(sqrt(sum(sum((A-Q*R).^2))));
-plot([1 2 3],q1);
-hold on;
-plot([1 2 3],q2);
-title('Two perpendicular unit feature directions');
-xlabel('Observation coordinate');
-ylabel('Basis vector component');
-legend('q1','q2');`,
-      explain: [{ code: 'q1=a/norm(a)', meaning: 'Divide by length so the first direction has unit length.' }, { code: 'remainder=b-q1*(q1\'*b)', meaning: 'Remove precisely the component of b that lies along q1.' }, { code: 'R=Q\'*A', meaning: 'Measure the original columns in the new perpendicular coordinate system.' }, { code: 'Q\'*Q', meaning: 'Diagonal ones verify unit length; off-diagonal zeros verify orthogonality.' }],
-    },
-    challenge: {
-      prompt: 'Apply the two-column Gram–Schmidt procedure to A. Store its orthonormal basis in Q, R=Q\' *A in R, Q\' *Q in gram, and the square root of the total squared reconstruction entry errors in reconstructionError. Normalize each nonzero remainder with a positive length.',
-      setup: 'A=[1 1;1 1;0 2];',
-      starter: 'Q=A;\nR=eye(2);\ngram=Q\'*Q;\nreconstructionError=sqrt(sum(sum((A-Q*R).^2)));',
-      solution: String.raw`a=A(:,1);
-b=A(:,2);
-q1=a/norm(a);
-remainder=b-q1*(q1'*b);
-q2=remainder/norm(remainder);
-Q=[q1 q2];
-R=Q'*A;
-gram=Q'*Q;
-reconstructionError=sqrt(sum(sum((A-Q*R).^2)));`,
-      checks: [{ name: 'Q', expected: [[Math.SQRT1_2, 0], [Math.SQRT1_2, 0], [0, 1]], tolerance: 1e-6, message: 'Remove the parallel component before normalizing the second column.' }, { name: 'R', expected: [[Math.SQRT2, Math.SQRT2], [0, 2]], tolerance: 1e-6, message: 'R contains each original feature’s coordinates along Q.' }, { name: 'gram', expected: [[1, 0], [0, 1]], tolerance: 1e-6, message: 'Unit lengths and perpendicular directions are both required.' }, { name: 'reconstructionError', expected: 0, tolerance: 1e-6, message: 'The factorization must reconstruct the original features.' }],
-      hints: ['Normalizing both original columns does not remove their overlap.', 'Subtract q1*(q1\'*b) from the second column before its normalization.', 'Build Q=[q1 q2], then R=Q\'*A; verify both orthogonality and reconstruction.'],
-      transfer: 'Replace the second column with [1;1;0.000001]. Explain why classical Gram–Schmidt becomes numerically delicate as the columns approach dependence.',
-    },
-  },
-  {
-    id: 'laml-least-squares', module: 'Least squares and data', title: 'Least squares: the residual tells the story', minutes: 30, level: 'Intermediate',
-    objective: 'Fit an inconsistent system and verify that the least-squares residual is perpendicular to every design column.',
-    prose: [
-      'Three observations have inputs 0, 1, 2 and outputs 1, 2, 2. No single straight line passes through all three points. A fitted line with intercept 7/6 and slope 1/2 predicts values 7/6, 5/3, and 13/6 instead.',
-      'A design matrix stores the features used to make predictions. Here its first column is all ones for the intercept, and its second column contains inputs. Multiplying this matrix X by coefficients beta produces fitted outputs. Define the residual r=y-X*beta, the observed output minus the prediction.',
-      'Least squares chooses beta to minimize the sum of squared residuals, written r\' *r. At the optimum, the residual is perpendicular to every column of X: X\' *r=0. Predictions are the closest point to y within the column span; a nonzero residual is expected when y lies outside that span.',
-      'For full-column-rank X, QR or a suitable least-squares solver finds the unique coefficients. Solving X\' *X*beta=X\' *y gives the normal equations, but can amplify poor conditioning. Prefer a direct least-squares solve rather than explicitly inverting X\' *X. Rank-deficient designs can have multiple optimal coefficient vectors.',
-      'In the demo, X\\y handles the rectangular system as a least-squares problem. The apostrophe turns X into a transposed matrix. The two plotted curves distinguish observed outputs from predictions; the printed X\' *r checks a geometric property that a visually plausible line alone cannot prove.',
-    ],
-    procedure: ['Construct one design row per observation, including an intercept column when the model needs one.', 'Solve for beta, compute fitted=X*beta, then residual=y-fitted.', 'Compute the squared error and X\' *residual; the latter should be near zero for an unconstrained least-squares optimum.'],
-    prediction: { question: 'Does a correct least-squares solution force every residual to zero?', answer: 'No. It makes their squared total as small as possible. For inconsistent data, the remaining residual is nonzero but perpendicular to every design column.' },
-    demo: {
-      code: String.raw`X=[1 0;1 1;1 2];
-y=[1;2;2];
-beta=X\y;
-fitted=X*beta;
-residual=y-fitted;
-disp(beta);
-disp(residual);
-disp(X'*residual);
-disp(residual'*residual);
-plot([0 1 2],y);
-hold on;
-plot([0 1 2],fitted);
-title('A best fit can still miss every observation');
-xlabel('Input');
-ylabel('Output');
-legend('Observed','Least-squares prediction');`,
-      explain: [{ code: 'X=[1 0;1 1;1 2]', meaning: 'Each row predicts intercept plus slope times that observation’s input.' }, { code: 'beta=X\\y', meaning: 'Find coefficients minimizing squared prediction error for this rectangular system.' }, { code: 'residual=y-fitted', meaning: 'Keep the sign convention consistent: positive means the observation is above its prediction.' }, { code: 'X\'*residual', meaning: 'Check that no design direction can explain any remaining residual; the answer is near [0,0].' }],
-    },
-    challenge: {
-      prompt: 'Fit X*beta to y. Store beta, residual=y-X*beta, normalResidual=X\' *residual, and sse=residual\' *residual. The four noisy observations cannot all fit exactly.',
-      setup: 'X=[1 0;1 1;1 2;1 3];\ny=[1;2;2;4];',
-      starter: 'beta=[0;0];\nresidual=y-X*beta;\nnormalResidual=X\'*residual;\nsse=residual\'*residual;',
-      solution: String.raw`beta=X\y;
-residual=y-X*beta;
-normalResidual=X'*residual;
-sse=residual'*residual;`,
-      checks: [{ name: 'beta', expected: [0.9, 0.9], tolerance: 1e-6, message: 'The first coefficient is the intercept and the second is the slope.' }, { name: 'residual', expected: [0.1, 0.2, -0.7, 0.4], tolerance: 1e-6, message: 'Subtract predictions from observations, keeping each observation in its original order.' }, { name: 'normalResidual', expected: [0, 0], tolerance: 1e-6, message: 'At the least-squares solution the residual must be perpendicular to both design columns.' }, { name: 'sse', expected: 0.7, tolerance: 1e-6, message: 'Square residuals before adding; signed errors can cancel.' }],
-      cases: [{ setup: 'X=[1 0;1 1;1 2;1 3];\ny=[0;1;1;2];', checks: [{ name: 'beta', expected: [0.1, 0.6], tolerance: 1e-6, message: 'Fit the supplied outputs rather than entering a remembered coefficient vector.' }, { name: 'sse', expected: 0.2, tolerance: 1e-6, message: 'Recalculate the squared residual total for these observations.' }] }],
-      hints: ['Use the same two-column design for every observation.', 'A rectangular backslash solve finds the least-squares coefficients.', 'Compute beta=X\\y, residual=y-X*beta, normalResidual=X\'*residual, and sse=residual\'*residual.'],
-      transfer: 'Double every output y. Predict how beta, residual, and sse change, then verify: coefficients and residuals double, while sse quadruples.',
-    },
-  },
-  {
-    id: 'laml-regression-validation', module: 'Least squares and data', title: 'Regression: include an intercept, reserve a test set', minutes: 30, level: 'Intermediate',
+    id: 'laml-regression-validation', module: 'Math for machine learning', title: 'Regression: include an intercept, reserve a test set', minutes: 30, level: 'Intermediate',
     objective: 'Fit an intercept and slope using training observations only, then evaluate held-out mean squared error.',
     prose: [
       'Training observations (0,1), (1,3), and (2,5) lie exactly on output=1+2*input. A new input 4 has an observed output of 10, while that trained rule predicts 9. Perfect training fit did not guarantee perfect future prediction.',
@@ -233,7 +137,7 @@ mse=mean((testY-predictions).^2);`,
     },
   },
   {
-    id: 'laml-ridge-scaling', module: 'Least squares and data', title: 'Conditioning, scaling, and ridge regularization', minutes: 30, level: 'Advanced',
+    id: 'laml-ridge-scaling', module: 'Math for machine learning', title: 'Conditioning, scaling, and ridge regularization', minutes: 30, level: 'Advanced',
     objective: 'Scale feature columns, fit ridge regression in scaled coordinates, and convert coefficients back to original units.',
     prose: [
       'One feature measures length in meters as [1;2;3]; another measures the same length in millimeters as [1000;2000;3000]. They encode one direction twice. A model can trade coefficients between the columns without changing its predictions.',
