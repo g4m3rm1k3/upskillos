@@ -2,7 +2,7 @@
 
 # Project inventory
 
-44 courses · 239 chapters · 1374 lessons · 74 labs · 16 games
+44 courses · 239 chapters · 1374 lessons · 75 labs · 16 games
 
 ## How things are counted
 
@@ -110,6 +110,7 @@
 | Matrix Lab | `matrix-lab` | lab | `/matrix-lab` |
 | Mesh Engine Lab | `mesh-engine-lab` | lab | `/mesh-engine-lab` |
 | MeshLab | `mesh-lab` | lab | `/mesh-lab` |
+| ML Foundations Lab | `ml-foundations` | lab | `/lab/ml-foundations` |
 | Machine Learning Lab | `ml-lab` | lab | `/lab/ml-lab` |
 | Music Lab | `music-lab` | builder | `/music-lab` |
 | Neural Net Lab | `neural-net-lab` | lab | `/lab/neural-net-lab` |

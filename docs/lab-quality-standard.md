@@ -10,7 +10,7 @@ A lab meets the standard when every lesson can tick each line, or the lab's doc 
 
 | # | Idea | Bar | Copy it from |
 |---|---|---|---|
-| 1 | **Try before telling** | A lesson opens with a question the learner attempts (play with it, guess, count by hand) before any explanation. | Book of Nature's six beats: hook, play, predict, reveal, try it, keep (`src/labs/book-of-nature/MomentPlayer.jsx`) |
+| 1 | **Try before telling** | A lesson opens with a question the learner attempts (play with it, guess, count by hand) before any explanation. **But never a blind guess** (owner, 2026-10-18): every question has a short "What you need to know" just before it (the rule, the numbers, or a worked example of a *similar* case), so the try is an educated guess. Every answer says **why** the right one is right, and "Show me the answer" gives the full reasoning. | Book of Nature's six beats: hook, play, predict, reveal, try it, keep (`src/labs/book-of-nature/MomentPlayer.jsx`) |
 | 2 | **Watch it run** | Every algorithm can be watched step by step: play, pause, step back and forward, scrub, change speed. Each step says what changed and why, in words, beside the picture. | DP lab `TableTrace.jsx` (table fills, arrows from the cells read) and `CallTree.jsx` (recursion tree, call stack); QMaze figures |
 | 3 | **Do it yourself, then compare** | The learner produces the next step before it is revealed (types the next cell, picks the next move). A wrong answer gets feedback naming the likely slip, not just "wrong". A harder mode removes the scaffolding. | DP "You fill it" (`diagnose()` in `TableTrace.jsx`); QMaze/Data Science `predict` blocks with `misconceptions` |
 | 4 | **Change the input** | Every visual takes the learner's own input (typed or dragged) and a random one ("Surprise me"), and is recomputed, never canned. Bad input gets a message, not a broken picture. | DP `INPUTS` (`tables.js`) + `traceInputs.js`; Linear Algebra's draggable Explore figures |
@@ -23,6 +23,8 @@ A lab meets the standard when every lesson can tick each line, or the lab's doc 
 | 11 | **Every number is computed** | No number in a lesson is typed by hand when it can be computed; a test checks the ones that are typed. | QMaze `predict.compute`; DP `trees.test.js` (the Fibonacci call counts the lessons quote) |
 | 12 | **Seen in a real browser** | A `tools/browser-check.mjs` opens every lesson, uses the interactive parts, screenshots them and reports page errors; reused every session. | Data Science and DP `tools/browser-check.mjs` |
 | 13 | **Usable by everyone** | Keyboard works (arrow keys step), colour is never the only signal, motion respects `prefers-reduced-motion`, narrow windows scroll inside the figure, not the page. | DP `trace.css` |
+| 14 | **Your code builds the next lesson** | A piece the learner wrote and passed is the version later lessons run on, shown as "✓ yours" in a toolbox; the lab's version fills any gap. | ML Foundations `prelude()` in `python/pieces.js` and `myPieces()` in `progress.js` |
+| 15 | **Predict inside the step-through** | Stepping stops before a key line and asks what it will do (a number, a square clicked on the picture, a choice), with named misconceptions and a right-first-time score. | ML Foundations `Stepper.jsx` (`ask` on a frame) |
 
 ## How the labs compare (2026-10-17)
 
@@ -33,5 +35,6 @@ A lab meets the standard when every lesson can tick each line, or the lab's doc 
 | Data Science Studio | partly | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | Python tab | – |
 | Linear Algebra | partly | ✓ | ✓ | ✓ | – | ✓ | seeded draws | – | ✓ |
 | Dynamic Programming | ✓ (87 full lessons) | ✓ (42 lessons) | ✓ | ✓ | to do | ✓ | ✓ | ✓ | to do |
+| ML Foundations (2026-10-18, lessons 0–3) | ✓ | ✓ (with predictions) | ✓ | ✓ | ✓ | ✓ | ✓ (+ random maps) | ✓ | to do |
 
 What the DP lab still needs to meet the standard everywhere is in [dynamic-programming-lab.md](dynamic-programming-lab.md#plan).

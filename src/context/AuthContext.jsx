@@ -55,6 +55,7 @@ const SYNC_KEYS = [
   'vue-studio-v3:milestone-idx', // Vue Studio: furthest milestone reached (code files stay local-only)
   'oc-blog-read',             // Blog: slugs of posts already read
   'oc-dp-lab',                // Dynamic Programming lab: drafts, passes, quizzes, designs per lesson
+  'oc-ml-foundations',        // ML Foundations lab: stages, checks, drafts and passes per lesson
 ]
 
 // Timestamp we write to localStorage after every successful Firestore restore,

@@ -387,6 +387,35 @@ export function mergeDpLab(
   return merged
 }
 
+// ML Foundations lab progress (src/labs/ml-foundations/progress.js):
+// `{ lessonId: { stages, checks, code: { challengeId: { code, passed, hints, shown } } } }`.
+// Nothing is ever un-done: stages and checks are unions, and a challenge passed on either
+// device stays passed (that side's code wins); otherwise this device's newer draft wins.
+type MlfRecord = { stages?: Record<string, boolean>; checks?: string[]; code?: Record<string, any> }
+export function mergeMlFoundations(
+  local: Record<string, MlfRecord> | null | undefined,
+  remote: Record<string, MlfRecord> | null | undefined
+): Record<string, MlfRecord> {
+  const isObject = (v: unknown): v is Record<string, any> => !!v && typeof v === 'object' && !Array.isArray(v)
+  if (!isObject(local)) return isObject(remote) ? remote : {}
+  if (!isObject(remote)) return local
+  const merged: Record<string, MlfRecord> = { ...remote }
+  for (const [id, mine] of Object.entries(local)) {
+    const theirs = merged[id]
+    if (!isObject(theirs) || !isObject(mine)) { merged[id] = isObject(mine) ? mine : theirs; continue }
+    const stages: Record<string, boolean> = { ...(theirs.stages ?? {}) }
+    for (const [s, v] of Object.entries(mine.stages ?? {})) if (v === true) stages[s] = true
+    const checks = [...new Set([...(theirs.checks ?? []), ...(mine.checks ?? [])])]
+    const code: Record<string, any> = { ...(theirs.code ?? {}) }
+    for (const [cid, entry] of Object.entries(mine.code ?? {})) {
+      const other = code[cid]
+      code[cid] = other?.passed === true && entry?.passed !== true ? other : entry
+    }
+    merged[id] = { stages, checks, code }
+  }
+  return merged
+}
+
 // Callers (AuthContext.jsx) are untyped JS, so `unknown` params here buy no
 // real safety — `any` matches the actual gradual-migration boundary.
 export type MergeStrategy = (local: any, remote: any) => unknown
@@ -412,4 +441,5 @@ export const SYNC_MERGE_STRATEGIES: Record<string, MergeStrategy> = {
   'vue-studio-v3:milestone-idx': mergeMaxNumber,
   'oc-blog-read': mergeArrayUnion,
   'oc-dp-lab': mergeDpLab,
+  'oc-ml-foundations': mergeMlFoundations,
 }

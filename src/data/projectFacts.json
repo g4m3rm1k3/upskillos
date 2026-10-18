@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 74,
+    "labs": 75,
     "games": 16
   },
   "courses": [
@@ -638,6 +638,12 @@
       "label": "MeshLab",
       "kind": "lab",
       "path": "/mesh-lab"
+    },
+    {
+      "id": "ml-foundations",
+      "label": "ML Foundations Lab",
+      "kind": "lab",
+      "path": "/lab/ml-foundations"
     },
     {
       "id": "ml-lab",
