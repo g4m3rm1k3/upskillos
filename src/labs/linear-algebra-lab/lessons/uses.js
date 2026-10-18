@@ -620,7 +620,7 @@ export const ANGLES = {
   'laml-dot-product': [
     { title: 'Where the cosine comes from', body: 'The law of cosines says $\\|\\mathbf a - \\mathbf b\\|^2 = \\|\\mathbf a\\|^2 + \\|\\mathbf b\\|^2 - 2\\|\\mathbf a\\|\\|\\mathbf b\\|\\cos\\theta$. Expanding the left side with entries gives $\\|\\mathbf a\\|^2 + \\|\\mathbf b\\|^2 - 2\\,\\mathbf a\\cdot\\mathbf b$. Compare the two, and $\\mathbf a\\cdot\\mathbf b = \\|\\mathbf a\\|\\|\\mathbf b\\|\\cos\\theta$.' },
     { title: 'Signs agreeing', body: 'Each product $a_ib_i$ is positive where the two vectors agree in sign and negative where they disagree. The dot product totals the agreement; dividing by the lengths removes the effect of size.' },
-    { title: 'As a shadow', body: 'The dot product of $\\mathbf a$ with a *unit* vector $\\mathbf u$ is the length of $\\mathbf a$\'s shadow on $\\mathbf u$. The next lesson builds on exactly this picture.' },
+    { title: 'As a shadow', body: 'The dot product of $\\mathbf a$ with a _unit_ vector $\\mathbf u$ is the length of $\\mathbf a$\'s shadow on $\\mathbf u$. The next lesson builds on exactly this picture.' },
   ],
   'laml-projection': [
     { title: 'As the closest point', body: 'Among all the points $c\\,\\mathbf u$ on the line, the projection is the closest to $\\mathbf x$. Move along the line from there and the distance grows, because you add a piece at right angles to the residual (Pythagoras).' },

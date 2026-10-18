@@ -16,33 +16,42 @@ At the end of a session, update this file (state, next step, anything learned) a
 - **One heavy run at a time.** Never overlap vitest runs, builds or the browser check.
 - Plain language in replies. Make technical decisions without asking.
 
-## State of the project (2026-10-18, end of Phase 6c)
+## State of the project (2026-10-18, end of Phase 6)
 
 - **Committed:** Phases 1–6b (Phase 6b went in with commit `5e812edd`).
-- **Done but NOT committed:** Phase 6c. Its files:
-  - Lab (`src/labs/linear-algebra-lab/`): `curriculum.js`, `curriculum.test.js`, `index.jsx`, `index.test.jsx`, `Study.jsx`, `ProblemSet.jsx`, `review.js`, `lab.css`, `Explore.jsx`, `lessons/core.js`, `lessons/applications.js`.
+- **Done but NOT committed:** Phases 6c and 6d. Their files:
+  - Lab (`src/labs/linear-algebra-lab/`). New: `stars.js`, `stars.test.jsx`. Modified: `curriculum.js`, `curriculum.test.js`, `practice.test.js`, `index.jsx`, `index.test.jsx`, `Study.jsx`, `ProblemSet.jsx`, `review.js`, `lab.css`, `Explore.jsx`, `lessons/core.js`, `lessons/applications.js`, `lessons/stage1.js`, `lessons/eigen.js`, `lessons/bestfit.js`, `lessons/uses.js`, `practice/core.js`, `practice/theory.js`.
   - Docs: `docs/linear-algebra-lab-gentle-plan.md` and this file.
   - Any untracked `docs/notebooks/*` files belong to another session. Don't stage them.
 - **Size:** 68 lessons in 12 modules: three stages of core modules, then two optional tracks (`STAGES` in `curriculum.js`).
-- **Optional tracks:** the last entry of `STAGES` is "Optional tracks", exported as `TRACK_STAGE`. Its modules are "Machine learning" (6 lessons) and "Decisions" (5 lessons). Every lesson in them gets `track: <module>` in `curriculum.js`. The sidebar labels the group "Optional tracks · any order", and the lesson header shows an "Optional track" chip.
-- **Wording:** "Mastery studio" is gone (its four capstones joined the track each belongs to), level "Mastery" is now "Capstone", and "Mastery map" is now "Progress map". A test keeps the word "mastery" out of every lesson.
+- **Optional tracks (6c):**
+  - The last entry of `STAGES` is "Optional tracks", exported as `TRACK_STAGE`, with "Machine learning" (6 lessons) and "Decisions" (5 lessons).
+  - Each lesson there gets `track: <module>`. The sidebar says "any order", and the lesson header shows "Optional track".
+  - "Mastery" wording is gone: the capstone level is now "Capstone", and the map is the "Progress map". A test keeps "mastery" out of the lessons.
+- **Clean-ups (6d):**
+  - **Stars:** `stars.js` escapes single `*` outside code and maths in the lab's three Markdown wrappers, so `X*beta` never turns into italics. Write italics as `_word_` and bold as `**word**`.
+  - **Guessable practice families:** each of the 15 now has an output that depends on the drawn numbers. `GUESSABLE` in `practice.test.js` is empty, and the test fails if a family can be passed with a hard-coded answer.
+  - **Derive it:** a lesson's `derive` field (claim, given, steps, conclusion, the same shape as `proof`) runs in the Learn tab after the reading, using the proof stepper (`Proof` with `part="derive"`). Three lessons have one: projection, least squares and eigenvalues (the characteristic equation).
 - **Reworked in the gentle style (why, uses, angles):** all of Stages 1, 2 and 3. The 11 track lessons have none yet.
 - **Last checks (2026-10-18):**
-  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 666 passed.
+  - `npx vitest run src/labs/linear-algebra-lab packages/openmat`: 669 passed.
   - `npm run typecheck`: clean.
-  - `npm run catalog:check`: current at Phase 6b (the 14 content problems that were already there). Phase 6c added no lessons.
-  - Browser check (dark mode): the Decisions capstone lesson, the sidebar and the progress map; no page errors.
-  - Other OpenMAT users were checked at Phase 6b; 6c did not touch the engine.
-  - The production build was last run at the Phase 3 commit.
+  - `npm run catalog:check`: current at Phase 6b; 6c and 6d added no lessons.
+  - Browser checks:
+    - 6c: the Decisions capstone, the sidebar and the progress map (dark).
+    - 6d: the eigenvalue "Derive it" card (light), and the capstone prose showing `gamma*P1*value` without italics.
+    - No page errors.
+  - Other OpenMAT users were checked at Phase 6b; 6c and 6d did not touch the engine.
+  - The production build was last run at the Phase 3 commit. Run `npm run build` once before or after committing Phase 6.
 
-## Next: Phase 6d, clean-ups
+## Next: Phase 7 (proposed; the owner picks)
 
-Read the Phase 6 entry in the plan. In short:
-1. **Prompts and prose where a pair of `*` renders as italics.** For example, "gamma*P1*value" in the policy-iteration capstone shows "P1" in italics. Put code in backticks, as the Best fit prompts do. Search the lesson prose, the challenge prompts and the practice prompts.
-2. **The guessable problem families** (`GUESSABLE` in `practice.test.js`): make each one fail when an answer is hard-coded from one draw, then remove it from the list.
-3. **The Derive-it stepper** (`derive`), if the session has room; otherwise make it Phase 6e.
+Phase 6 finished the plan's build order. Candidates, roughly in value order:
 
-After Phase 6: the 11 track lessons have no why stories, case studies or angles. Graphics and engineering tracks were planned but have no lessons.
+1. **The two tracks in the gentle style:** why stories, case studies and angles for the 11 track lessons. The ML lessons can lean on the Best fit and Calculus modules. Add the track modules to the `gentle curve` test when done.
+2. **More "Derive it" steppers** for results that are stated before they are shown, for example the determinant as an area, the inverse of a 2 × 2, the Gram–Schmidt step and the power-iteration convergence ratio.
+3. **The missing tracks:** Graphics and 3D (homogeneous coordinates, a camera) and Engineering (spring networks, finite elements). New lessons need 6 problem families each.
+4. **OpenMAT `reshape` order** (row-major here, column-major in MATLAB). It needs a site-wide check before changing.
 
 ## How the lab is built
 
@@ -51,6 +60,8 @@ After Phase 6: the 11 track lessons have no why stories, case studies or angles.
   - **Order:** lessons are sorted by module in `STAGES` order. A lesson whose module is in no stage throws an error.
   - **Extra fields for older lessons:** `ENRICH` in `lessons/enrich.js` adds notation, quiz and proof. `USES` and `ANGLES` in `lessons/uses.js` add case studies and extra angles. All three are merged by id.
 - **Ids never change**: they are progress keys. A rewrite keeps the id.
+- **Derive it:** `derive: { claim, given, steps: [{ ask, options, answer, why }], conclusion }` on a lesson, the same shape as `proof`. It shows in the Learn tab after the reading. At least 3 steps; the schema test checks it like a proof.
+- **Stars in prose:** a single `*` is always shown as multiplication. Write italics as `_word_`.
 - **Demos:** `demo.draw` holds the plotting code. It runs after `demo.code` and is shown collapsed. Every demo must plot, with a title.
 - **Challenges:** the test runs the reference solution, which must pass, and the starter, which must fail, and also checks every `cases` variant.
 - **Practice families:** in `practice/*.js` and merged in `practice/index.js`. Each lesson needs at least 6 families. Each family must:

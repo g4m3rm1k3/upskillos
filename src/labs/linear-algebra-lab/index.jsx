@@ -11,6 +11,7 @@ import ProblemSet from './ProblemSet.jsx'
 import { problemsFor } from './practice/index.js'
 import Plot from './Plot.jsx'
 import MarkdownProse from '../../components/math/MarkdownProse.jsx'
+import { starsAsTimes } from './stars.js'
 import { useThemeColors } from '../../hooks/useThemeColors.js'
 import './lab.css'
 
@@ -19,7 +20,7 @@ const HUES = [['#b45309', '#fbbf24'], ['#be123c', '#fb7185'], ['#6d28d9', '#a78b
 const hue = module => { const [light, dark] = HUES[Math.max(0, MODULES.indexOf(module)) % HUES.length]; return { '--mod-l': light, '--mod-d': dark } }
 const pad = n => String(n).padStart(2, '0')
 
-function Prose({ children }) { return <div className="la-prose"><MarkdownProse text={children} /></div> }
+function Prose({ children }) { return <div className="la-prose"><MarkdownProse text={starsAsTimes(children)} /></div> }
 
 function Figure({ json, colors }) {
   let figure
@@ -185,6 +186,7 @@ ${lesson.demo.draw}` : demo }
             <WhyCard why={lesson.why} />
             <UsesCard uses={lesson.uses} roles={ROLES} role={store.role} onRole={role => setStore(previous => ({ ...previous, role }))} />
             <section className="la-card la-reading"><div className="la-eyebrow">Start with a concrete example</div>{lesson.prose.map((paragraph, i) => <Prose key={i}>{paragraph}</Prose>)}</section>
+            {lesson.derive && <Proof key={`${lesson.id}-derive`} lesson={lesson} part="derive" />}
             <Notation items={lesson.notation} />
             <AnglesCard angles={lesson.angles} />
             <div className="la-pair">

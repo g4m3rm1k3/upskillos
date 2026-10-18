@@ -87,6 +87,16 @@ total = sum(misfit.^2);`,
       'In code, `X\\y` finds β̂ for a tall X. The right-angle test is the honest check on any claimed fit: compute X\'*residual and see that it is zero, apart from rounding. A line that merely looks good on a plot can fail it.',
       'Two cautions. Squaring makes one wild measurement pull the line hard, so look at the residuals before trusting the fit. And solving the normal equations directly can lose accuracy on a computer; the QR lesson at the end of this module shows why, and the safer way.',
     ],
+    derive: {
+      claim: t`Find the equations that the best-fit coefficients $\boldsymbol\beta$ must satisfy.`,
+      given: t`The best fit $X\boldsymbol\beta$ is the closest point to $\mathbf y$ among all combinations of the columns of $X$, so the leftover $\mathbf r = \mathbf y - X\boldsymbol\beta$ is at right angles to every column.`,
+      steps: [
+        { ask: t`Column $j$ of $X$ is $\mathbf x_j$. Write "the leftover is at right angles to column $j$".`, options: [t`$\mathbf x_j\cdot\mathbf r = 0$`, t`$\mathbf x_j = \mathbf r$`, t`$\mathbf x_j\cdot\mathbf y = 0$`], answer: 0, why: 'At right angles means a dot product of zero, exactly as for the shadow.' },
+        { ask: t`Collect these dot products for every column at once.`, options: [t`$X^T\mathbf r = \mathbf 0$`, t`$X\mathbf r = \mathbf 0$`, t`$\mathbf r^T\mathbf r = 0$`], answer: 0, why: t`Row $j$ of $X^T$ is column $j$ of $X$, so entry $j$ of $X^T\mathbf r$ is $\mathbf x_j\cdot\mathbf r$.` },
+        { ask: t`Put in $\mathbf r = \mathbf y - X\boldsymbol\beta$ and rearrange.`, options: [t`$X^TX\boldsymbol\beta = X^T\mathbf y$`, t`$X\boldsymbol\beta = \mathbf y$`, t`$X^T\boldsymbol\beta = \mathbf y$`], answer: 0, why: t`$X^T(\mathbf y - X\boldsymbol\beta) = X^T\mathbf y - X^TX\boldsymbol\beta$, and that must be $\mathbf 0$.` },
+      ],
+      conclusion: t`These are the normal equations: a small square system, one equation per coefficient. With a single column $\mathbf u$ they shrink to the shadow formula $c = (\mathbf u\cdot\mathbf y)/(\mathbf u\cdot\mathbf u)$.`,
+    },
     procedure: ['Build X with one row per measurement: a 1 for the intercept, then the input.', 'Solve beta = X\\y, then compute fitted = X*beta and residual = y - fitted.', 'Check the right angle: X\'*residual should be zero. The squared total residual\'*residual is the smallest possible.'],
     prediction: { question: 'Does the least-squares line pass through any of the three points?', answer: 'Not necessarily, and here it passes through none: it predicts 7/6, 5/3 and 13/6. It makes the squared total smallest; it does not try to hit any single point.' },
     demo: {

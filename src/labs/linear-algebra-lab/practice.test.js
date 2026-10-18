@@ -11,17 +11,9 @@ const SEEDS = ['a', 'b', 'c', 'd', 'e', 'f']
 // Lessons without a problem set: the opening tour (motivation only).
 const WITHOUT_PROBLEMS = ['laml-why-linear-algebra']
 
-// Families whose answers are (nearly) the same on every draw, so typing the number passes.
-// Known weakness: their generators vary entries but not structure (ranks, nullities, zero checks).
-// Fix the generator, then delete the entry; the test fails if a fixed family is still listed.
-const GUESSABLE = new Set([
-  'laml-elimination/contradictory-measurements', 'laml-span-rank/feature-rank-nullity', 'laml-span-rank/new-feature-information',
-  'laml-basis-dimension/dimension', 'laml-basis-dimension/direction-gain', 'laml-four-subspaces/rank-dimensions',
-  'laml-four-subspaces/right-nullity', 'laml-four-subspaces/left-nullity', 'laml-four-subspaces/row-null-orthogonality',
-  'laml-four-subspaces/wide-data-audit', 'laml-gram-schmidt/dependent-input', 'laml-gram-schmidt/calibration-rebuild',
-  // Sometimes guessable: on some draws the unseen inputs repeat the visible answer (small value ranges).
-  'laml-orthogonal-qr/detect-zero-remainder', 'laml-eigen-iteration/audit-proposed-eigenpair', 'laml-complex-eigen/turning-angle',
-])
+// Families whose answers are (nearly) the same on every draw, so typing the number passes. Empty since
+// Phase 6d: each family now has an output that depends on the drawn numbers. Keep it that way.
+const GUESSABLE = new Set([])
 
 const literal = v => Array.isArray(v) ? (Array.isArray(v[0]) ? `[${v.map(r => r.join(' ')).join('; ')}]` : `[${v.join('; ')}]`) : String(v)
 const run = (ex, code) => evaluateRun({ source: `${ex.setup}\n${code}`, setup: ex.setup, code, reference: ex.solution, outputs: ex.outputs, cases: ex.cases })

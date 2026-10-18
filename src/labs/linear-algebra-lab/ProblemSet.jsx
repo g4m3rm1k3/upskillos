@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import MarkdownProse from '../../components/math/MarkdownProse.jsx'
+import { starsAsTimes } from './stars.js'
 import { CodeEditor, CodeView } from './code.jsx'
 import { startRun } from './runner.js'
 import { attemptKey, familyKey, freshSeed, instantiate, practiceStatus, problemsFor, PROBLEM_VERSION } from './practice/index.js'
 
-const Md = ({ children }) => <div className="la-prose"><MarkdownProse text={children} /></div>
+const Md = ({ children }) => <div className="la-prose"><MarkdownProse text={starsAsTimes(children)} /></div>
 const validSeed = seed => typeof seed === 'string' || typeof seed === 'number'
 
 function Workspace({ lesson, exercise, store, setStore, colors, renderResult }) {

@@ -390,6 +390,16 @@ xlabel('x'); ylabel('y'); legend('a', 'b'); axis equal; grid on`,
       'Solving u · (x − c·u) = 0 for c gives c = (u · x) / (u · u). The shadow c·u is called the **projection** of x onto u. The leftover x − c·u is called the **residual**.',
       'In code: `c = dot(u, x) / dot(u, u);` then `shadow = c * u`. The Reason & prove tab walks through why the residual is always at right angles.',
     ],
+    derive: {
+      claim: t`Find the number $c$ that makes $c\,\mathbf u$ the shadow of $\mathbf x$ on the direction $\mathbf u$.`,
+      given: t`The leftover $\mathbf x - c\,\mathbf u$ stands at right angles to $\mathbf u$.`,
+      steps: [
+        { ask: 'Write "at right angles" as an equation.', options: [t`$\mathbf u\cdot(\mathbf x - c\,\mathbf u) = 0$`, t`$\mathbf x - c\,\mathbf u = \mathbf 0$`, t`$\mathbf u\cdot\mathbf x = c$`], answer: 0, why: 'Two arrows are at right angles exactly when their dot product is zero.' },
+        { ask: 'Open the bracket.', options: [t`$\mathbf u\cdot\mathbf x - c\,(\mathbf u\cdot\mathbf u) = 0$`, t`$\mathbf u\cdot\mathbf x - c = 0$`, t`$(\mathbf u\cdot\mathbf x)\,c = 0$`], answer: 0, why: t`The dot product shares out over a difference, and the number $c$ comes outside.` },
+        { ask: t`Solve for $c$.`, options: [t`$c = \dfrac{\mathbf u\cdot\mathbf x}{\mathbf u\cdot\mathbf u}$`, t`$c = \dfrac{\mathbf u\cdot\mathbf u}{\mathbf u\cdot\mathbf x}$`, t`$c = \mathbf u\cdot\mathbf x$`], answer: 0, why: t`Move the second term across and divide by $\mathbf u\cdot\mathbf u$, which is not zero because $\mathbf u$ is not the zero arrow.` },
+      ],
+      conclusion: t`The shadow is $\dfrac{\mathbf u\cdot\mathbf x}{\mathbf u\cdot\mathbf u}\,\mathbf u$. One idea, "the leftover is at right angles", gave the whole formula; least squares later uses exactly the same idea.`,
+    },
     procedure: ['Find c = (u · x) / (u · u).', 'The projection is c times u.', 'Check: the residual x − c·u has a dot product of zero with u.'],
     prediction: { question: 'The ground direction changes from [1; 0] to [2; 0]. Does the shadow move?', answer: 'No. Both describe the same line. The number c halves while u doubles, so the shadow stays [3; 0].' },
     demo: {

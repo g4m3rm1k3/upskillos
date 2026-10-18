@@ -99,6 +99,20 @@ describe('Linear Algebra Lab', () => {
     expect(Math.abs(descentTrace(1.1).at(-1) - 2)).toBeGreaterThan(3)
   })
 
+  it('derives a result step by step in the Learn tab', () => {
+    const lesson = LESSONS.find(item => item.id === 'laml-projection')
+    localStorage.setItem(STORE_KEY, JSON.stringify({ current: lesson.id }))
+    render(<Lab />)
+    expect(screen.getByText('Find the result yourself')).toBeTruthy()
+    for (let i = 0; i < lesson.derive.steps.length; i++) {
+      const label = `Derivation step ${i + 1}`
+      while (screen.queryByRole('group', { name: label })) {
+        fireEvent.click(within(screen.getByRole('group', { name: label })).getAllByRole('button').find(button => !button.disabled))
+      }
+    }
+    expect(screen.getByText(/∎ Derived/)).toBeTruthy()
+  })
+
   it('builds a proof step by step, records quick checks and shows both on the progress map and in review', async () => {
     const lesson = LESSONS.find(item => item.proof)
     localStorage.setItem(STORE_KEY, JSON.stringify({ current: lesson.id }))

@@ -80,8 +80,8 @@ describe('notation, quick checks and proofs', () => {
         expect(item.why.length).toBeGreaterThan(10)
         ;[item.q, item.why, ...item.options].flatMap(mathIn).forEach(renders)
       }
-      if (lesson.proof) {
-        const { claim, given, steps, conclusion } = lesson.proof
+      for (const part of ['proof', 'derive']) if (lesson[part]) {
+        const { claim, given, steps, conclusion } = lesson[part]
         expect(steps.length).toBeGreaterThanOrEqual(3)
         for (const step of steps) {
           expect(step.options[step.answer]).toBeTruthy()

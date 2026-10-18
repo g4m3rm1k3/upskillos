@@ -17,6 +17,17 @@ export const eigenLessons = [
       'Apply A again and again to almost any start. The part along the eigenvalue-3 direction triples each time while the other part stays the same size, so the vector swings towards [1; 1]. Repeating and rescaling like this is called **power iteration**, and it finds the eigenvector with the largest eigenvalue.',
       'In code, `[V, D] = eig(A)` returns the eigenvectors as the columns of V and the eigenvalues on the diagonal of D. Check any pair by computing A·v − λ·v, which should be zero.',
     ],
+    derive: {
+      claim: t`Find the eigenvalues of $A = \begin{bmatrix} 2 & 1 \\ 1 & 2 \end{bmatrix}$ without guessing any eigenvector.`,
+      given: t`An eigenvector is a nonzero $\mathbf v$ with $A\mathbf v = \lambda\mathbf v$.`,
+      steps: [
+        { ask: t`Bring everything to one side. Writing $\lambda\mathbf v$ as $\lambda I\mathbf v$, what do you get?`, options: [t`$(A - \lambda I)\mathbf v = \mathbf 0$`, t`$A - \lambda = 0$`, t`$(A + \lambda I)\mathbf v = \mathbf 0$`], answer: 0, why: t`$I\mathbf v = \mathbf v$, so $A\mathbf v - \lambda I\mathbf v = (A - \lambda I)\mathbf v$.` },
+        { ask: t`$\mathbf v$ is not zero, yet $A - \lambda I$ sends it to zero. What does that say about $A - \lambda I$?`, options: ['It squashes a direction flat, so it has no inverse', 'It is the zero matrix', 'It is the identity'], answer: 0, why: t`An invertible matrix sends only $\mathbf 0$ to $\mathbf 0$. This one sends a nonzero $\mathbf v$ there.` },
+        { ask: 'Which number detects a matrix with no inverse?', options: [t`Its determinant: $\det(A - \lambda I) = 0$`, 'Its largest entry', 'Its trace'], answer: 0, why: 'A matrix squashes area to zero exactly when its determinant is zero.' },
+        { ask: t`For this $A$, $\det(A - \lambda I) = (2 - \lambda)^2 - 1$. Which values make it zero?`, options: [t`$\lambda = 3$ and $\lambda = 1$`, t`$\lambda = 2$ only`, t`$\lambda = 4$ and $\lambda = 0$`], answer: 0, why: t`$(2 - \lambda)^2 = 1$ means $2 - \lambda = \pm 1$.` },
+      ],
+      conclusion: t`The eigenvalues are 3 and 1, the stretches found in the reading. The equation $\det(A - \lambda I) = 0$ is called the characteristic equation, and it works for any square matrix.`,
+    },
     procedure: ['Guess or compute a direction v.', 'Check A*v − λ*v ≈ 0 to confirm an eigenpair.', 'For the dominant one, repeat v = A*v; v = v/norm(v), and estimate λ = dot(v, A*v).'],
     prediction: { question: 'For A = [2 1; 1 2], what happens to power iteration if the start vector is exactly [1; −1]?', answer: 'It stays on [1; −1] for ever. It has no part along the dominant direction [1; 1], so repeated multiplication can never create one.' },
     demo: {

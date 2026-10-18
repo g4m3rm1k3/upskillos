@@ -1,6 +1,6 @@
 # Linear Algebra Lab: gentle-curve redesign plan
 
-Drafted 2026-10-17. Status: Phases 1–5 and 6a–6c done (2026-10-18); 6d not started. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
+Drafted 2026-10-17. Status: Phases 1–6 done (2026-10-18); Phase 7 proposed in the handoff. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
 
 ## Goal
 
@@ -146,4 +146,8 @@ N = new lesson, E = existing lesson (reworked where noted).
      - Two tracks, "Machine learning" (6 lessons) and "Decisions" (5 lessons). Each lesson carries `track`, the sidebar shows the group as "any order", and the lesson header shows "Optional track".
      - "Mastery studio" is gone: its capstones joined their tracks. Level "Mastery" became "Capstone", "Mastery map" became "Progress map", and a test keeps "mastery" out of the lessons.
      - Graphics and 3D and the engineering track have no lessons yet, so they are not listed.
-   - **6d: fix the 15 guessable problem families, and add the `derive` (Derive it) stepper.**
+   - **6d (done, 2026-10-18): clean-ups.**
+     - All 15 guessable problem families now depend on their drawn numbers; the `GUESSABLE` list is empty.
+     - `derive` (Derive it) runs in the Learn tab with the proof stepper. It is used in projection, least squares and eigenvalues.
+     - A single `*` in lab prose always shows as multiplication (`stars.js`), so no more stray italics.
+7. **Phase 7 (proposed):** the tracks in the gentle style, more Derive-it steppers, then the Graphics and Engineering tracks. See the handoff.

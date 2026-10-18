@@ -3,9 +3,10 @@ import { useMemo, useState } from 'react'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import MarkdownProse from '../../components/math/MarkdownProse.jsx'
+import { starsAsTimes } from './stars.js'
 import { dueItems, itemKey, stages } from './review.js'
 
-export function Md({ children, className = 'la-prose' }) { return <div className={className}><MarkdownProse text={children} /></div> }
+export function Md({ children, className = 'la-prose' }) { return <div className={className}><MarkdownProse text={starsAsTimes(children)} /></div> }
 
 export function Tex({ children, display = false }) {
   const html = useMemo(() => { try { return katex.renderToString(children, { displayMode: display, throwOnError: false, strict: false }) } catch { return null } }, [children, display])
@@ -52,13 +53,18 @@ export function QuickCheck({ lesson, onAnswer }) {
 
 // A proof is a sequence of reasoning steps. Each step offers candidate next moves; a wrong pick explains
 // itself and stays on the step, so the learner builds the argument rather than reading it.
-export function Proof({ lesson, proved, onComplete }) {
-  const { proof } = lesson
+// The same stepper runs a proof (Reason & prove tab) or a derivation (Derive it, in the Learn tab).
+const WORDING = {
+  proof: { eyebrow: 'Reason it out', title: 'Why is this true?', claim: 'Claim', done: '∎ Proof complete', again: 'Rebuild the proof', group: 'Proof step' },
+  derive: { eyebrow: 'Derive it', title: 'Find the result yourself', claim: 'Goal', done: '∎ Derived', again: 'Derive it again', group: 'Derivation step' },
+}
+export function Proof({ lesson, proved, onComplete = () => {}, part = 'proof' }) {
+  const proof = lesson[part], words = WORDING[part]
   const [step, setStep] = useState(proved ? proof.steps.length : 0)
   const [miss, setMiss] = useState({})
   const [mistakes, setMistakes] = useState(proved?.mistakes ?? 0)
   const current = proof.steps[step]
-  const shown = useMemo(() => current ? order(current.options.length, `${lesson.id}:${step}`) : [], [current, lesson.id, step])
+  const shown = useMemo(() => current ? order(current.options.length, part === 'proof' ? `${lesson.id}:${step}` : `${lesson.id}:${part}:${step}`) : [], [current, lesson.id, part, step])
   const choose = i => {
     if (i === current.answer) {
       setMiss({})
@@ -67,21 +73,21 @@ export function Proof({ lesson, proved, onComplete }) {
       if (next === proof.steps.length) onComplete({ mistakes, at: new Date().toISOString() })
     } else { setMiss(previous => ({ ...previous, [i]: true })); setMistakes(m => m + 1) }
   }
-  return <section className="la-card la-proof">
-    <div className="la-eyebrow">Reason it out</div><h2>Why is this true?</h2>
-    <div className="la-claim"><span>Claim</span><Md>{proof.claim}</Md></div>
+  return <section className={`la-card la-proof la-${part}`}>
+    <div className="la-eyebrow">{words.eyebrow}</div><h2>{words.title}</h2>
+    <div className="la-claim"><span>{words.claim}</span><Md>{proof.claim}</Md></div>
     {proof.given && <div className="la-given-proof"><span>Given</span><Md>{proof.given}</Md></div>}
     <ol className="la-steps">
       {proof.steps.slice(0, step).map((s, i) => <li key={i} className="la-step-done"><Md>{s.options[s.answer]}</Md><Md className="la-prose la-step-why">{s.why}</Md></li>)}
       {current && <li className="la-step-now">
         <Md>{current.ask}</Md>
-        <div className="la-options" role="group" aria-label={`Proof step ${step + 1}`}>{shown.map(i => <button key={i} type="button" className={`la-option ${miss[i] ? 'la-wrong' : ''}`} disabled={miss[i]} onClick={() => choose(i)}><Md>{current.options[i]}</Md></button>)}</div>
+        <div className="la-options" role="group" aria-label={`${words.group} ${step + 1}`}>{shown.map(i => <button key={i} type="button" className={`la-option ${miss[i] ? 'la-wrong' : ''}`} disabled={miss[i]} onClick={() => choose(i)}><Md>{current.options[i]}</Md></button>)}</div>
         {Object.keys(miss).length > 0 && <p className="la-verdict la-no" role="status"><strong>Not that one.</strong> {current.hint || 'Ask which move uses only what is already established.'}</p>}
       </li>}
     </ol>
-    {!current && <div className="la-qed" role="status"><Md>{proof.conclusion}</Md><span>∎ Proof complete{mistakes === 0 ? ' · no wrong turns' : ` · ${mistakes} wrong turn${mistakes === 1 ? '' : 's'} on the way`}</span></div>}
+    {!current && <div className="la-qed" role="status"><Md>{proof.conclusion}</Md><span>{words.done}{mistakes === 0 ? ' · no wrong turns' : ` · ${mistakes} wrong turn${mistakes === 1 ? '' : 's'} on the way`}</span></div>}
     <p className="la-muted">{proof.steps.length} steps. Pick the move that follows from what is already on the page.</p>
-    {!current && <button type="button" className="la-ghost" onClick={() => { setStep(0); setMiss({}); setMistakes(0) }}>Rebuild the proof</button>}
+    {!current && <button type="button" className="la-ghost" onClick={() => { setStep(0); setMiss({}); setMistakes(0) }}>{words.again}</button>}
   </section>
 }
 
