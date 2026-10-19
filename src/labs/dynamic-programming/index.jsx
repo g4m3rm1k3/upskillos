@@ -46,7 +46,7 @@ export default function DynamicProgrammingLab() {
   const solvedCount = solvedIn(CONCEPTS)
   function recordProgress(id, record) {
     const before = progress[id]
-    if ((isSolved(record) && !isSolved(before)) || (record.design?.done && !before?.design?.done)) pushNow?.()
+    if ((isSolved(record) && !isSolved(before)) || (record.design?.done && !before?.design?.done) || (record.hunt?.passed && !before?.hunt?.passed)) pushNow?.()
     setProgress(previous => ({ ...previous, [id]: record }))
   }
   const countLabel = (concepts, total = concepts.length) => {

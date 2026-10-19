@@ -379,7 +379,7 @@ export function mergeDpLab(
       continue
     }
     const record: DpRecord = { ...theirs, ...mine }
-    for (const part of ['Python', 'JavaScript', 'quiz', 'design']) {
+    for (const part of ['Python', 'JavaScript', 'quiz', 'design', 'hunt']) {
       if (won(theirs[part]) && !won(mine[part])) record[part] = theirs[part]
     }
     merged[id] = record

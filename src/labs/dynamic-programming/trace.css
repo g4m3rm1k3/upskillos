@@ -692,6 +692,16 @@
   padding: 2px 8px;
 }
 
+/* .dp-lab button (no border, no padding) outranks the plain .dp-btn-hint rule in style.css. */
+.dp-lab .dp-btn-hint {
+  padding: 10px 18px;
+  border: 1px solid var(--dp-line-bright);
+  border-radius: 8px;
+  background: var(--dp-panel);
+  color: #cbd5e1;
+  font-size: 13px;
+}
+
 .dp-lab .dp-btn-check,
 .dp-lab .dp-btn-codelens {
   padding: 10px 18px;

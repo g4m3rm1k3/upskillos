@@ -13,6 +13,9 @@ import { DESIGNS } from './lessons/designs.js'
 import './trace.css'
 import { TRACES } from './tables.js'
 import { TREE_FOR } from './trees.js'
+import { argsText, parseArgs } from './runArgs.js'
+import Hunt from './Hunt.jsx'
+import { BUG_HUNTS } from './hunt.js'
 
 const short = value => {
   const text = JSON.stringify(value)
@@ -32,6 +35,7 @@ export default function Lesson({
   const hasQuiz = Boolean(lesson.quiz)
 
   const design = isRecursion ? null : DESIGNS[lesson.id]
+  const hunt = !isRecursion && hasChallenge ? BUG_HUNTS[lesson.id] : null
   const stages = isRecursion
     ? [['walk', '01 · Walkthrough & stack'], ['solve', '02 · Coding challenge']]
     : [
@@ -39,6 +43,7 @@ export default function Lesson({
         ['understand', '01 · Understand'],
         ['walk', '02 · Walk through'],
         ['solve', hasChallenge ? '03 · Solve a problem' : '03 · Check understanding'],
+        ...(hunt ? [['hunt', `04 · Bug hunt${readProgress(lesson.id, lesson.revision).hunt?.passed ? ' ✓' : ''}`]] : []),
       ]
 
   // The stage is remembered for this tab, so returning from CodeLens reopens the challenge.
@@ -287,7 +292,26 @@ export default function Lesson({
               <p className="dp-muted">Practice challenge coming soon for this concept.</p>
             </div>
           )}
+          {hunt && (
+            <div className="dp-next-stage-cta">
+              <button type="button" className="dp-primary" onClick={() => setStage('hunt')}>
+                Hunt a bug in someone else’s solution →
+              </button>
+            </div>
+          )}
         </>
+      )}
+
+      {/* BUG HUNT: a solution with one classic DP bug */}
+      {stage === 'hunt' && hunt && (
+        <Hunt
+          key={lesson.id}
+          lesson={lesson}
+          hunt={hunt}
+          language={language}
+          setLanguage={setLanguage}
+          onProgress={onProgress}
+        />
       )}
 
       {/* BOTTOM PAGING NAVIGATION */}
@@ -399,15 +423,7 @@ export function ConceptQuiz({ lesson, onProgress }) {
   )
 }
 
-// Run's input box holds solve's arguments as JSON, without the outer brackets: `4, [1, 3]`.
-const argsText = args => args.map(a => JSON.stringify(a)).join(', ')
-export function parseArgs(text) {
-  try {
-    return { value: JSON.parse(`[${text}]`) }
-  } catch {
-    return { error: 'Write the arguments the way they appear in the examples, separated by commas: numbers, "strings" in double quotes, [lists] in brackets.' }
-  }
-}
+export { parseArgs } from './runArgs.js'
 
 export function Practice({ lesson, language, setLanguage, onProgress, traceable = false }) {
   const spec = lesson.challenge

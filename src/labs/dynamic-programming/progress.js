@@ -1,7 +1,7 @@
 // Progress for every DP lesson, in one localStorage key so the app's sign-in sync (SYNC_KEYS in
 // src/context/AuthContext.jsx) backs it up to the user's account; mergeDpLab in
 // src/context/progressMigration.ts merges two devices without ever un-solving a lesson.
-// Shape: { [lessonId]: { revision, Python?, JavaScript?, quiz?, design? } }.
+// Shape: { [lessonId]: { revision, Python?, JavaScript?, quiz?, design?, hunt? } }.
 export const STORE = 'oc-dp-lab'
 // Before 2026-10-17 each lesson had its own key; those are moved into STORE the first time they are read.
 export const progressKey = id => `upskillos.dp.v1.${id}`
@@ -18,8 +18,18 @@ export function cleanRecord(data, revision) {
     if (entry && typeof entry.code === 'string') clean[language] = { code: entry.code, passed: entry.passed === true, hints: Number.isInteger(entry.hints) ? Math.max(0, Math.min(3, entry.hints)) : 0 }
   }
   if (data.quiz && typeof data.quiz.answer === 'string') clean.quiz = { answer: data.quiz.answer, passed: data.quiz.passed === true }
+  if (data.hunt && typeof data.hunt === 'object') clean.hunt = cleanHunt(data.hunt)
   if (data.design?.done === true) clean.design = { done: true, misses: Number.isInteger(data.design.misses) ? Math.max(0, data.design.misses) : 0, assisted: data.design.assisted === true }
   return clean
+}
+
+// A bug hunt (Hunt.jsx): whether the line was found and the fix passed, the clues used, whether the
+// answer was shown (an assisted pass), and the learner's edited code in each language.
+const count = (n, top) => Number.isInteger(n) ? Math.max(0, Math.min(top, n)) : 0
+export function cleanHunt(data) {
+  const hunt = { found: data.found === true, passed: data.passed === true, shown: data.shown === true, misses: count(data.misses, 1e6), clues: count(data.clues, 3) }
+  for (const language of ['Python', 'JavaScript']) if (typeof data[language] === 'string') hunt[language] = data[language]
+  return hunt
 }
 
 export function readProgress(id, revision) {

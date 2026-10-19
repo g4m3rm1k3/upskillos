@@ -1,0 +1,95 @@
+.dp-hunt {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dp-hunt-step {
+  margin: 12px 0 0;
+  font-size: 15px;
+}
+
+.dp-hunt-know {
+  border: 1px solid var(--dp-line-bright);
+  border-left: 4px solid var(--dp-primary);
+  border-radius: 8px;
+  background: var(--dp-panel);
+  padding: 10px 14px;
+}
+
+.dp-hunt-know p {
+  margin: 6px 0 0;
+}
+
+.dp-hunt-know .dp-console {
+  margin-top: 8px;
+}
+
+/* One button per line; the code keeps its indentation and scrolls inside the box, not the page. */
+.dp-hunt-lines {
+  list-style: none;
+  margin: 0;
+  padding: 6px 0;
+  border: 1px solid var(--dp-line-bright);
+  border-radius: 8px;
+  background: var(--dp-bg);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.dp-hunt-lines li {
+  min-width: max-content;
+}
+
+.dp-lab .dp-hunt-lines button,
+.dp-hunt-blank {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  min-height: 22px;
+  padding: 1px 12px 1px 0;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: none;
+  color: var(--dp-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dp-hunt-blank {
+  cursor: default;
+}
+
+.dp-lab .dp-hunt-lines button:hover,
+.dp-lab .dp-hunt-lines button:focus-visible {
+  background: var(--dp-card-hover);
+  outline: none;
+  border-left-color: var(--dp-primary);
+}
+
+.dp-lab .dp-hunt-lines button.is-picked {
+  background: rgba(239, 68, 68, 0.12);
+  border-left-color: var(--dp-red);
+}
+
+.dp-hunt-no {
+  flex: 0 0 3ch;
+  text-align: right;
+  color: var(--dp-muted);
+  font-family: var(--dp-mono);
+  font-size: 12px;
+  user-select: none;
+}
+
+.dp-hunt-lines code {
+  font-family: var(--dp-mono);
+  font-size: 13px;
+  white-space: pre;
+  background: none;
+  padding: 0;
+}
+
+.dp-hunt .dp-test-diff {
+  margin: 8px 0 0;
+}

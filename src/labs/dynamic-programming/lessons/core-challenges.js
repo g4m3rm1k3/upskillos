@@ -191,6 +191,7 @@ export const CORE_CHALLENGES = {
     [[[3,34,4,12,5,2],9],true],
     [[[3,34,4,12,5,2],30],false],
     [[[7,7,7],14],true],
+    [[[3,5],5],true],
   ], ["Keep, for every total from 0 to target, whether it can be made so far.","Adding one value v: which totals become reachable, and why must you loop downwards?","With [3, 5] and target 6, 3 would be used twice by an upward loop."]),
   "equal-partition": task("values", "Split the values into two groups (one may be empty). Return the smallest possible difference between the two groups’ totals.", "0–60 positive integers up to 100.", [
     [[[1,2,5]],2],

@@ -2,7 +2,8 @@
 // own dev server (and always stops it), opens every lesson that has a live table or a call tree, goes
 // to its walkthrough, plays the table and the tree, fills one cell by typing, tries the fill-order
 // game, walks the answer back where it can, and saves a screenshot of each. Every lesson with "Design it yourself" is designed start to
-// finish, with one wrong pick per decision. `--only` takes lesson ids, plus `design` and `run`. Any page error, console error or missing piece is reported.
+// finish, with one wrong pick per decision. Every bug hunt is played in real Python: run the bug, click a
+// right line, click the bug, type the fix, pass. `--only` takes lesson ids, plus `design`, `hunt` and `run`. Any page error, console error or missing piece is reported.
 //
 //   node src/labs/dynamic-programming/tools/browser-check.mjs [out-folder] [--only id1,id2]
 import { chromium } from 'playwright'
@@ -14,6 +15,7 @@ import { TRACES } from '../tables.js'
 import { TREE_FOR } from '../trees.js'
 import { DESIGNS, applyCell } from '../lessons/designs.js'
 import { WALKS } from '../walks.js'
+import { BUG_HUNTS, bugLines, buggyCode, show } from '../hunt.js'
 
 const args = process.argv.slice(2)
 const onlyArg = args.includes('--only') ? args[args.indexOf('--only') + 1] : null
@@ -122,6 +124,36 @@ try {
     if (overflow) problems.push(`${id}: the design stage scrolls sideways`)
     console.log(`${id} design: ok`)
   }
+  // Bug hunts, in Python (each Run starts real Pyodide): the bug shows, a right line says why it is
+  // right, the bug line is accepted, the fix passes, and the stage is marked.
+  for (const [id, hunt] of Object.entries(BUG_HUNTS).filter(([id]) => wanted('hunt') || (onlyArg && wanted(id)))) {
+    const title = CONCEPTS.find(c => c.id === id).title
+    await openConcept(title)
+    await page.getByRole('button', { name: /^04 · Bug hunt/ }).click()
+    const region = page.getByRole('region', { name: 'Bug hunt' })
+    await region.getByRole('button', { name: '▶ Run' }).first().click()
+    const output = region.getByRole('region', { name: 'Run output' })
+    await output.waitFor({ timeout: 180000 })
+    const text = (await output.textContent()).replace(/\s+/g, ' ')
+    const got = show(hunt.symptom.buggy, 'Python'), want = show(hunt.symptom.expected, 'Python')
+    if (!text.includes(`returned ${got.replaceAll(',', ', ')}`) && !text.includes(`returned ${got}`)) problems.push(`${id} hunt: Run showed ${text.slice(0, 160)}, not ${got}`)
+    if (!text.includes(`the right answer is ${want}`)) problems.push(`${id} hunt: Run did not give the right answer ${want}`)
+    const lines = buggyCode(hunt, 'Python').split('\n')
+    const decoy = 1 + lines.findIndex(l => l.includes(hunt.decoys[0][0][0]))
+    await region.getByRole('button', { name: new RegExp(`^Line ${decoy}:`) }).click()
+    if (!(await region.getByText(`Line ${decoy} is right.`).isVisible().catch(() => false))) problems.push(`${id} hunt: a right line got no reason`)
+    await region.screenshot({ path: path.join(out, `${id}-hunt.png`) })
+    await region.getByRole('button', { name: new RegExp(`^Line ${bugLines(hunt, 'Python')[0]}:`) }).click()
+    await region.getByText(/✓ Found it/).waitFor({ timeout: 5000 }).catch(() => problems.push(`${id} hunt: the bug line was not accepted`))
+    await region.getByLabel('The buggy Python solution, to fix').fill(hunt.code.Python)
+    await region.getByRole('button', { name: '✓ Run & check' }).click()
+    await region.getByText('🐞 Fixed: every check passes.').waitFor({ timeout: 120000 }).catch(() => problems.push(`${id} hunt: the fix did not pass`))
+    if (!(await page.getByRole('button', { name: '04 · Bug hunt ✓' }).isVisible().catch(() => false))) problems.push(`${id} hunt: the stage has no ✓ after the fix`)
+    await region.screenshot({ path: path.join(out, `${id}-hunt-fixed.png`) })
+    const overflow = await page.evaluate(() => { const m = document.querySelector('.dp-detail'); return m.scrollWidth > m.clientWidth + 2 })
+    if (overflow) problems.push(`${id}: the bug hunt scrolls sideways`)
+    console.log(`${id} hunt: ok`)
+  }
   // Run (not graded) in real Python, with a print, then Run & check, then CodeLens and back.
   if (wanted('run')) {
     await page.getByRole('searchbox').fill('Non-adjacent selection')
@@ -168,6 +200,12 @@ try {
   await page.locator('.dp-concept').filter({ hasText: 'Non-adjacent selection' }).first().click()
   await page.getByRole('button', { name: '00 · Design it yourself' }).click()
   await page.getByRole('region', { name: 'Design it yourself' }).screenshot({ path: path.join(out, 'narrow-design.png') })
+  // The line picker, unsolved: its code scrolls inside its own box.
+  await page.evaluate(() => localStorage.removeItem('oc-dp-lab'))
+  await page.getByRole('button', { name: /^03 · / }).click()
+  await page.getByRole('button', { name: /^04 · Bug hunt/ }).click()
+  await page.getByRole('region', { name: 'Bug hunt' }).screenshot({ path: path.join(out, 'narrow-hunt.png') })
+  if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2)) problems.push('narrow: the bug hunt scrolls the page sideways')
   if (await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 2)) problems.push('narrow: the page scrolls sideways')
 } finally {
   await browser.close()
