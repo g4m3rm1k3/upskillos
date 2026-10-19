@@ -104,6 +104,8 @@ describe('gentle curve', () => {
     for (const lesson of LESSONS) {
       expect(lesson.why?.story.length, lesson.id).toBeGreaterThan(80)
       expect(lesson.uses?.length, lesson.id).toBeGreaterThanOrEqual(4)
+      // The page keys case studies by background, so each background appears once per lesson.
+      expect(new Set(lesson.uses.map(use => use.who)).size, lesson.id).toBe(lesson.uses.length)
     }
     for (const lesson of LESSONS.filter(l => STAGES[0][1].includes(l.module))) expect(lesson.level).toBe('Beginner')
     for (const lesson of LESSONS) for (const use of lesson.uses ?? []) {

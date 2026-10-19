@@ -1,5 +1,7 @@
 // OpenMat exercises use explicit column means and factor products so the same
 // mathematics works with OpenMat's flat vector representation.
+const t = String.raw
+
 export const core = [
   {
     id: 'laml-span-rank', module: 'Spaces and bases', title: 'Span and rank: how many real directions?', minutes: 25, level: 'Intermediate',
@@ -148,6 +150,17 @@ mse=mean((testY-predictions).^2);`,
       'Ridge regression minimizes squared prediction error plus lambda times the squared coefficient length. The positive number lambda controls the penalty. In scaled coordinates Z, solve (Z\' *Z+lambda*I)*gamma=Z\' *y. Convert back by dividing each scaled coefficient gamma by its original column scale. This deliberately accepts some fit error to reduce coefficient instability.',
       'eye(2) creates a two-by-two identity matrix. Dividing a column by a scalar scales every entry. The expression scales(1,2) reads the second entry of the computed scale row. The demo has no intercept; when an intercept is included, it is usually left unpenalized. The plotted ridge predictions shrink toward zero. Scaling gives the penalty a meaning independent of whether a feature uses meters or millimeters.',
     ],
+    derive: {
+      claim: t`Derive the ridge equations $(Z^TZ + \lambda I)\boldsymbol\gamma = Z^T\mathbf y$.`,
+      given: t`Ridge chooses $\boldsymbol\gamma$ to make $\|\mathbf y - Z\boldsymbol\gamma\|^2 + \lambda\|\boldsymbol\gamma\|^2$ as small as possible, with $\lambda > 0$.`,
+      steps: [
+        { ask: t`What is the gradient of the fit term $\|\mathbf y - Z\boldsymbol\gamma\|^2$ with respect to $\boldsymbol\gamma$?`, options: [t`$-2Z^T(\mathbf y - Z\boldsymbol\gamma)$`, t`$2(\mathbf y - Z\boldsymbol\gamma)$`, t`$-2\,\mathbf y^TZ\boldsymbol\gamma$`], answer: 0, why: t`It is the least-squares gradient from the Best fit and Calculus modules: the chain rule gives $-Z^T$ times twice the residual.` },
+        { ask: t`What is the gradient of the penalty $\lambda\|\boldsymbol\gamma\|^2 = \lambda\,\boldsymbol\gamma^T\boldsymbol\gamma$?`, options: [t`$2\lambda\boldsymbol\gamma$`, t`$\lambda\boldsymbol\gamma$`, t`$2\lambda$`], answer: 0, why: t`$\boldsymbol\gamma^T\boldsymbol\gamma = \gamma_1^2 + \gamma_2^2 + \dots$, whose slope in $\gamma_i$ is $2\gamma_i$.` },
+        { ask: t`At the bottom the total gradient is zero: $-2Z^T(\mathbf y - Z\boldsymbol\gamma) + 2\lambda\boldsymbol\gamma = \mathbf 0$. Rearrange it.`, options: [t`$(Z^TZ + \lambda I)\boldsymbol\gamma = Z^T\mathbf y$`, t`$Z^TZ\boldsymbol\gamma = Z^T\mathbf y + \lambda$`, t`$(Z^TZ - \lambda I)\boldsymbol\gamma = Z^T\mathbf y$`], answer: 0, why: t`Divide by 2, move $Z^T\mathbf y$ to the right, and write $\lambda\boldsymbol\gamma$ as $\lambda I\boldsymbol\gamma$.` },
+        { ask: t`Why can this system always be solved when $\lambda > 0$, even with repeated columns?`, options: [t`For any $\boldsymbol\gamma \neq \mathbf 0$, $\boldsymbol\gamma^T(Z^TZ + \lambda I)\boldsymbol\gamma = \|Z\boldsymbol\gamma\|^2 + \lambda\|\boldsymbol\gamma\|^2 > 0$, so no nonzero vector is sent to zero`, t`Because $Z$ is square`, t`Because $\lambda$ removes the repeated column`], answer: 0, why: t`A matrix that sends some nonzero vector to zero would make that sum zero. With $\lambda > 0$ it never is.` },
+      ],
+      conclusion: t`These are the equations the demo solves. With $\lambda = 0$ they are the normal equations from Best fit, which fail when two columns repeat each other; any $\lambda > 0$ makes them solvable.`,
+    },
     procedure: ['Compute and record one nonzero scale per training feature.', 'Divide columns by their scales to construct Z; apply the same scales to new data.', 'Solve the ridge system with positive lambda, then convert gamma back to original-unit beta.', 'Evaluate predictions and inspect the tradeoff between fit error and coefficient size.'],
     prediction: { question: 'Should ridge penalize a millimeter coefficient and a meter coefficient equally before accounting for their units?', answer: 'Equal raw penalties depend on arbitrary units. Scaling makes equivalent feature directions comparable before applying the coefficient penalty.' },
     demo: {

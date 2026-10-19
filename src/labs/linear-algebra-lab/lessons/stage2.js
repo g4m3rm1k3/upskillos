@@ -210,6 +210,16 @@ xlabel('x'); ylabel('y'); legend('Stretch, then turn', 'Turn, then stretch'); ax
       'Some moves cannot be undone. The matrix [1 0; 0 0] flattens every point onto the x-axis: [2; 1] and [2; 9] both become [2; 0]. Once flattened, the height is lost for good, so this matrix has no inverse.',
       'Always check a solve by computing A * x − b. If it is zero (or very close), x really does produce b.',
     ],
+    derive: {
+      claim: t`Find the inverse of $A = \begin{bmatrix} a & b \\ c & d \end{bmatrix}$ when $ad - bc \neq 0$.`,
+      given: t`An inverse $A^{-1}$ satisfies $A^{-1}A = I$. Start from a guess: swap the diagonal and negate the other two, $B = \begin{bmatrix} d & -b \\ -c & a \end{bmatrix}$.`,
+      steps: [
+        { ask: t`Multiply out $BA$. What do you get?`, options: [t`$(ad - bc)\,I$`, t`$I$`, t`$\begin{bmatrix} ad & bc \\ bc & ad \end{bmatrix}$`], answer: 0, why: t`Row 1 of $B$ times column 1 of $A$ is $da - bc$; row 1 times column 2 is $db - bd = 0$. Row 2 gives $0$ and $-cb + ad$.` },
+        { ask: t`$B$ gives $(ad - bc)$ times $I$ instead of $I$. How do you fix it?`, options: [t`Divide $B$ by $ad - bc$`, t`Subtract $ad - bc$ from every entry of $B$`, t`Transpose $B$`], answer: 0, why: t`Dividing a matrix by a number divides the product by it too, leaving $I$.` },
+        { ask: 'When does this recipe fail?', options: [t`When $ad - bc = 0$`, t`When $a = 0$`, t`When $b = c$`], answer: 0, why: t`You cannot divide by zero. That number is the determinant of the next lesson, and zero means the move flattens the plane.` },
+      ],
+      conclusion: t`$A^{-1} = \dfrac{1}{ad - bc}\begin{bmatrix} d & -b \\ -c & a \end{bmatrix}$: swap the diagonal, negate the rest, divide by $ad - bc$. For the stretch $\begin{bmatrix} 2 & 0 \\ 0 & 1 \end{bmatrix}$ it gives $\begin{bmatrix} 0.5 & 0 \\ 0 & 1 \end{bmatrix}$, the undo from the reading.`,
+    },
     procedure: ['Name the move A, the output b and the unknown input x.', 'Solve with x = A \\ b.', 'Check that A * x − b is close to zero, and ask whether A could have flattened anything.'],
     prediction: { question: 'Can C = [1 0; 0 0] tell the inputs [2; 1] and [2; 9] apart?', answer: 'No. Both become [2; 0]. The erased second coordinate means C has no inverse.' },
     demo: {
@@ -246,6 +256,17 @@ xlabel('x(1)'); ylabel('x(2)'); legend('2 x(1) + x(2) = 5', 'x(1) + 3 x(2) = 10'
       'A negative determinant means the picture was also flipped over, like a mirror image. Its size is still the area factor.',
       'A determinant of 0 means the parallelogram is flat: the matrix squashes the plane onto a line, so it cannot be undone. This is the quick test for "does an inverse exist?"',
     ],
+    derive: {
+      claim: t`Show that the parallelogram with sides $[a;\,c]$ and $[b;\,d]$ has area $ad - bc$.`,
+      given: t`Take all four numbers positive, with the first side lying below the second, as in the demo picture. The parallelogram has corners $(0,0)$, $(a,c)$, $(b,d)$ and $(a+b,\,c+d)$. Put it inside the box with corners $(0,0)$ and $(a+b,\,c+d)$.`,
+      steps: [
+        { ask: 'What is the area of the box?', options: [t`$(a+b)(c+d)$`, t`$ad$`, t`$(a+c)(b+d)$`], answer: 0, why: t`It is $a+b$ wide and $c+d$ tall.` },
+        { ask: t`Outside the parallelogram, two corners of the box are right triangles with legs $a$ and $c$. What is their total area?`, options: [t`$ac$`, t`$ac/2$`, t`$2ac$`], answer: 0, why: t`Each has area $ac/2$, and there are two.` },
+        { ask: t`The rest of the space is two right triangles with legs $b$ and $d$, and two rectangles $b$ wide and $c$ tall. Their total area?`, options: [t`$bd + 2bc$`, t`$bd + bc$`, t`$2bd + bc$`], answer: 0, why: t`Two triangles of $bd/2$ make $bd$; two rectangles of $bc$ make $2bc$.` },
+        { ask: t`Subtract everything outside from the box: $(a+b)(c+d) - ac - bd - 2bc$. What is left?`, options: [t`$ad - bc$`, t`$ad + bc$`, t`$ac - bd$`], answer: 0, why: t`Expanding gives $ac + ad + bc + bd$; the $ac$ and $bd$ cancel, and $bc - 2bc = -bc$.` },
+      ],
+      conclusion: t`The area is $ad - bc$, the determinant. Try it on the demo matrix $\begin{bmatrix} 2 & 1 \\ 1 & 3 \end{bmatrix}$: the box is $3 \times 4 = 12$, the corners take $2 + 3 + 2 = 7$, leaving $5$. When the sides are the other way round the same sum comes out negative, which is the sign that records a flip.`,
+    },
     procedure: ['Read the two columns as the new sides of the unit square.', 'Compute det A = ad − bc, or det(A) in code.', 'Size = area factor, negative sign = flipped, zero = flattened (no inverse).'],
     prediction: { question: 'What area factor and orientation does [-2 0; 0 3] produce?', answer: 'The determinant is −6: areas grow by 6 and the picture is flipped.' },
     demo: {

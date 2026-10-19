@@ -1,5 +1,7 @@
 // The final studios connect the same matrix operations to learning and control.
 // All scripts run in the repository's @opencalc/openmat engine.
+const t = String.raw
+
 export const applications = [
   {
     id: 'laml-stable-logistic', module: 'Machine learning',
@@ -12,6 +14,17 @@ export const applications = [
       'The binary target y is either 0 or 1. A stable per-example loss is max(z,0)-y*z+log(1+exp(-abs(z))). Here max(z,0) means entrywise maximum; .* multiplies corresponding entries when z and y are vectors. This expression avoids logarithms of rounded probabilities equal to zero. It remains finite for the extreme scores in the demo.',
       'Average the losses across m examples. The gradient is transpose(X)*(p-y)/m. A confident wrong prediction has a large loss, so saturation does not excuse an incorrect label. The probability curve stays within [0,1] as the score changes; it demonstrates a mapping of scores, not a claim that probabilities are calibrated on unseen data.',
     ],
+    derive: {
+      claim: t`Show that the log loss $-y\log p - (1-y)\log(1-p)$, with $p = 1/(1+e^{-z})$, equals $\max(z,0) - yz + \log(1+e^{-|z|})$.`,
+      given: t`The target $y$ is 0 or 1, and $z$ is the score.`,
+      steps: [
+        { ask: t`What is $\log p$?`, options: [t`$-\log(1+e^{-z})$`, t`$\log(1+e^{z})$`, t`$-z$`], answer: 0, why: t`The logarithm of $1/u$ is $-\log u$.` },
+        { ask: t`$1 - p = e^{-z}/(1+e^{-z})$. What is $\log(1-p)$?`, options: [t`$-z - \log(1+e^{-z})$`, t`$z - \log(1+e^{-z})$`, t`$\log(e^{-z})$`], answer: 0, why: t`The log of a quotient is the top's log, $-z$, minus the bottom's log.` },
+        { ask: t`Put both into the loss and collect terms. What do you get?`, options: [t`$\log(1+e^{z}) - yz$`, t`$\log(1+e^{-z}) + yz$`, t`$-yz$`], answer: 0, why: t`The loss is $(1-y)z + \log(1+e^{-z}) = -yz + \big(z + \log(1+e^{-z})\big)$, and $z + \log(1+e^{-z}) = \log\big(e^{z}(1+e^{-z})\big) = \log(e^{z}+1)$.` },
+        { ask: t`$\log(1+e^{z})$ still overflows at $z = 1000$. For $z > 0$, take $e^{z}$ out of the bracket. Which form never exponentiates a positive number?`, options: [t`$\max(z,0) + \log(1+e^{-|z|})$`, t`$z + \log 2$`, t`$\log(e^{z}) + 1$`], answer: 0, why: t`For $z > 0$, $\log(1+e^{z}) = z + \log(e^{-z}+1)$; for $z \le 0$ it is already safe. Both cases are $\max(z,0) + \log(1+e^{-|z|})$.` },
+      ],
+      conclusion: t`The loss is $\max(z,0) - yz + \log(1+e^{-|z|})$, the formula in the demo. It is the same number as the textbook log loss, but the exponential only ever sees $-|z| \le 0$, so it cannot overflow.`,
+    },
     procedure: ['Compute score z=X*w and allocate a probability vector p.', 'Evaluate each sigmoid with the branch that exponentiates a nonpositive number.', 'Average max(z,0)-y.*z+log(1+exp(-abs(z))).', 'Compute transpose(X)*(p-y)/m and keep evaluation examples separate from fitting examples.'],
     prediction: { question: 'If score 1000 has target 0, is its stable loss close to 0 or 1000?', answer: 'Close to 1000. The classifier is confidently wrong. Numerical stability preserves that penalty instead of hiding it behind overflow or a clipped probability.' },
     demo: {
@@ -78,6 +91,17 @@ w=[0;1000];`, checks: [{ name: 'p', expected: [0,0.5,1], tolerance: 1e-6, messag
       'The chain rule passes local rates backward. The output-weight gradient is d*h. Because the derivative of tanh is 1-h.^2, the hidden-score gradient is delta=(d*v).*(1-h.^2). The matrix gradient is the outer product delta*x transposed. In this engine, reshape(delta,2,1)*reshape(x,1,2) explicitly preserves the required row and column dimensions.',
       'A central finite difference changes one weight by plus and minus epsilon and divides the loss difference by 2*epsilon. It should agree with the corresponding backpropagated entry. Extremely small epsilon magnifies rounding error; this check uses 1e-5. The plot compares analytic and numerical entries, while the printed difference makes a sign error visible even when bars look similar.',
     ],
+    derive: {
+      claim: t`Derive the slope of the loss with respect to one first-layer weight $W_{ij}$.`,
+      given: t`$\mathbf s = W\mathbf x$, $\mathbf h = \tanh(\mathbf s)$ entry by entry, prediction $= \mathbf v\cdot\mathbf h$, $d = \text{prediction} - y$ and loss $L = d^2/2$.`,
+      steps: [
+        { ask: t`How fast does $L$ change with the prediction?`, options: [t`$d$`, t`$d^2$`, t`$2d$`], answer: 0, why: t`The slope of $d^2/2$ is $d$, and $d$ moves one-for-one with the prediction.` },
+        { ask: t`The prediction is $v_1h_1 + v_2h_2$. So how fast does $L$ change with $h_i$?`, options: [t`$d\,v_i$`, t`$d\,h_i$`, t`$v_i$`], answer: 0, why: t`Nudging $h_i$ moves the prediction by $v_i$ times the nudge. Multiply the rates along the chain.` },
+        { ask: t`$h_i = \tanh(s_i)$, and the slope of $\tanh$ is $1 - \tanh^2$. How fast does $L$ change with $s_i$?`, options: [t`$\delta_i = d\,v_i\,(1 - h_i^2)$`, t`$d\,v_i\,h_i$`, t`$d\,(1 - h_i^2)$`], answer: 0, why: t`One more link in the chain: multiply by the local slope of $\tanh$ at $s_i$.` },
+        { ask: t`$s_i = W_{i1}x_1 + W_{i2}x_2$. How fast does $L$ change with $W_{ij}$?`, options: [t`$\delta_i\,x_j$`, t`$\delta_j\,x_i$`, t`$\delta_i$`], answer: 0, why: t`$W_{ij}$ only appears in $s_i$, multiplied by $x_j$.` },
+      ],
+      conclusion: t`Every entry is $\delta_i x_j$, so the whole gradient is the outer product $\boldsymbol\delta\,\mathbf x^T$: the demo's reshape(delta,2,1)*reshape(x,1,2). Each step multiplied one local rate, working backward from the loss. That is backpropagation.`,
+    },
     procedure: ['Compute hidden outputs, prediction, error, and loss in that order.', 'Propagate the scalar error through v and the tanh derivative.', 'Form the first-layer gradient with an explicit outer product.', 'Perturb one weight in both directions and compare its numerical and analytic derivatives.'],
     prediction: { question: 'Which hidden unit has the smaller tanh derivative: the one with score 3 or score 0?', answer: 'The unit with score 3. Its output is close to 1, so 1-h^2 is close to zero. The unit at zero has derivative 1.' },
     demo: {
@@ -149,6 +173,17 @@ gradientError=abs(finiteDifference-gradW(1,1));`,
       'Use mldivide(I-gamma*P,r) to solve the linear system without explicitly forming an inverse. Alternatively, start at zero and repeatedly assign v=r+gamma*P*v. Discounting makes this update a contraction: differences shrink by at most gamma in the maximum-entry norm. The iteration includes the reward stream repeatedly; it does not describe a finite horizon.',
       'Define the Bellman residual as max(abs(r+gamma*P*v-v)). It measures the largest violation of any state equation. Dividing it by 1-gamma bounds the largest value error for this exact model. A tiny residual certifies the numerical solve, not the estimated rewards or transitions. The plot shows how a chosen state value approaches the direct solution.',
     ],
+    derive: {
+      claim: t`Derive the policy-value system $(I - \gamma P)\mathbf v = \mathbf r$ and show it has exactly one solution.`,
+      given: t`The value of a state is its expected reward now plus $\gamma$ times the expected value of the state it moves to. $P_{ij}$ is the chance of moving from state $i$ to state $j$, and $0 \le \gamma < 1$.`,
+      steps: [
+        { ask: t`From state $i$, what is the expected value of the next state?`, options: [t`$\sum_j P_{ij}v_j$, entry $i$ of $P\mathbf v$`, t`$\sum_j P_{ji}v_j$, entry $i$ of $P^T\mathbf v$`, t`$v_i$`], answer: 0, why: t`Row $i$ of $P$ holds the chances of leaving state $i$, so it weights the values of the possible next states.` },
+        { ask: 'So for all states at once, what equation holds?', options: [t`$\mathbf v = \mathbf r + \gamma P\mathbf v$`, t`$\mathbf v = \gamma\mathbf r + P\mathbf v$`, t`$\mathbf v = \mathbf r + P\mathbf v$`], answer: 0, why: 'Reward now, plus the discounted expected value of what comes next.' },
+        { ask: t`Move the $\mathbf v$ terms to the left, writing $\mathbf v$ as $I\mathbf v$. What system results?`, options: [t`$(I - \gamma P)\mathbf v = \mathbf r$`, t`$(I + \gamma P)\mathbf v = \mathbf r$`, t`$(\gamma P - I)\mathbf v = \mathbf r$`], answer: 0, why: t`Subtract $\gamma P\mathbf v$ from both sides.` },
+        { ask: t`Suppose $(I - \gamma P)\mathbf u = \mathbf 0$, so $\mathbf u = \gamma P\mathbf u$. Look at the entry of $\mathbf u$ with the largest size, $m$. What follows?`, options: [t`It is $\gamma$ times an average of entries no bigger than $m$, so $m \le \gamma m$, which forces $m = 0$`, t`$m$ must equal $\gamma$`, t`Nothing: $\mathbf u$ can be anything`], answer: 0, why: t`Each row of $P$ is a set of chances that add to 1, so $P\mathbf u$ averages entries of $\mathbf u$. With $\gamma < 1$, only $m = 0$ satisfies $m \le \gamma m$.` },
+      ],
+      conclusion: t`Only $\mathbf 0$ is sent to $\mathbf 0$, so $I - \gamma P$ is invertible and the values are $\mathbf v = (I - \gamma P)^{-1}\mathbf r$, which the demo finds with mldivide. At $\gamma = 1$ the argument breaks: a constant $\mathbf u$ satisfies $\mathbf u = P\mathbf u$.`,
+    },
     procedure: ['Check 0<=gamma<1 and that P has probability rows.', 'Solve (I-gamma*P)*v=r with mldivide.', 'Run repeated Bellman expectation updates from a starting vector.', 'Measure the maximum Bellman residual and divide by 1-gamma for an error bound.'],
     prediction: { question: 'Why is the value in an absorbing state not necessarily zero?', answer: 'An absorbing state can keep receiving rewards. State 2 here earns 2 forever and has value 10. A terminal state instead has no future rewards unless a terminal payoff is explicitly specified.' },
     demo: {
