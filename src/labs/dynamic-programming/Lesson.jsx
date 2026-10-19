@@ -16,6 +16,8 @@ import { TREE_FOR } from './trees.js'
 import { argsText, parseArgs } from './runArgs.js'
 import Hunt from './Hunt.jsx'
 import { BUG_HUNTS } from './hunt.js'
+import Explained from './Explained.jsx'
+import { EXPLAINED } from './explain.js'
 
 const short = value => {
   const text = JSON.stringify(value)
@@ -438,6 +440,8 @@ export function Practice({ lesson, language, setLanguage, onProgress, traceable 
   const [runArgs, setRunArgs] = useState(() => argsText(spec.cases[0].args))
   const [running, setRunning] = useState(null)
   const [status, setStatus] = useState('')
+  // The reference solution opens after the learner's own first Run & check (or a saved pass).
+  const [attempted, setAttempted] = useState(saved?.passed ?? false)
   const cancel = useRef(null)
 
   useEffect(() => () => cancel.current?.(), [])
@@ -489,6 +493,7 @@ export function Practice({ lesson, language, setLanguage, onProgress, traceable 
 
   function check() {
     cancel.current?.()
+    setAttempted(true)
     setRunning('check')
     setPassed(false)
     setResult(null)
@@ -706,6 +711,8 @@ export function Practice({ lesson, language, setLanguage, onProgress, traceable 
           )}
         </div>
       )}
+
+      {EXPLAINED[lesson.id] && <Explained entry={EXPLAINED[lesson.id]} language={language} attempted={attempted} />}
 
       <p className="dp-muted">
         Solve the challenge in either language or practice both! Passing checks verifies the cases;

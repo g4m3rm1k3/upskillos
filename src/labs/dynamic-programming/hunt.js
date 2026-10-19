@@ -1,8 +1,10 @@
 // What a bug hunt shows is computed from its data (lessons/bug-hunts.js): the buggy code is the
 // correct code with the swap applied, and the bug's lines are wherever the swap landed.
-import { BUG_HUNTS } from './lessons/bug-hunts.js'
+import { HUNTS } from './lessons/bug-hunts.js'
+import { EXPLAINED } from './lessons/explained.js'
 
-export { BUG_HUNTS }
+// Each hunt breaks its lesson's explained reference code.
+export const BUG_HUNTS = Object.fromEntries(Object.entries(HUNTS).map(([id, hunt]) => [id, { ...hunt, code: EXPLAINED[id].code }]))
 
 export function buggyCode(hunt, language) {
   const [right, wrong] = hunt.swap[language]

@@ -1,5 +1,5 @@
-// Bug hunts: a solution to a lesson's challenge with one classic DP bug. Each hunt stores the
-// correct code and one swap (the right lines and the buggy lines that replace them), so the buggy
+// Bug hunts: a solution to a lesson's challenge with one classic DP bug. Each hunt uses the lesson's
+// explained reference code (explained.js) and stores one swap (the right lines and the buggy lines that replace them), so the buggy
 // code and the bug's line numbers are computed (hunt.js), never typed. bug-hunts.test.js checks, in
 // JavaScript and real Python, that the correct code passes the challenge, the buggy code fails it,
 // and the symptom's right answer agrees with the exhaustive oracle.
@@ -8,22 +8,9 @@
 // on it) and {want} (the right answer); Hunt.jsx fills them in.
 const pair = (Python, JavaScript) => ({ Python, JavaScript })
 
-export const BUG_HUNTS = {
+export const HUNTS = {
   fibonacci: {
     know: 'After k passes of the loop, a holds F(k) and b holds F(k + 1). One pass turns the pair (F(k), F(k + 1)) into (F(k + 1), F(k + 2)): the new a is the old b, and the new b is old a + old b. Both new values are made from the old pair.',
-    code: pair(`def solve(n):
-    a, b = 0, 1
-    for _ in range(n):
-        a, b = b, a + b
-    return a
-`, `function solve(n) {
-  let a = 0, b = 1
-  for (let i = 0; i < n; i++) {
-    [a, b] = [b, a + b]
-  }
-  return a
-}
-`),
     swap: pair(['        a, b = b, a + b', '        a = b\n        b = a + b'], ['    [a, b] = [b, a + b]', '    a = b\n    b = a + b']),
     symptom: { args: [8], expected: 21, buggy: 128 },
     bug: 'Overwritten before it was read',
@@ -43,31 +30,6 @@ export const BUG_HUNTS = {
 
   'house-robber': {
     know: 'best[i] is the most you can take from houses 0 to i. For house i you either skip it (best[i − 1]) or take it and add best[i − 2]. The first two cells have no i − 2, so they are set by hand: best[0] = values[0], and best[1] is the better of the first two houses on their own, because you may take only one of them.',
-    code: pair(`def solve(values):
-    n = len(values)
-    if n == 0:
-        return 0
-    if n == 1:
-        return values[0]
-    best = [0] * n
-    best[0] = values[0]
-    best[1] = max(values[0], values[1])
-    for i in range(2, n):
-        best[i] = max(best[i - 1], best[i - 2] + values[i])
-    return best[n - 1]
-`, `function solve(values) {
-  const n = values.length
-  if (n === 0) return 0
-  if (n === 1) return values[0]
-  const best = Array(n).fill(0)
-  best[0] = values[0]
-  best[1] = Math.max(values[0], values[1])
-  for (let i = 2; i < n; i++) {
-    best[i] = Math.max(best[i - 1], best[i - 2] + values[i])
-  }
-  return best[n - 1]
-}
-`),
     swap: pair(['    best[1] = max(values[0], values[1])', '    best[1] = values[1]'], ['  best[1] = Math.max(values[0], values[1])', '  best[1] = values[1]']),
     symptom: { args: [[5, 1, 1, 5]], expected: 10, buggy: 6 },
     bug: 'A wrong base case',
@@ -87,28 +49,6 @@ export const BUG_HUNTS = {
 
   'decode-ways': {
     know: 'ways[i] counts the readings of the first i digits. The last letter used either one digit (any digit except 0) or two digits. Two digits make a letter only from 10 to 26: a pair that starts with 0, such as 01 or 05, is not a letter, because no code starts with 0.',
-    code: pair(`def solve(s):
-    n = len(s)
-    ways = [1] + [0] * n
-    for i in range(1, n + 1):
-        if s[i - 1] != '0':
-            ways[i] += ways[i - 1]
-        if i >= 2 and 10 <= int(s[i - 2:i]) <= 26:
-            ways[i] += ways[i - 2]
-    return ways[n]
-`, `function solve(s) {
-  const n = s.length
-  const ways = [1, ...Array(n).fill(0)]
-  for (let i = 1; i <= n; i++) {
-    if (s[i - 1] !== '0') ways[i] += ways[i - 1]
-    if (i >= 2) {
-      const pair = Number(s.slice(i - 2, i))
-      if (pair >= 10 && pair <= 26) ways[i] += ways[i - 2]
-    }
-  }
-  return ways[n]
-}
-`),
     swap: pair(['        if i >= 2 and 10 <= int(s[i - 2:i]) <= 26:', '        if i >= 2 and 1 <= int(s[i - 2:i]) <= 26:'], ['      if (pair >= 10 && pair <= 26) ways[i] += ways[i - 2]', '      if (pair >= 1 && pair <= 26) ways[i] += ways[i - 2]']),
     symptom: { args: ['101'], expected: 1, buggy: 2 },
     bug: 'A range that lets a leading zero through',
@@ -127,40 +67,6 @@ export const BUG_HUNTS = {
 
   'obstacle-paths': {
     know: 'p[r][c] counts the paths from the top-left to (r, c) moving only right or down; a blocked cell (1) has 0 paths. A cell in the top row can only be reached from its left neighbour, so it has that neighbour’s count, and once a block appears, every cell after it in the row is 0. The left column works the same way going down.',
-    code: pair(`def solve(grid):
-    if not grid or not grid[0]:
-        return 0
-    rows, cols = len(grid), len(grid[0])
-    p = [[0] * cols for _ in range(rows)]
-    for c in range(cols):
-        if grid[0][c] == 0:
-            p[0][c] = 1 if c == 0 else p[0][c - 1]
-    for r in range(1, rows):
-        if grid[r][0] == 0:
-            p[r][0] = p[r - 1][0]
-    for r in range(1, rows):
-        for c in range(1, cols):
-            if grid[r][c] == 0:
-                p[r][c] = p[r - 1][c] + p[r][c - 1]
-    return p[rows - 1][cols - 1]
-`, `function solve(grid) {
-  if (grid.length === 0 || grid[0].length === 0) return 0
-  const rows = grid.length, cols = grid[0].length
-  const p = Array.from({ length: rows }, () => Array(cols).fill(0))
-  for (let c = 0; c < cols; c++) {
-    if (grid[0][c] === 0) p[0][c] = c === 0 ? 1 : p[0][c - 1]
-  }
-  for (let r = 1; r < rows; r++) {
-    if (grid[r][0] === 0) p[r][0] = p[r - 1][0]
-  }
-  for (let r = 1; r < rows; r++) {
-    for (let c = 1; c < cols; c++) {
-      if (grid[r][c] === 0) p[r][c] = p[r - 1][c] + p[r][c - 1]
-    }
-  }
-  return p[rows - 1][cols - 1]
-}
-`),
     swap: pair(['            p[0][c] = 1 if c == 0 else p[0][c - 1]', '            p[0][c] = 1'], ['    if (grid[0][c] === 0) p[0][c] = c === 0 ? 1 : p[0][c - 1]', '    if (grid[0][c] === 0) p[0][c] = 1']),
     symptom: { args: [[[0, 1, 0], [0, 0, 0]]], expected: 1, buggy: 2 },
     bug: 'An edge row that forgets where it was reached from',
@@ -179,38 +85,6 @@ export const BUG_HUNTS = {
 
   'max-square': {
     know: 'side[r][c] is the side of the largest square of 1s whose bottom-right corner is (r, c): 1 + the smallest of the cells above, left and above-left. A cell holding 0 in the grid is never written, so it must start at 0 and stay 0. That only works if every row of side is a list of its own.',
-    code: pair(`def solve(grid):
-    if not grid:
-        return 0
-    rows, cols = len(grid), len(grid[0])
-    side = [[0] * cols for _ in range(rows)]
-    best = 0
-    for r in range(rows):
-        for c in range(cols):
-            if grid[r][c] == 1:
-                if r == 0 or c == 0:
-                    side[r][c] = 1
-                else:
-                    side[r][c] = 1 + min(side[r - 1][c], side[r][c - 1], side[r - 1][c - 1])
-                best = max(best, side[r][c])
-    return best
-`, `function solve(grid) {
-  if (grid.length === 0) return 0
-  const rows = grid.length, cols = grid[0].length
-  const side = Array.from({ length: rows }, () => Array(cols).fill(0))
-  let best = 0
-  for (let r = 0; r < rows; r++) {
-    for (let c = 0; c < cols; c++) {
-      if (grid[r][c] === 1) {
-        if (r === 0 || c === 0) side[r][c] = 1
-        else side[r][c] = 1 + Math.min(side[r - 1][c], side[r][c - 1], side[r - 1][c - 1])
-        best = Math.max(best, side[r][c])
-      }
-    }
-  }
-  return best
-}
-`),
     swap: pair(['    side = [[0] * cols for _ in range(rows)]', '    side = [[0] * cols] * rows'], ['  const side = Array.from({ length: rows }, () => Array(cols).fill(0))', '  const side = Array(rows).fill(Array(cols).fill(0))']),
     symptom: { args: [[[1, 1], [0, 1]]], expected: 1, buggy: 2 },
     bug: 'Every row is the same list',
@@ -229,23 +103,6 @@ export const BUG_HUNTS = {
 
   'zero-one-knapsack': {
     know: 'best[c] is the largest value fitting in capacity c, using the items seen so far. Adding item (w, v): best[c] = max(best[c], best[c − w] + v). The best[c − w] it reads must still be the value without this item; that is what keeps each item to one copy.',
-    code: pair(`def solve(weights, values, capacity):
-    best = [0] * (capacity + 1)
-    for w, v in zip(weights, values):
-        for c in range(capacity, w - 1, -1):
-            best[c] = max(best[c], best[c - w] + v)
-    return best[capacity]
-`, `function solve(weights, values, capacity) {
-  const best = Array(capacity + 1).fill(0)
-  for (let i = 0; i < weights.length; i++) {
-    const w = weights[i], v = values[i]
-    for (let c = capacity; c >= w; c--) {
-      best[c] = Math.max(best[c], best[c - w] + v)
-    }
-  }
-  return best[capacity]
-}
-`),
     swap: pair(['        for c in range(capacity, w - 1, -1):', '        for c in range(w, capacity + 1):'], ['    for (let c = capacity; c >= w; c--) {', '    for (let c = w; c <= capacity; c++) {']),
     symptom: { args: [[2, 3], [3, 5], 4], expected: 5, buggy: 6 },
     bug: 'The capacity loop runs the wrong way',
@@ -264,29 +121,6 @@ export const BUG_HUNTS = {
 
   'bounded-knapsack': {
     know: 'For each item, try q = 1 … k copies: best[c] = max(best[c], old[c − q·w] + q·v), where old is the table from before this item. Reading old, not best, guarantees the q copies are the only copies of this item.',
-    code: pair(`def solve(weights, values, counts, capacity):
-    best = [0] * (capacity + 1)
-    for w, v, k in zip(weights, values, counts):
-        old = best[:]
-        for c in range(capacity + 1):
-            for q in range(1, k + 1):
-                if q * w <= c:
-                    best[c] = max(best[c], old[c - q * w] + q * v)
-    return best[capacity]
-`, `function solve(weights, values, counts, capacity) {
-  const best = Array(capacity + 1).fill(0)
-  for (let i = 0; i < weights.length; i++) {
-    const w = weights[i], v = values[i], k = counts[i]
-    const old = [...best]
-    for (let c = 0; c <= capacity; c++) {
-      for (let q = 1; q <= k; q++) {
-        if (q * w <= c) best[c] = Math.max(best[c], old[c - q * w] + q * v)
-      }
-    }
-  }
-  return best[capacity]
-}
-`),
     swap: pair(['        old = best[:]', '        old = best'], ['    const old = [...best]', '    const old = best']),
     symptom: { args: [[3], [4], [2], 9], expected: 8, buggy: 12 },
     bug: 'A copy that isn’t a copy',
@@ -305,34 +139,6 @@ export const BUG_HUNTS = {
 
   'subset-sum': {
     know: 'can(i, left) answers: can some of values[i], values[i + 1], … add up to exactly left? It takes values[i] or skips it. The answer depends on both i and left, so the memo must store each (i, left) pair separately.',
-    code: pair(`def solve(values, target):
-    memo = {}
-
-    def can(i, left):
-        if left == 0:
-            return True
-        if i == len(values) or left < 0:
-            return False
-        key = (i, left)
-        if key not in memo:
-            memo[key] = can(i + 1, left - values[i]) or can(i + 1, left)
-        return memo[key]
-
-    return can(0, target)
-`, `function solve(values, target) {
-  const memo = new Map()
-  function can(i, left) {
-    if (left === 0) return true
-    if (i === values.length || left < 0) return false
-    const key = i + ',' + left
-    if (!memo.has(key)) {
-      memo.set(key, can(i + 1, left - values[i]) || can(i + 1, left))
-    }
-    return memo.get(key)
-  }
-  return can(0, target)
-}
-`),
     swap: pair(['        key = (i, left)', '        key = i'], ["    const key = i + ',' + left", '    const key = i']),
     symptom: { args: [[3, 5], 5], expected: true, buggy: false },
     bug: 'A cache key that forgets a parameter',
@@ -351,24 +157,6 @@ export const BUG_HUNTS = {
 
   'coin-min': {
     know: 'best[a] is the fewest coins making amount a, with best[0] = 0. Each coin c ≤ a offers best[a − c] + 1, and a minimum keeps the smallest offer. Every amount other than 0 starts as “not made yet”, which must lose to any real offer: it has to be infinity.',
-    code: pair(`def solve(coins, amount):
-    impossible = float('inf')
-    best = [0] + [impossible] * amount
-    for a in range(1, amount + 1):
-        for c in coins:
-            if c <= a:
-                best[a] = min(best[a], best[a - c] + 1)
-    return -1 if best[amount] == impossible else best[amount]
-`, `function solve(coins, amount) {
-  const best = [0, ...Array(amount).fill(Infinity)]
-  for (let a = 1; a <= amount; a++) {
-    for (const c of coins) {
-      if (c <= a) best[a] = Math.min(best[a], best[a - c] + 1)
-    }
-  }
-  return best[amount] === Infinity ? -1 : best[amount]
-}
-`),
     swap: pair(['    best = [0] + [impossible] * amount', '    best = [0] * (amount + 1)'], ['  const best = [0, ...Array(amount).fill(Infinity)]', '  const best = Array(amount + 1).fill(0)']),
     symptom: { args: [[3, 5], 9], expected: 3, buggy: 0 },
     bug: 'The wrong starting value for a minimum',
@@ -387,22 +175,6 @@ export const BUG_HUNTS = {
 
   'coin-combinations': {
     know: 'A collection is counted once if coins are always added in one fixed order: all of the first value, then all of the second, and so on. So the outer loop goes over the coin values, and after coin c, ways[a] counts the collections of a using only the coins so far. 1 + 2 is counted; 2 + 1 never is.',
-    code: pair(`def solve(coins, amount):
-    ways = [1] + [0] * amount
-    for c in coins:
-        for a in range(c, amount + 1):
-            ways[a] += ways[a - c]
-    return ways[amount]
-`, `function solve(coins, amount) {
-  const ways = [1, ...Array(amount).fill(0)]
-  for (const c of coins) {
-    for (let a = c; a <= amount; a++) {
-      ways[a] += ways[a - c]
-    }
-  }
-  return ways[amount]
-}
-`),
     swap: pair([
       '    for c in coins:\n        for a in range(c, amount + 1):\n            ways[a] += ways[a - c]',
       '    for a in range(1, amount + 1):\n        for c in coins:\n            if c <= a:\n                ways[a] += ways[a - c]',
@@ -426,22 +198,6 @@ export const BUG_HUNTS = {
 
   'integer-partitions': {
     know: 'ways[t] counts the ways to write t as a sum of positive parts, in any order counted once. It works like coin collections with coins 1, 2, …, n: for each part size, add ways[t − part] to ways[t]. Every part size up to n is needed, because n on its own is a partition of n.',
-    code: pair(`def solve(n):
-    ways = [1] + [0] * n
-    for part in range(1, n + 1):
-        for total in range(part, n + 1):
-            ways[total] += ways[total - part]
-    return ways[n]
-`, `function solve(n) {
-  const ways = [1, ...Array(n).fill(0)]
-  for (let part = 1; part <= n; part++) {
-    for (let total = part; total <= n; total++) {
-      ways[total] += ways[total - part]
-    }
-  }
-  return ways[n]
-}
-`),
     swap: pair(['    for part in range(1, n + 1):', '    for part in range(1, n):'], ['  for (let part = 1; part <= n; part++) {', '  for (let part = 1; part < n; part++) {']),
     symptom: { args: [5], expected: 7, buggy: 6 },
     bug: 'A loop that stops one short',
@@ -460,23 +216,6 @@ export const BUG_HUNTS = {
 
   derangements: {
     know: 'D(n) = (n − 1)·(D(n − 1) + D(n − 2)): letter 1 goes into one of the n − 1 other envelopes, and the two cases leave n − 2 or n − 1 letters to derange. The recurrence needs two starting values: D(0) = 1 (the empty arrangement counts once) and D(1) = 0 (one letter has only its own envelope).',
-    code: pair(`def solve(n):
-    d = [0] * (n + 2)
-    d[0] = 1
-    d[1] = 0
-    for m in range(2, n + 1):
-        d[m] = (m - 1) * (d[m - 1] + d[m - 2])
-    return d[n]
-`, `function solve(n) {
-  const d = Array(n + 2).fill(0)
-  d[0] = 1
-  d[1] = 0
-  for (let m = 2; m <= n; m++) {
-    d[m] = (m - 1) * (d[m - 1] + d[m - 2])
-  }
-  return d[n]
-}
-`),
     swap: pair(['    d[1] = 0', '    d[1] = 1'], ['  d[1] = 0', '  d[1] = 1']),
     symptom: { args: [3], expected: 2, buggy: 6 },
     bug: 'A wrong base case',

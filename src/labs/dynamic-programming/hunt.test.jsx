@@ -86,6 +86,21 @@ describe('a bug hunt', () => {
   })
 })
 
+describe('the reference solution, explained', () => {
+  it('opens only after the learner’s own Run & check, with notes under the lines and the maths beside the code', async () => {
+    const { Practice } = await import('./Lesson.jsx')
+    render(<Practice lesson={lesson} language="Python" setLanguage={() => {}} />)
+    expect(screen.getByText(/After your first/)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /Compare with the reference solution/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: '✓ Run & check' }))
+    fireEvent.click(screen.getByRole('button', { name: /Compare with the reference solution/ }))
+    const panel = screen.getByRole('region', { name: 'Reference solution, explained' })
+    expect(panel.textContent).toContain('for c in range(capacity, w - 1, -1):')
+    expect(panel.textContent).toMatch(/Going down, best\[c − w\] is read before this item changes it/)
+    expect(screen.getByRole('cell', { name: 'max(best[c], best[c - w] + v)' })).toBeTruthy()
+  })
+})
+
 describe('the bug hunt in a lesson', () => {
   it('is a fourth stage on lessons that have one, and marked ✓ once fixed', () => {
     render(<Lesson lesson={lesson} concepts={[]} onSelect={() => {}} language="JavaScript" />)

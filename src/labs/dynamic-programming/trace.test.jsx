@@ -169,6 +169,35 @@ describe('live table: walk back the answer', () => {
   })
 })
 
+describe('live table: walking back a tree', () => {
+  // Sizes 1, 10, 1, 10, 1: the best order is (A0 A1)(A2 A3), a split that leaves two halves to explain.
+  const open = () => {
+    render(<TableTrace id="matrix-chain" />)
+    fireEvent.click(screen.getByText('Change the input and rebuild the table'))
+    fireEvent.change(screen.getByRole('textbox', { name: /^Sizes d/ }), { target: { value: '1, 10, 1, 10, 1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Rebuild the table' }))
+    fireEvent.click(screen.getByRole('tab', { name: '↩ Walk back' }))
+  }
+  it('explains both halves of a split, one after the other, and reads the bracketing off', () => {
+    open()
+    fireEvent.click(screen.getByRole('button', { name: 'Next step ↩' }))
+    expect(screen.getByText('The bracketing so far:').parentElement.textContent).toContain('(… …)')
+    expect(screen.getByText(/Still to explain after this: D\(2,3\)/)).toBeTruthy()
+    while (screen.queryByRole('button', { name: 'Next step ↩' })) fireEvent.click(screen.getByRole('button', { name: 'Next step ↩' }))
+    expect(screen.getByText(/Every piece is explained/)).toBeTruthy()
+    expect(screen.getByText('((A0 A1) (A2 A3))')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: '◀ Undo' }))
+    expect(screen.getByText('D(2,3) = 10.')).toBeTruthy()
+  })
+  it('lets the learner choose the split by clicking one of its cells', () => {
+    open()
+    fireEvent.click(screen.getByLabelText(/Let me choose/))
+    fireEvent.click(cell('D(2,3)'))
+    expect(screen.getByText('D(0,1) = 10.')).toBeTruthy()
+    expect(screen.getByText(/the last multiplication joins A0…A1/)).toBeTruthy()
+  })
+})
+
 describe('live table: walk back with no solution', () => {
   it('says so instead of walking', () => {
     render(<TableTrace id="exact-capacity" />)

@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest'
 import { TRACES, INPUTS, defaultInput } from './tables.js'
 import { formatField, parseInput, randomInput } from './traceInputs.js'
-import { WALKS, walkFrom, spell } from './walks.js'
+import { WALKS, walkFrom, spell, nexts } from './walks.js'
 
 const isSub = (small, big) => { let k = 0; for (const ch of big) if (ch === small[k]) k++; return k === small.length }
 const pieces = (id, steps) => steps.map(s => s.option.adds).filter(x => x !== undefined)
@@ -16,6 +16,33 @@ const ranges = steps => fwd(steps).map(x => x.split('–').map(Number))
 const covers = (rs, n) => rs.every(([a, b], k) => a === (k ? rs[k - 1][1] + 1 : 1) && b >= a) && rs.at(-1)?.[1] === n
 const trades = steps => fwd(steps).map(x => [x.split(' ')[0], Number(x.split(' ')[2])])
 const alternates = tr => tr.every(([op, d], k) => op === (k % 2 ? 'sell' : 'buy') && (k === 0 || d > tr[k - 1][1])) && tr.length % 2 === 0
+
+// A fully bracketed tree, "(x y)" or "(x op y)", read back into nested arrays; a leaf is a token.
+function parseTree(s) {
+  const tokens = s.match(/\(|\)|[^\s()]+/g) ?? []
+  let i = 0
+  const node = () => { if (tokens[i] !== '(') return tokens[i++]; i++; const kids = []; while (i < tokens.length && tokens[i] !== ')') kids.push(node()); i++; return kids }
+  const tree = node()
+  return i === tokens.length ? tree : null
+}
+const leavesOf = n => (Array.isArray(n) ? n.flatMap(leavesOf) : [n])
+// "k2(k0(–, k1), k3)": [key, left, right], or null for "–".
+function parseBst(s) {
+  let i = 0
+  const node = () => {
+    if (s[i] === '–') { i++; return null }
+    const key = Number(/^k(\d+)/.exec(s.slice(i))[1]); i += 1 + String(key).length
+    if (s[i] !== '(') return [key, null, null]
+    i++; const left = node(); i += 2; const right = node(); i++
+    return [key, left, right]
+  }
+  const tree = node()
+  return i === s.length ? tree : null
+}
+const inorder = n => (n ? [...inorder(n[1]), n[0], ...inorder(n[2])] : [])
+const depthCost = (n, f, depth = 1) => (n ? f[n[0]] * depth + depthCost(n[1], f, depth + 1) + depthCost(n[2], f, depth + 1) : 0)
+const answerOf = trace => trace.table.get(...trace.answer)
+const range = n => Array.from({ length: n }, (_, i) => i)
 
 // What makes each walk's result a real solution, beyond adding up to the answer.
 const VALID = {
@@ -54,6 +81,51 @@ const VALID = {
   'grid-direction': (trace, steps) => { const g = trace.args[0], cells = spell('grid-direction', steps).split(' → ').map(x => x.slice(1, -1).split(',').map(Number)); return cells[0].join() === '0,0' && cells.at(-1).join() === `${g.length - 1},${g[0].length - 1}` && cells.every(([r, c], k) => k === 0 || (r - cells[k - 1][0]) + (c - cells[k - 1][1]) === 1) },
   'palindrome-subsequence': (trace, steps) => { const p = spell('palindrome-subsequence', steps); return isPal(p) && isSub(p, trace.args[0]) && p.length === trace.table.get(...trace.answer) },
   'weighted-intervals': (trace, steps) => { const iv = pieces('', steps).map(x => x.slice(1, -1).split(',').map(Number)); return iv.every(([s, e], k) => iv.every(([s2, e2], k2) => k === k2 || e <= s2 || e2 <= s)) },
+
+  'matrix-chain': (trace, steps) => {
+    const d = trace.args[0], tree = parseTree(spell('matrix-chain', steps, trace))
+    const cost = n => { if (!Array.isArray(n)) { const i = Number(n.slice(1)); return [d[i], d[i + 1], 0] } const [a, b] = n.map(cost); return a[1] === b[0] ? [a[0], b[1], a[2] + b[2] + a[0] * a[1] * b[1]] : [0, 0, NaN] }
+    return leavesOf(tree).join() === range(d.length - 1).map(i => `A${i}`).join() && cost(tree)[2] === answerOf(trace)
+  },
+  'merge-stones': (trace, steps) => {
+    const a = trace.args[0], tree = parseTree(spell('merge-stones', steps, trace))
+    const cost = n => (Array.isArray(n) ? n.reduce((s, k) => s + cost(k), 0) + sum(leavesOf(n).map(Number)) : 0)
+    return leavesOf(tree).map(Number).join() === a.join() && cost(tree) === answerOf(trace)
+  },
+  'optimal-bst': (trace, steps) => {
+    const f = trace.args[0], tree = parseBst(spell('optimal-bst', steps, trace))
+    return inorder(tree).join() === range(f.length).join() && depthCost(tree, f) === answerOf(trace)
+  },
+  'burst-balloons': (trace, steps) => {
+    const a = trace.args[0], order = spell('burst-balloons', steps, trace).split(', ').map(Number)
+    if ([...order].sort((x, y) => x - y).join() !== range(a.length).map(i => i + 1).join()) return false
+    let left = range(a.length).map(i => i + 1), coins = 0
+    for (const k of order) { const at = left.indexOf(k); coins += (at ? a[left[at - 1] - 1] : 1) * a[k - 1] * (at < left.length - 1 ? a[left[at + 1] - 1] : 1); left = left.filter(x => x !== k) }
+    return coins === answerOf(trace)
+  },
+  'cut-stick': (trace, steps) => {
+    const [n, cuts] = trace.args, order = spell('cut-stick', steps, trace).split(', ').map(Number)
+    if ([...order].sort((x, y) => x - y).join() !== [...cuts].sort((x, y) => x - y).join()) return false
+    let marks = [0, n], cost = 0
+    for (const c of order) { const hi = marks.find(m => m > c), lo = marks.filter(m => m < c).at(-1); cost += hi - lo; marks = [...marks, c].sort((x, y) => x - y) }
+    return cost === answerOf(trace)
+  },
+  'polygon-triangulation': (trace, steps) => {
+    const w = trace.args[0], tris = spell('polygon-triangulation', steps, trace).split(', ').map(x => x.split('-').map(Number))
+    return tris.length === w.length - 2 && new Set(tris.map(String)).size === tris.length && tris.every(([i, j, k]) => i < j && j < k) && sum(tris.map(([i, j, k]) => w[i] * w[j] * w[k])) === answerOf(trace)
+  },
+  'boolean-parenthesization': (trace, steps) => {
+    const [syms, ops] = trace.args, tree = parseTree(spell('boolean-parenthesization', steps, trace))
+    const ev = n => (Array.isArray(n) ? ({ '&': (x, y) => x && y, '|': (x, y) => x || y, '^': (x, y) => x !== y })[n[1]](ev(n[0]), ev(n[2])) : n === 'T')
+    const sym = { and: '&', or: '|', xor: '^' }
+    return leavesOf(tree).join('') === syms.map((v, i) => (v ? 'T' : 'F') + (ops[i] ? sym[ops[i]] : '')).join('') && ev(tree) === true
+  },
+  'expression-extrema': (trace, steps) => {
+    const [nums, ops] = trace.args, tree = parseTree(spell('expression-extrema', steps, trace))
+    const ev = n => (Array.isArray(n) ? ({ '+': (x, y) => x + y, '−': (x, y) => x - y, '×': (x, y) => x * y })[n[1]](ev(n[0]), ev(n[2])) : Number(n))
+    const sym = { '+': '+', '-': '−', '*': '×' }
+    return leavesOf(tree).join('') === nums.map((v, i) => v + (ops[i] ? sym[ops[i]] : '')).join('') && ev(tree) === answerOf(trace)
+  },
 }
 
 function checkWalk(id, trace) {
@@ -64,7 +136,7 @@ function checkWalk(id, trace) {
   for (const { at, option } of steps) {
     expect(option.says.length, id).toBeGreaterThan(3)
     // A step goes to a cell this cell read, unless this cell is a base case (an edge walked along).
-    if (option.from && reads.has(at.join())) expect(reads.get(at.join()), `${id}: ${t.name(...at)} → ${t.name(...option.from)}`).toContain(option.from.join())
+    if (reads.has(at.join())) for (const next of nexts(option)) expect(reads.get(at.join()), `${id}: ${t.name(...at)} → ${t.name(...next)}`).toContain(next.join())
   }
   // A yes/no table's walk ends on a true base case; any other walk's gains add up to the answer.
   if (WALKS[id].yes) expect(end && t.get(...end), `${id}: the walk ends on a true cell`).toBe(true)
@@ -72,7 +144,7 @@ function checkWalk(id, trace) {
     const gained = steps.reduce((s, x) => s + x.option.gain, 0) + (end ? t.get(...end) : 0)
     expect(gained, `${id} ${JSON.stringify(trace.args)}: gains`).toBe(WALKS[id].total ? WALKS[id].total(trace) : t.get(...trace.answer))
   }
-  expect(VALID[id](trace, steps), `${id} ${JSON.stringify(trace.args)}: ${spell(id, steps)}`).toBe(true)
+  expect(VALID[id](trace, steps), `${id} ${JSON.stringify(trace.args)}: ${spell(id, steps, trace)}`).toBe(true)
 }
 
 const rng = seed => () => ((seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648)
@@ -93,7 +165,7 @@ describe('walking back the answer', () => {
         const trace = TRACES[id](parsed.value)
         const answer = trace.table.get(...trace.answer)
         // Nothing to walk back when there is no solution (∞, −∞, or no).
-        if (answer === false || (typeof answer === 'number' && !Number.isFinite(answer))) continue
+        if (answer === false || (typeof answer === 'number' && !Number.isFinite(answer)) || WALKS[id].none?.(answer)) continue
         tried++
         checkWalk(id, trace)
       }

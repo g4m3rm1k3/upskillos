@@ -181,6 +181,11 @@
   background: rgba(139, 92, 246, 0.16);
 }
 
+/* A piece a split left to explain, waiting its turn in a tree walk. */
+.dp-tt-cell.is-pending > span {
+  border: 2px dashed var(--dp-primary);
+}
+
 .dp-tt-cell.is-hint > span {
   border: 2px solid var(--dp-green);
   animation: dp-tt-pulse 1s infinite;

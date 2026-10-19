@@ -1,0 +1,94 @@
+.dp-ex {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dp-ex-locked {
+  margin-top: 12px;
+}
+
+/* The code scrolls sideways inside its box; each note sits under its line. */
+.dp-ex-code {
+  border: 1px solid var(--dp-line-bright);
+  border-radius: 8px;
+  background: var(--dp-bg);
+  padding: 6px 0;
+  overflow-x: auto;
+}
+
+.dp-ex-row {
+  min-width: max-content;
+}
+
+.dp-ex-row.is-noted {
+  border-left: 3px solid var(--dp-primary);
+}
+
+.dp-ex-line {
+  margin: 0;
+  padding: 1px 12px 1px 0;
+  display: flex;
+  gap: 12px;
+  font-family: var(--dp-mono);
+  font-size: 13px;
+  white-space: pre;
+  background: none;
+}
+
+/* Plain code lines: no chip from the lab's inline-code style, and == shown as two characters. */
+.dp-lab .dp-ex-line code,
+.dp-lab .dp-ex-math td code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-variant-ligatures: none;
+}
+
+.dp-ex-no {
+  flex: 0 0 3ch;
+  text-align: right;
+  color: var(--dp-muted);
+  user-select: none;
+}
+
+.dp-ex-notes {
+  margin: 2px 0 8px;
+  padding: 6px 12px 6px 44px;
+  max-width: 72ch;
+  white-space: normal;
+  color: var(--dp-text);
+  background: var(--dp-panel);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.dp-ex-notes li + li {
+  margin-top: 4px;
+}
+
+.dp-ex-math {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.dp-ex-math caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 6px;
+}
+
+.dp-ex-math th,
+.dp-ex-math td {
+  border: 1px solid var(--dp-line);
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.dp-ex-math td code {
+  font-family: var(--dp-mono);
+  word-break: break-word;
+}

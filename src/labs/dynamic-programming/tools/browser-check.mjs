@@ -83,7 +83,7 @@ try {
         await tt.getByRole('tab', { name: '↩ Walk back' }).click()
         const next = tt.getByRole('button', { name: 'Next step ↩' })
         for (let k = 0; k < 60 && await next.isVisible().catch(() => false); k++) await next.click()
-        if (!(await tt.getByText(/read forwards/).isVisible().catch(() => false))) problems.push(`${id}: the walk back did not reach a solution`)
+        if (!(await tt.getByText(/read forwards|Every piece is explained/).first().isVisible().catch(() => false))) problems.push(`${id}: the walk back did not reach a solution`)
         await tt.screenshot({ path: path.join(out, `${id}-walk.png`) })
       }
       const overflow = await page.evaluate(() => { const m = document.querySelector('.dp-detail'); return m.scrollWidth > m.clientWidth + 2 })
@@ -174,6 +174,11 @@ try {
     if (!/[1-9]\d* of \d+ lessons solved/.test(await page.getByRole('group', { name: 'Your progress' }).textContent())) problems.push('the progress bar did not count the solve')
     await page.locator('.dp-workspace').screenshot({ path: path.join(out, 'solved.png') })
     await page.locator('.dp-header').screenshot({ path: path.join(out, 'progress-header.png') })
+    // After the attempt, the reference solution explained line by line.
+    await page.getByRole('button', { name: /Compare with the reference solution/ }).click()
+    const explained = page.getByRole('region', { name: 'Reference solution, explained' })
+    if (!(await explained.getByText(/The two choices for house i/).isVisible().catch(() => false))) problems.push('the explained solution shows no notes')
+    await explained.screenshot({ path: path.join(out, 'explained.png') })
     await page.getByRole('button', { name: '🔍 Open in CodeLens' }).click()
     await page.waitForURL(/#\/codelens/, { timeout: 20000 })
     await page.waitForTimeout(4000)
