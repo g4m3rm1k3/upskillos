@@ -1,6 +1,6 @@
 # Linear Algebra Lab: gentle-curve redesign plan
 
-Drafted 2026-10-17. Status: Phases 1–6 done (2026-10-18); Phase 7 proposed in the handoff. Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
+Drafted 2026-10-17. Status: Phases 1–6 done (2026-10-18); Phase 7 in progress (7a done). Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
 
 ## Goal
 
@@ -150,4 +150,5 @@ N = new lesson, E = existing lesson (reworked where noted).
      - All 15 guessable problem families now depend on their drawn numbers; the `GUESSABLE` list is empty.
      - `derive` (Derive it) runs in the Learn tab with the proof stepper. It is used in projection, least squares and eigenvalues.
      - A single `*` in lab prose always shows as multiplication (`stars.js`), so no more stray italics.
-7. **Phase 7 (proposed):** the tracks in the gentle style, more Derive-it steppers, then the Graphics and Engineering tracks. See the handoff.
+7. **Phase 7:** the tracks in the gentle style, more Derive-it steppers, then the Graphics and Engineering tracks. See the handoff.
+   - **7a (done 2026-10-18):** all 11 track lessons have a why story, 4–6 case studies and two extra angles. The gentle-curve test now covers every lesson.

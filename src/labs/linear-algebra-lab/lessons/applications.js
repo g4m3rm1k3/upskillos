@@ -4,6 +4,7 @@ export const applications = [
   {
     id: 'laml-stable-logistic', module: 'Machine learning',
     title: 'Logistic regression without numerical overflow', minutes: 35, level: 'Advanced',
+    why: { title: 'Yes or no, and how sure', story: 'A spam filter must decide yes or no, but it is more useful to say how sure it is: 97% spam. Logistic regression turns a score into a probability with an S-shaped curve that Pierre-François Verhulst first drew in the 1830s to describe population growth. A real filter meets scores in the hundreds or thousands, and the textbook formula then asks the computer for e to the power 1000, a number larger than any it can store. This lesson gets the same answer without ever forming that number.' },
     objective: 'Compute binary probabilities, a stable logistic loss, and its vectorized gradient.',
     prose: [
       'A classifier can produce scores -1000, 0, and 1000 for three examples. The intended probabilities are approximately 0, 0.5, and 1. Evaluating log(1+exp(1000)) overflows on ordinary floating-point machines even though the correctly classified example should contribute almost no loss.',
@@ -69,6 +70,7 @@ w=[0;1000];`, checks: [{ name: 'p', expected: [0,0.5,1], tolerance: 1e-6, messag
   {
     id: 'laml-backpropagation', module: 'Machine learning',
     title: 'A neural network is a chain of matrix operations', minutes: 35, level: 'Advanced',
+    why: { title: 'Millions of knobs, one slope each', story: 'A network that recognises speech has millions of weights. Training it means knowing, for every weight, how the error changes when that weight is nudged: millions of slopes. Nudging each weight in turn would take millions of runs. In 1986 David Rumelhart, Geoffrey Hinton and Ronald Williams made a shortcut famous, backpropagation: one run forward and one run backward give every slope at once. It is the chain rule from the Calculus module, applied to a chain of matrices.' },
     objective: 'Implement a small neural-network forward pass and verify a backpropagated gradient numerically.',
     prose: [
       'Feed the two measurements [2;-1] into a layer with rows [1,-1] and [0.5,1]. Its two pre-activation scores are 3 and 0. Applying tanh gives approximately 0.995 and 0. The first hidden unit is almost saturated; changing its score slightly changes its output only slightly.',
@@ -139,6 +141,7 @@ gradientError=abs(finiteDifference-gradW(1,1));`,
   {
     id: 'laml-policy-evaluation', module: 'Decisions',
     title: 'Evaluate a fixed policy two ways', minutes: 35, level: 'Advanced',
+    why: { title: 'What is a situation worth?', story: 'A shop owner wonders what a loyal customer is worth: not this month\'s purchase, but everything they will buy in the years ahead, with money later counting a little less than money now. A chess player judges a position by what it leads to. For a fixed way of acting, the worth of every situation at once is a vector of values, and it is the solution of one linear system. Richard Bellman wrote these equations down in the 1950s; they are the base of reinforcement learning.' },
     objective: 'Solve a discounted policy-value equation directly and by iteration, then certify the result with a residual.',
     prose: [
       'Suppose state 2 pays 2 every step and always returns to itself. With discount 0.8, its total value is 2+0.8*2+0.8^2*2+...=10. State 1 pays 1 and moves equally often to states 1 and 2. Its value is smaller than 10 because it takes time to reach the better reward stream.',
@@ -197,6 +200,7 @@ errorBound=residual/(1-gamma);`,
   {
     id: 'laml-backward-induction', module: 'Decisions',
     title: 'Finite horizons and backward induction', minutes: 35, level: 'Advanced',
+    why: { title: 'Plan from the end', story: 'A market stall has three days to sell its strawberries before they spoil. Cutting the price sells more now but earns less per box. The clean way to decide is to start at the end. On the last day the choice is easy, because nothing comes after it. Once the last day is known, the day before becomes easy, and so on back to today. This is backward induction, the heart of what Bellman called dynamic programming, and it shows that the best action can depend on how much time is left.' },
     objective: 'Work backward from a terminal payoff and recover a policy that can change with time.',
     prose: [
       'You have three decisions left. Waiting in state 1 earns 1 and keeps you there. Moving to state 2 costs 1. State 2 earns nothing, but pays a terminal bonus of 5 after the final decision. With one decision left, moving is worth 4 while waiting is worth 1. Earlier, it can be better to collect a waiting reward first.',
@@ -267,6 +271,7 @@ firstPolicy=policy;`,
   {
     id: 'laml-value-iteration', module: 'Decisions',
     title: 'Bellman optimality and value iteration', minutes: 35, level: 'Advanced',
+    why: { title: 'Not how good a plan is, but which plan is best', story: 'Evaluating one plan is not enough. A delivery robot choosing a turn at every corner, a thermostat deciding when to heat, a program choosing game moves: each wants the best action in every situation. Bellman\'s optimality equation says the best value of a situation is the best action\'s reward plus the discounted best value of where it leads. Value iteration finds those values by applying that rule again and again until nothing changes. DeepMind\'s 2015 Atari-playing network learned approximations to exactly these action values.' },
     objective: 'Compute an optimal discounted value, extract a greedy policy, and certify its Bellman mismatch.',
     prose: [
       'In state 1, staying pays 1. In state 2, staying pays 0. Switching pays 0 from state 1 and 2 from state 2. With discount 0.5, staying in state 1 forever is worth 2, and switching from state 2 to that stream is worth 3. The best actions are therefore different in the two states.',
@@ -343,6 +348,7 @@ errorBound=residual/(1-gamma);`,
   {
     id: 'laml-recommendation-studio', module: 'Machine learning',
     title: 'Low-rank recommendations with honest holdouts', minutes: 35, level: 'Capstone',
+    why: { title: 'The million-dollar table', story: 'In 2006 Netflix offered a million dollars to anyone who could predict its customers\' film ratings 10% better than its own system. The ratings table had about 480,000 customers and 17,770 films, and almost all of it was empty. The leading methods treated the table as close to low rank: each person and each film is described by a few hidden numbers, such as how much action or romance they like or contain. The prize was won in 2009. This lesson builds the simplest version and tests it honestly on a rating it never saw.' },
     objective: 'Construct a low-rank rating estimate without using a held-out rating, and separate reconstruction error from predictive evidence.',
     prose: [
       'A three-user, three-item ratings table contains six training ratings: 5, 4, 4, 2, 2, and 1. Their mean is 3. Three cells are unavailable during fitting. Fill those cells with the training mean as a simple baseline, then compress the filled table to rank one. One hidden rating is 3 and will be used only after fitting.',
@@ -407,6 +413,7 @@ heldoutTruth=5;`, checks: [{ name: 'fillMean', expected: 3, tolerance: 1e-6, mes
   {
     id: 'laml-pca-ridge-capstone', module: 'Machine learning',
     title: 'Capstone: a PCA and ridge prediction pipeline', minutes: 35, level: 'Capstone',
+    why: { title: 'Hundreds of readings, one number', story: 'A grain buyer shines near-infrared light on a wheat sample, measures how much is reflected at hundreds of wavelengths, and must predict the protein content. Neighbouring wavelengths carry almost the same information, so a plain regression is unstable. The standard recipe squeezes the readings into a few principal components, fits a regularised model on those, and judges it on samples it never saw. The trap is letting the test samples leak into any step, even the averages. This capstone builds the whole pipeline without that leak.' },
     objective: 'Fit a training-only PCA projection and ridge model, then evaluate unseen rows without leaking test information.',
     prose: [
       'Four training examples have feature pairs [0,0], [1,2], [2,4], and [3,6], with targets 1, 4, 7, and 10. The two columns measure the same direction at different scales. A one-component projection preserves their variation. Future examples [4,8] and [5,10] must be transformed using the training mean [1.5,3], even though their own mean is different.',
@@ -493,6 +500,7 @@ lambda=1;`, checks: [{ name: 'mu', expected: [1.5,3], tolerance: 1e-6, message: 
   {
     id: 'laml-policy-iteration-capstone', module: 'Decisions',
     title: 'Capstone: policy iteration as solve and improve', minutes: 35, level: 'Capstone',
+    why: { title: 'Bigger steps to the best plan', story: 'Value iteration creeps toward the answer a little at a time. In 1960 Ronald Howard proposed bigger steps: take a plan, work out exactly what it is worth by solving one linear system, then switch each situation to the action that looks best given those values. Repeat. Each round can only improve the plan, and because there are finitely many plans it must stop at the best one, often within a few rounds. This "solve, then improve" loop runs inside many planning systems.' },
     objective: 'Alternate exact policy evaluation with greedy improvement, then verify both policy and optimality equations.',
     prose: [
       'With rewards [0.5;0] for staying and [0;2] for switching, a policy that always stays values the states at [2.5;0] when the discount is 0.8. Switching from state 2 then becomes attractive. Re-evaluating that improved policy can make switching from state 1 attractive too. One greedy pass from a poor policy need not finish the job.',
@@ -606,6 +614,7 @@ gamma=0.5;`, checks: [{ name: 'policy', expected: [1,2], tolerance: 1e-6, messag
   {
     id: 'laml-independent-audit', module: 'Decisions',
     title: 'Independent studio: learn rewards, then audit a decision', minutes: 35, level: 'Capstone',
+    why: { title: 'Three questions before you sign', story: 'An engineer signing off a design asks three separate questions. Did the computer solve the equations correctly? Do the assumed loads match the real ones? Would the design still hold if those loads were a little off? A decision built on data needs the same three checks. This studio learns rewards from noisy data, makes a decision with them, and audits each step with its own evidence: a solve residual, a held-out error and the gap between the competing actions.' },
     objective: 'Combine regularized prediction with discounted control and support conclusions using independent numerical and Bellman evidence.',
     prose: [
       'Three noisy observations at inputs 0, 1, and 2 have measured rewards 1, 2, and 2. Fit a line with an unpenalized intercept and a ridge-penalized slope. Use its predicted rewards at inputs 0 and 2 as the staying rewards of a two-state decision model. A switching action has known rewards [0;3]. The learned model now influences an actual decision.',

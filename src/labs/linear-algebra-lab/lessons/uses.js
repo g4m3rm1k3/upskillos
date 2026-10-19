@@ -420,6 +420,82 @@ export const USES = {
     { who: 'ee', title: 'Adaptive filters', story: 'Echo cancellers and antenna arrays update a least-squares fit with every new sample. QR-based updates keep them stable over millions of steps.' },
     { who: 'cs', title: 'Eigenvalue algorithms', story: 'The QR algorithm, which repeats QR factorisations, is how libraries compute the eigenvalues of a matrix.' },
   ],
+  // Optional tracks: Machine learning
+  'laml-regression-validation': [
+    { who: 'general', title: 'House-price estimates', story: 'Websites that estimate what a house is worth test their models on recent sales the model was not fitted to, and publish how far off those estimates typically were.' },
+    { who: 'ml', title: 'The train/test split', story: 'Every machine-learning project keeps a test set aside, and usually a validation set too for choosing settings. Cross-validation repeats the split several ways when data is scarce.' },
+    { who: 'mech', title: 'Sensor calibration', story: 'A load cell often reads a little above zero with nothing on it. Fitting reading = offset + gain × load needs the intercept, or every calibrated weight is off by the same amount.' },
+    { who: 'ee', title: 'Offsets in measurement chains', story: 'Amplifiers and analogue-to-digital converters add a small constant offset. Calibration fits a gain and an offset, then checks them on readings kept back for the purpose.' },
+    { who: 'cs', title: 'No peeking at the future', story: 'A model that forecasts server load or sales must be tested on later data than it was trained on. A random split lets tomorrow leak into yesterday and makes the forecast look better than it is.' },
+    { who: 'physics', title: 'Fitting a law with a baseline', story: 'A spring\'s length grows linearly with load from its natural length, not from zero. The natural length is the intercept; forcing the line through the origin gives the wrong stiffness.' },
+  ],
+  'laml-ridge-scaling': [
+    { who: 'ml', title: 'Weight decay', story: 'Neural networks are trained with "weight decay", a penalty on the squared size of the weights. It is ridge regression\'s penalty applied to a whole network.' },
+    { who: 'physics', title: 'Unstable inverse problems', story: 'Sharpening a blurred image or reconstructing a CT scan works backwards from effect to cause, and tiny noise would explode without a penalty. Tikhonov regularisation, the same idea as ridge, keeps it in check.' },
+    { who: 'ee', title: 'Equalisers', story: 'A receiver that undoes the distortion of a radio channel solves a least-squares problem. The minimum mean-square-error equaliser adds the noise level to the diagonal, exactly as ridge adds λ.' },
+    { who: 'cs', title: 'Robot arms near a singularity', story: 'When a robot arm is almost fully stretched, the joint motions needed to move the hand blow up. "Damped least squares" inverse kinematics adds λ to the diagonal so the arm moves smoothly instead.' },
+    { who: 'mech', title: 'Finding loads from strain gauges', story: 'Working out the loads on a part from a few strain readings is often badly conditioned. Engineers scale the unknowns and regularise the solve, the same two steps as this lesson.' },
+  ],
+  'laml-stable-logistic': [
+    { who: 'general', title: 'Risk scores', story: 'Credit scores and many medical risk calculators come from logistic regression: they add up weighted factors into a score and turn it into a probability.' },
+    { who: 'ml', title: 'The last layer of a classifier', story: 'Image and text classifiers end with a sigmoid or softmax and are trained with the same log loss. Frameworks compute it with the stable form from this lesson; softmax uses the related "log-sum-exp" trick.' },
+    { who: 'cs', title: 'Click prediction', story: 'Online services predict the chance that a user clicks a link with very large logistic models, trained on billions of examples where extreme scores are common.' },
+    { who: 'physics', title: 'Fermi–Dirac statistics', story: 'The chance that an electron occupies a state of energy E is $1/(1+e^{(E-\\mu)/kT})$: a logistic curve. At low temperature the exponent is huge, and the same overflow care is needed.' },
+    { who: 'ee', title: 'Soft decisions in decoders', story: 'Error-correcting decoders in phones and Wi-Fi pass log-likelihood ratios between steps. Turning one into a probability is a sigmoid, and the decoder hardware must not overflow on confident bits.' },
+  ],
+  'laml-backpropagation': [
+    { who: 'ml', title: 'Every deep-learning framework', story: 'PyTorch, JAX and TensorFlow record the forward pass and run it backwards to get every gradient. That is backpropagation, automated for any chain of operations.' },
+    { who: 'cs', title: 'Automatic differentiation', story: 'Reverse-mode automatic differentiation, described by Seppo Linnainmaa in 1970, computes the gradient of any program at a cost of a few times one run of that program.' },
+    { who: 'mech', title: 'Shaping wings with adjoints', story: 'Aircraft designers find how drag changes with thousands of shape parameters using one extra "adjoint" flow solve. It is the same backward pass, applied to the flow equations.' },
+    { who: 'physics', title: 'Weather forecasting', story: 'Forecast centres adjust today\'s estimated state of the atmosphere so the model best matches the observations, using an adjoint model that runs the forecast backwards to get the gradient.' },
+    { who: 'general', title: 'Check the derivative', story: 'Programmers who write a gradient by hand test it exactly as this lesson does: nudge one input both ways and compare. A sign error shows up at once.' },
+  ],
+  'laml-recommendation-studio': [
+    { who: 'general', title: 'What to watch or buy next', story: 'Streaming, shopping and music services suggest items from a huge, mostly empty table of who liked what, filling it in by assuming a few hidden tastes explain most of it.' },
+    { who: 'ml', title: 'Embeddings', story: 'The hidden numbers for each user and item are an early form of embeddings, the vectors that modern recommenders and language models use to represent things.' },
+    { who: 'cs', title: 'Search by meaning', story: 'Latent semantic analysis keeps a few singular vectors of a table of words by documents, so a search for "car" can find a page that only says "automobile".' },
+    { who: 'math', title: 'Matrix completion', story: 'Emmanuel Candès and Benjamin Recht proved in 2009 that a low-rank matrix can be recovered exactly from a fairly small random sample of its entries, by a convex optimisation.' },
+  ],
+  'laml-pca-ridge-capstone': [
+    { who: 'ml', title: 'Pipelines and leakage', story: 'Libraries such as scikit-learn bundle scaling, PCA and the model into one pipeline, so every step is fitted on training rows only. Leaking test rows into a scaler is one of the most common mistakes in published models.' },
+    { who: 'physics', title: 'Spectroscopy', story: 'Chemists predict sugar, fat or protein content from spectra with hundreds of wavelengths using principal-component regression and its relatives.' },
+    { who: 'general', title: 'Genes and patients', story: 'Medical studies may measure 20,000 genes on 100 patients. With far more columns than rows, compressing and regularising before predicting is not optional.' },
+    { who: 'mech', title: 'Plant monitoring', story: 'Process plants record hundreds of sensors. PCA of normal running data defines what "normal" looks like, and a new reading far from it raises an alarm.' },
+  ],
+  // Optional tracks: Decisions
+  'laml-policy-evaluation': [
+    { who: 'general', title: 'Customer lifetime value', story: 'Businesses estimate what a customer is worth by modelling how they move between active, lapsing and lost, with a discount on future money. That is policy evaluation with a fixed policy.' },
+    { who: 'cs', title: 'Judging game positions', story: 'In 1992 TD-Gammon learned to play backgammon at expert level by learning to evaluate positions, nudging each position\'s value toward the value of the one that followed.' },
+    { who: 'ml', title: 'The critic', story: 'Reinforcement-learning agents often have a "critic" that estimates how good the current situation is under the current behaviour. It learns the solution of this lesson\'s equation from experience.' },
+    { who: 'mech', title: 'Maintenance costs', story: 'A machine that is new, worn or broken, under a rule such as "repair only when broken", has an expected discounted cost from each condition. Comparing rules starts by evaluating each one.' },
+    { who: 'math', title: 'A geometric series of matrices', story: 'Because every row of $P$ adds to 1 and $\\gamma < 1$, the series $I + \\gamma P + \\gamma^2P^2 + \\dots$ converges, and its sum is $(I-\\gamma P)^{-1}$.' },
+  ],
+  'laml-backward-induction': [
+    { who: 'general', title: 'When to sell', story: 'Selling a car, a house or a crop with a deadline is a finite-horizon problem: work out the last moment first, then the price you should hold out for earlier.' },
+    { who: 'cs', title: 'Chess endgame tables', story: 'Endgame tablebases are built backwards from checkmate positions: positions one move from mate, then two, and so on. They give perfect play for every position with up to seven pieces.' },
+    { who: 'ee', title: 'Decoding with Viterbi', story: 'Phones decode noisy signals with the Viterbi algorithm, which is dynamic programming over time: keep the best path into each state, then trace back from the end.' },
+    { who: 'mech', title: 'Optimal control', story: 'The finite-horizon linear-quadratic regulator, used to steer rockets and robots, is solved by a backward recursion of matrices (the Riccati equation) from the final time.' },
+    { who: 'math', title: 'Finite games', story: 'Ernst Zermelo showed in 1913 that in chess either one side can force a win or both can force a draw. The argument is backward induction over a finite game tree.' },
+  ],
+  'laml-value-iteration': [
+    { who: 'ml', title: 'Q-learning', story: 'Q-learning and DeepMind\'s Atari network learn action values by moving them toward "reward plus discounted best next value": the Bellman optimality update, estimated from experience.' },
+    { who: 'cs', title: 'Shortest paths', story: 'With costs instead of rewards, no discount and a goal state, value iteration is the Bellman–Ford shortest-path algorithm used in network routing.' },
+    { who: 'ee', title: 'Battery scheduling', story: 'Home and grid batteries decide when to charge and discharge as prices change. Small versions are solved exactly by value iteration over charge levels.' },
+    { who: 'mech', title: 'Inventory and replacement', story: 'How much stock to reorder, or when to replace a worn machine, are classic Markov decision problems solved by value iteration in operations research.' },
+    { who: 'math', title: 'Contraction mappings', story: 'Value iteration converges because the update is a contraction: it brings any two value vectors closer by a factor $\\gamma$. Banach\'s fixed-point theorem then gives exactly one fixed point.' },
+  ],
+  'laml-policy-iteration-capstone': [
+    { who: 'ml', title: 'Actor and critic', story: 'Actor–critic methods in reinforcement learning alternate a critic that evaluates the current behaviour with an actor that improves it: policy iteration done approximately.' },
+    { who: 'cs', title: 'AlphaGo Zero', story: 'DeepMind described AlphaGo Zero\'s training as policy iteration: tree search acts as a strong improvement step, and the network learns to evaluate and imitate the improved play.' },
+    { who: 'mech', title: 'Replacement policies', story: 'Howard\'s 1960 book applied policy iteration to practical problems such as when to replace a car. Fleet operators still compare replacement rules this way.' },
+    { who: 'math', title: 'Policy improvement theorem', story: 'Acting greedily with respect to a policy\'s values gives a new policy at least as good in every state. That is why the loop can never get worse and must stop.' },
+  ],
+  'laml-independent-audit': [
+    { who: 'mech', title: 'Verification and validation', story: 'Engineering simulation standards separate verification, solving the equations right, from validation, solving the right equations. This studio\'s residuals verify; its test error validates.' },
+    { who: 'ml', title: 'Models that exploit their own errors', story: 'A planner given a learned model will find any place where the model is too optimistic and steer there. Offline reinforcement learning spends much effort guarding against this.' },
+    { who: 'general', title: 'Decisions on thin margins', story: 'When two options are almost equally good on paper, a small error in the inputs can swap them. Reporting the margin tells a reader how much to trust the recommendation.' },
+    { who: 'ee', title: 'Control with identified models', story: 'A controller designed on a model fitted from test data must keep working when the real system differs. Engineers check stability margins as well as performance on the fitted model.' },
+  ],
 }
 
 export const ANGLES = {
@@ -626,5 +702,49 @@ export const ANGLES = {
     { title: 'As the closest point', body: 'Among all the points $c\\,\\mathbf u$ on the line, the projection is the closest to $\\mathbf x$. Move along the line from there and the distance grows, because you add a piece at right angles to the residual (Pythagoras).' },
     { title: 'With a unit direction', body: 'If $\\mathbf u$ has length 1, then $\\mathbf u\\cdot\\mathbf u = 1$ and the formula shrinks to $(\\mathbf u\\cdot\\mathbf x)\\,\\mathbf u$: the shadow length times the direction.' },
     { title: 'Physically', body: 'A block on a ramp: the projection of its weight onto the ramp direction is the force trying to slide it down. The residual presses it into the ramp.' },
+  ],
+  'laml-regression-validation': [
+    { title: 'Why the column of ones', body: 'Every prediction is a combination of the columns: $\\hat y = \\beta_0\\cdot 1 + \\beta_1 x$. Without a constant column, the prediction at $x = 0$ is $0$ whatever the coefficients are, so the line is forced through the origin.' },
+    { title: 'Why training error is too hopeful', body: 'A line through two points always fits them exactly, so its training error is $0$ whatever the data. The more freedom a model has, the better it fits the data it was given, which says little about new data. Only data it never saw can grade it.' },
+  ],
+  'laml-ridge-scaling': [
+    { title: 'Adding λ to every eigenvalue', body: 'The eigenvalues of $Z^TZ$ are the squared singular values $\\sigma_i^2$, and a near-zero one makes the solve unstable. Adding $\\lambda I$ adds $\\lambda$ to each, so none is smaller than $\\lambda$ and the system can always be solved.' },
+    { title: 'Shrinking only the weak directions', body: 'Along the $i$-th singular direction, ridge multiplies the plain least-squares coefficient by $\\sigma_i^2/(\\sigma_i^2 + \\lambda)$. Strong directions ($\\sigma_i^2 \\gg \\lambda$) barely change; weak ones, which mostly carry noise, shrink toward zero.' },
+  ],
+  'laml-stable-logistic': [
+    { title: 'The score is log-odds', body: 'If $p = 1/(1+e^{-z})$, then $z = \\log\\big(p/(1-p)\\big)$: the score is the logarithm of the odds. Each extra unit of score multiplies the odds by $e \\approx 2.7$, whatever the starting probability.' },
+    { title: 'The same number, a safer formula', body: 'For $z > 0$, take $e^{z}$ out of the bracket: $\\log(1+e^{z}) = z + \\log(e^{-z} + 1)$. Both cases together give $\\log(1+e^{z}) = \\max(z,0) + \\log(1+e^{-|z|})$, and now the exponential never sees a positive number.' },
+  ],
+  'laml-backpropagation': [
+    { title: 'Why backward is cheaper', body: 'Going forward, you can track how one input nudge spreads to the output: one run per weight. Going backward, you track how the one output depends on everything: one run gives all the slopes. A network has millions of weights and one loss, so backward wins.' },
+    { title: 'Why the check uses both sides', body: 'A one-sided difference $(L(w+\\varepsilon) - L(w))/\\varepsilon$ is off by an amount proportional to $\\varepsilon$. The central difference $(L(w+\\varepsilon) - L(w-\\varepsilon))/(2\\varepsilon)$ is off by about $\\varepsilon^2$, so $\\varepsilon = 10^{-5}$ gives roughly ten correct digits.' },
+  ],
+  'laml-recommendation-studio': [
+    { title: 'Rank one as hidden taste', body: 'A rank-one table has entries $u_i v_j$: user $i$\'s enthusiasm times film $j$\'s appeal. Rank two adds a second pair, perhaps how much each person likes action and how much action each film has. A few such pairs can explain a table with millions of cells.' },
+    { title: 'Why filling with the mean is a crutch', body: 'The filled-in cells are invented, and the SVD tries to fit them too, pulling every estimate toward the mean. Real systems fit the hidden numbers to the observed cells only, for example by alternating least squares: fix the films and solve for the users, then the other way round.' },
+  ],
+  'laml-pca-ridge-capstone': [
+    { title: 'Two ways to tame repeated columns', body: 'PCA keeps the strong directions and drops the weak ones completely. Ridge keeps all of them but shrinks the weak ones by $\\sigma_i^2/(\\sigma_i^2+\\lambda)$. This pipeline uses both: drop what is clearly noise, then shrink what remains.' },
+    { title: 'Leakage in one line', body: 'Computing the means from all the rows, test rows included, lets the test set move the centre the model is fitted around. The test error then looks better than it will in real use, where the future rows are not available when you fit.' },
+  ],
+  'laml-policy-evaluation': [
+    { title: 'As a sum of futures', body: 'Unroll $\\mathbf v = \\mathbf r + \\gamma P\\mathbf v$: $\\mathbf v = \\mathbf r + \\gamma P\\mathbf r + \\gamma^2P^2\\mathbf r + \\dots$. The $k$-th term is the reward expected $k$ steps from now, discounted $k$ times. The iteration adds these terms one at a time; the solve adds them all at once.' },
+    { title: 'The discount as a chance of stopping', body: 'A discount of $\\gamma = 0.8$ gives the same values as a game with no discount that ends after each step with probability $0.2$. Either way, rewards far in the future count for little.' },
+  ],
+  'laml-backward-induction': [
+    { title: 'Why not plan forwards?', body: 'Forwards, you would compare whole sequences of actions: with 2 actions and $H$ decisions there are $2^H$ of them. Backwards, each step compares 2 actions in each state once, so the work grows only like $H$ times the number of states.' },
+    { title: 'Time is part of the situation', body: 'A policy that changes with the time left is an ordinary policy on pairs (state, decisions remaining). Adding the clock to the state turns a time-dependent problem into one where each situation has one best action.' },
+  ],
+  'laml-value-iteration': [
+    { title: 'Errors shrink by γ each sweep', body: 'For any two value vectors, one update brings them closer: $\\|T(\\mathbf u) - T(\\mathbf v)\\|_\\infty \\le \\gamma\\,\\|\\mathbf u - \\mathbf v\\|_\\infty$. So the error after $k$ sweeps is at most $\\gamma^k$ times the first one. With $\\gamma = 0.9$ it takes about 22 sweeps to gain each extra digit.' },
+    { title: 'As shortest paths', body: 'Make the rewards negative costs, set $\\gamma = 1$ and add a goal state. Then the value of a state is minus the cheapest route to the goal, and each sweep finds the best routes that use one more step.' },
+  ],
+  'laml-policy-iteration-capstone': [
+    { title: 'Why it cannot go round in circles', body: 'Each improvement gives a policy at least as good as the last in every state, and strictly better somewhere unless it is already stable. A policy can never come back after a better one, and there are only finitely many policies, so the loop stops.' },
+    { title: 'Like Newton\'s method', body: 'Value iteration takes small, steady steps toward the fixed point. Policy iteration is Newton\'s method applied to the Bellman equation: each round solves a linear system exactly, so it usually needs only a handful of rounds, each costing more.' },
+  ],
+  'laml-independent-audit': [
+    { title: 'Three questions, three pieces of evidence', body: 'Was the fit solved correctly? The linear residual. Does the fitted model predict well? The held-out error. Is the decision robust? The action gap. Each one can be perfect while another is poor, so none can stand in for the others.' },
+    { title: 'The action gap as a safety margin', body: 'If the two best actions in a state differ by $1/15$ and the learned rewards could easily be off by more than that, the decision could flip. Like a safety factor in a design, the gap should be compared with the size of the uncertainty.' },
   ],
 }

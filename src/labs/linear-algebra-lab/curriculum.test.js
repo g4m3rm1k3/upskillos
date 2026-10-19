@@ -98,10 +98,10 @@ describe('gentle curve', () => {
   it('puts every module in exactly one stage, in curriculum order', () => {
     expect(STAGES.flatMap(([, modules]) => modules)).toEqual(MODULES)
   })
-  it('opens every Stage 1 and Stage 2 lesson with why it matters and where it is used', () => {
+  it('opens every lesson with why it matters and where it is used', () => {
     const roles = new Set(ROLES.map(([id]) => id))
-    // Every reworked module: Stages 1 and 2, and all six core modules of Stage 3.
-    for (const lesson of LESSONS.filter(l => [...STAGES[0][1], ...STAGES[1][1], 'Spaces and bases', 'Best fit', 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world', 'The SVD: the shape of any matrix'].includes(l.module))) {
+    // Every module has been reworked in the gentle style, the optional tracks included.
+    for (const lesson of LESSONS) {
       expect(lesson.why?.story.length, lesson.id).toBeGreaterThan(80)
       expect(lesson.uses?.length, lesson.id).toBeGreaterThanOrEqual(4)
     }

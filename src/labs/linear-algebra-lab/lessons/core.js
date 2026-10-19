@@ -88,6 +88,7 @@ residual=A*x-b;`,
   },
   {
     id: 'laml-regression-validation', module: 'Machine learning', title: 'Regression: include an intercept, reserve a test set', minutes: 30, level: 'Intermediate',
+    why: { title: 'Acing last year\'s exam', story: 'A student who memorises last year\'s exam answers scores full marks on last year\'s paper and can still fail this year\'s. A model can do the same: fit every past data point and still predict the next one badly. So people who build models hide some of their data before fitting, and use it only at the end to grade the model. This lesson does that, and adds a column of ones so the fitted line can start somewhere other than zero.' },
     objective: 'Fit an intercept and slope using training observations only, then evaluate held-out mean squared error.',
     prose: [
       'Training observations (0,1), (1,3), and (2,5) lie exactly on output=1+2*input. A new input 4 has an observed output of 10, while that trained rule predicts 9. Perfect training fit did not guarantee perfect future prediction.',
@@ -138,6 +139,7 @@ mse=mean((testY-predictions).^2);`,
   },
   {
     id: 'laml-ridge-scaling', module: 'Machine learning', title: 'Conditioning, scaling, and ridge regularization', minutes: 30, level: 'Advanced',
+    why: { title: 'When two columns say the same thing', story: 'A house-price table records floor area twice, in square metres and in square feet. A plain fit can then give one of them a coefficient of plus a million and the other minus a million, and still predict the prices well, until a typo in one column sends a prediction wild. In 1970 Arthur Hoerl and Robert Kennard, working with chemical-plant data, published ridge regression: add a small penalty on large coefficients, and the wild answers disappear. Andrey Tikhonov had used the same idea earlier for unstable physics problems.' },
     objective: 'Scale feature columns, fit ridge regression in scaled coordinates, and convert coefficients back to original units.',
     prose: [
       'One feature measures length in meters as [1;2;3]; another measures the same length in millimeters as [1000;2000;3000]. They encode one direction twice. A model can trade coefficients between the columns without changing its predictions.',
