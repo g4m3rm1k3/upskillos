@@ -78,6 +78,7 @@ export default function HomeTopicSearch({ onSearch }) {
 
             <input
               type="text"
+              aria-label="Search courses, labs and games"
               value={query}
               onChange={handleInputChange}
               onFocus={() => setIsFocused(true)}
@@ -93,6 +94,7 @@ export default function HomeTopicSearch({ onSearch }) {
                   setQuery('');
                   onSearch('');
                 }}
+                aria-label="Clear search"
                 className="absolute inset-y-0 right-5 flex items-center justify-center text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors z-10"
                 title="Clear search"
               >

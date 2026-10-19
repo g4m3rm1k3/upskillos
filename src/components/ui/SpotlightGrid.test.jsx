@@ -12,7 +12,10 @@ import { SPOTLIGHT } from '../../data/spotlight.js'
 import { resolveEntry } from './TopicTable.jsx'
 import { TOPICS, TOPIC_ORDER } from '../../data/topicGroups.js'
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+})
 
 describe('Spotlight', () => {
   it('every entry is a real app in its registry (a renamed key would silently vanish)', () => {
@@ -23,8 +26,8 @@ describe('Spotlight', () => {
   })
 
   it('leads with the apps chosen for it, in order', () => {
-    expect(SPOTLIGHT.map(i => i.key)).toEqual(['lesson-engine', 'codelens', 'openmat', 'calculus', 'linear-algebra', 'html-lab', 'notebook-lab', 'ml-lab',
-      'qmaze-lab', 'neural-net-lab', 'mesh-lab', 'code-typing', 'project-studio', 'dsa-patterns', 'game-studio', 'backend-lab'])
+    expect(SPOTLIGHT.map(i => i.key)).toEqual(['lesson-engine', 'codelens', 'openmat', 'calculus', 'linear-algebra', 'linear-algebra-lab', 'html-lab', 'notebook-lab', 'ml-foundations', 'ml-lab',
+      'qmaze-lab', 'neural-net-lab', 'mesh-lab', 'code-typing', 'project-studio', 'dsa-patterns', 'dynamic-programming', 'game-studio', 'backend-lab'])
   })
 
   it('is the first category on the Home page', () => {
@@ -37,5 +40,15 @@ describe('Spotlight', () => {
     for (const item of SPOTLIGHT) expect(screen.getByText(item.headline)).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Open CodeLens/ }))
     expect(openPin).toHaveBeenCalledWith(expect.objectContaining({ id: 'codelens', labKey: 'codelens' }))
+  })
+
+  it.each([
+    ['ML Foundations Lab', 'ml-foundations'],
+    ['Linear Algebra Lab', 'linear-algebra-lab'],
+    ['Dynamic Programming Lab', 'dynamic-programming'],
+  ])('opens %s from its Spotlight card', (label, labKey) => {
+    render(<MemoryRouter><SpotlightGrid /></MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: `Open ${label}` }))
+    expect(openPin).toHaveBeenCalledWith(expect.objectContaining({ id: labKey, labKey }))
   })
 })

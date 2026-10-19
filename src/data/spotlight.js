@@ -74,6 +74,19 @@ export const SPOTLIGHT = [
   },
   {
     kind: 'lab',
+    key: 'linear-algebra-lab',
+    headline: 'See linear algebra, run it, then solve it yourself',
+    description:
+      'Start with vectors and dot products, then explore transformations, systems of equations, best fit, eigenvalues and the SVD. Drag the pictures, edit and run OpenMAT code, and solve checked challenges, with optional tracks that connect the mathematics to machine learning and decisions.',
+    highlights: [
+      'Visual playgrounds beside code you can change and run',
+      'Checked challenges and problem sets with fresh inputs',
+      'Explanations, notation, proofs and review as you progress',
+    ],
+    bestFor: 'Building geometric intuition and the confidence to compute with matrices.',
+  },
+  {
+    kind: 'lab',
     key: 'html-lab',
     headline: 'Build web pages by hand and by drag-and-drop, and see both at once',
     description:
@@ -97,6 +110,19 @@ export const SPOTLIGHT = [
       'Import notebooks from GitHub',
     ],
     bestFor: 'Data work and experiments when you want results, not setup.',
+  },
+  {
+    kind: 'lab',
+    key: 'ml-foundations',
+    headline: 'Build a maze-learning mouse, one idea at a time',
+    description:
+      'Turn a maze into data, work out what each move is worth, then build a learner that improves by playing. Try an idea, predict what will happen, step through the Python and write the piece yourself; your checked pieces become the toolbox later lessons use, from Q-learning to neural-network formulas.',
+    highlights: [
+      'Experiment on your own maps before writing the code',
+      'Real Python challenges with Run, checks and CodeLens',
+      'Build from weighted averages and planning to Q-learning and backpropagation',
+    ],
+    bestFor: 'Learning machine learning from first principles by building the program yourself.',
   },
   {
     kind: 'lab',
@@ -188,6 +214,19 @@ export const SPOTLIGHT = [
       'TypeScript throughout',
     ],
     bestFor: 'Interview preparation and writing data-structure code you would ship.',
+  },
+  {
+    kind: 'lab',
+    key: 'dynamic-programming',
+    headline: 'Design the state, watch the recurrence, write the solution',
+    description:
+      'Build dynamic programming foundations through explanations, worked examples and checked Python or JavaScript challenges. Explore recursion and state design, watch call trees and table traces, then practise designing solutions and finding bugs. The concept map shows the path into specialist techniques, with later levels marked coming soon.',
+    highlights: [
+      'Python and JavaScript challenges checked with tests',
+      'Interactive call trees and table traces',
+      'State-design exercises and bug hunts alongside guided lessons',
+    ],
+    bestFor: 'Understanding how to derive a dynamic programming solution and why it works.',
   },
   {
     kind: 'lab',

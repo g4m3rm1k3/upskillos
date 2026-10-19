@@ -12,6 +12,7 @@ import { usePinLauncher } from '../../hooks/usePinLauncher.js'
 import { GLASS_META } from '../../styles/courseColors.js'
 import { useGlobalTheme } from '../../context/ThemeContext.jsx'
 import { labSubjects } from '../../data/catalogNavigation.js'
+import { matchItem } from '../../data/catalogSearch.js'
 
 const SECTIONS = [
   { id: 'all',         label: 'All' },
@@ -170,25 +171,28 @@ export default function StartMenu({ onClose }) {
   }
 
   // ---------- filters ----------
-  const q = query.toLowerCase()
-  const filteredCourses = COURSES.filter(c => !q || c.label.toLowerCase().includes(q))
-  const filteredLabItems = LABS.filter(l => !q || l.label.toLowerCase().includes(q) || l.tags?.some(t => t.toLowerCase().includes(q)))
+  const q = query.trim()
+  const filteredCourses = COURSES.filter(c => matchItem(c, q, { kind: 'course' }))
+  const filteredLabItems = LABS.filter(l => matchItem(l, q, { kind: 'lab', badgeKind: l.kind }))
   const filteredLabs        = filteredLabItems.filter(l => l.kind === 'lab')
   const filteredLessons     = filteredLabItems.filter(l => l.kind === 'lesson')
   const filteredBuilders    = filteredLabItems.filter(l => l.kind === 'builder')
   const filteredVisualizers = filteredLabItems.filter(l => l.kind === 'visualizer')
-  const filteredGames   = GAMES.filter(g   => !q || g.label.toLowerCase().includes(q) || g.tags?.some(t => t.toLowerCase().includes(q)))
-  const filteredNav     = NAV_LINKS.filter(n => !q || n.label.toLowerCase().includes(q))
-  const filteredPins    = pins.filter(p    => !q || p.label?.toLowerCase().includes(q))
+  const filteredGames   = GAMES.filter(g => matchItem(g, q, { kind: 'game' }))
+  const filteredNav     = NAV_LINKS.filter(n => matchItem(n, q))
+  const filteredPins    = pins.filter(p => matchItem(p, q))
 
   const showFavourites  = !q && (tab === 'all' || tab === 'favourites')
-  const showCourses     = tab === 'all' || tab === 'courses'
-  const showLabs        = tab === 'all' || tab === 'labs'
-  const showLessons     = tab === 'all' || tab === 'lessons'
-  const showBuilders    = tab === 'all' || tab === 'builders'
-  const showVisualizers = tab === 'all' || tab === 'visualizers'
-  const showGames       = tab === 'all' || tab === 'games'
-  const showNav         = tab === 'all' || tab === 'nav'
+  // A query searches every section, even after selecting a tab. The hidden
+  // tabs must not silently restrict which matching labs can appear.
+  const searchAll = Boolean(q) || tab === 'all'
+  const showCourses     = searchAll || tab === 'courses'
+  const showLabs        = searchAll || tab === 'labs'
+  const showLessons     = searchAll || tab === 'lessons'
+  const showBuilders    = searchAll || tab === 'builders'
+  const showVisualizers = searchAll || tab === 'visualizers'
+  const showGames       = searchAll || tab === 'games'
+  const showNav         = searchAll || tab === 'nav'
 
   const sectionVariants = {
     hidden:  { opacity: 0, y: 10 },
@@ -292,7 +296,7 @@ export default function StartMenu({ onClose }) {
         </div>
 
         {/* Tabs */}
-        {!query && (
+        {!q && (
           <div className="relative z-10 flex-shrink-0 flex gap-2 px-4 pt-3 pb-2 border-b border-black/[0.05] dark:border-white/[0.05] overflow-x-auto scrollbar-none">
             {SECTIONS.map(s => (
               <button
@@ -473,7 +477,7 @@ export default function StartMenu({ onClose }) {
 
           </AnimatePresence>
 
-          {query && filteredCourses.length === 0 && filteredLabs.length === 0 && filteredLessons.length === 0 && filteredBuilders.length === 0 && filteredVisualizers.length === 0 && filteredGames.length === 0 && filteredNav.length === 0 && (
+          {q && filteredCourses.length === 0 && filteredLabs.length === 0 && filteredLessons.length === 0 && filteredBuilders.length === 0 && filteredVisualizers.length === 0 && filteredGames.length === 0 && filteredNav.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 opacity-50">
               <span className="text-4xl mb-3">🔍</span>
               <p className="text-center text-sm font-medium">No results for "{query}"</p>

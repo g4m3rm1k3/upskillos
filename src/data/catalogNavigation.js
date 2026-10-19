@@ -27,7 +27,10 @@ export function completeTopics(curated, registries) {
   const topics = Object.fromEntries(Object.entries(curated).map(([id, topic]) => [id, {
     ...topic, subtopics: Object.fromEntries(Object.entries(topic.subtopics).map(([sid, sub]) => [sid, { ...sub, items: [...sub.items] }])),
   }]))
-  const placed = new Set(Object.values(topics).flatMap(t => Object.values(t.subtopics).flatMap(s => s.items.map(i => `${i.kind}:${i.key}`))))
+  // Featuring a lab does not replace its subject placement: a Spotlight-only
+  // entry still belongs in Mathematics, Data & AI, or its other normal topic.
+  const placed = new Set(Object.entries(topics).filter(([id]) => id !== 'spotlight')
+    .flatMap(([, t]) => Object.values(t.subtopics).flatMap(s => s.items.map(i => `${i.kind}:${i.key}`))))
   const domains = { math: 'mathematics', science: 'science', cs: 'computer-science', engineering: 'engineering', data: 'data-ai', creative: 'creative' }
   const subjects = { Math: 'mathematics', Science: 'science', Engineering: 'engineering', 'CS Theory': 'computer-science', 'Computer Science': 'computer-science', 'Software Engineering': 'programming', 'Data Science': 'data-ai', 'Machine Learning': 'data-ai', AI: 'data-ai', 'Web Dev': 'programming', Creative: 'creative' }
   // Subjects with a home of their own inside a topic, rather than the topic's catch-all "More …" list.

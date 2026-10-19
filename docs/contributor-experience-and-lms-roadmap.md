@@ -8,6 +8,10 @@ Last reconciled: 2026-09-26
 
 ## Current status and prioritized backlog
 
+### Spotlight and lab discovery (2026-10-18)
+
+- [x] Feature ML Foundations Lab, the OpenMAT Linear Algebra Lab and the new Dynamic Programming Lab in Spotlight while retaining their subject placements. Home and Start menu search share metadata matching, including partial names, tags, descriptions and registry keys; typing searches across categories regardless of the selected tab. Regression checks cover every discovered lab's name as it is typed and opening the newly featured labs.
+
 ### OpenMAT Linear Algebra Lab (2026-10-16)
 
 - [x] Authored the beginner-to-mastery series for data science, machine learning and dynamic programming. Includes first-use MATLAB-style syntax, editable OpenMAT examples, labelled plots, visual experiments, numeric challenge checks, progressive hints, saved drafts and transfer projects. See [curriculum and verification](linear-algebra-lab.md).
