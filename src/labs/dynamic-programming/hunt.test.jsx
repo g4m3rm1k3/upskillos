@@ -113,7 +113,9 @@ describe('the bug hunt in a lesson', () => {
   })
 
   it('is not offered on a lesson without a hunt', () => {
-    render(<Lesson lesson={LESSONS['min-cost-stairs']} concepts={[]} onSelect={() => {}} language="JavaScript" />)
+    // Every Core lesson has a hunt; a Structured lesson (a quiz, no challenge) has none.
+    expect(LESSONS['matrix-chain']).toBeTruthy()
+    render(<Lesson lesson={LESSONS['matrix-chain']} concepts={[]} onSelect={() => {}} language="JavaScript" />)
     expect(screen.queryByRole('button', { name: /Bug hunt/ })).toBeNull()
   })
 

@@ -248,6 +248,7 @@ export const CORE_CHALLENGES = {
     [[[[5,5,9]],4,10],0],
     [[[[1,2,5],[2,1,4],[2,2,6],[3,1,7]],4,3],12],
     [[[[0,3,2],[3,0,2],[2,2,5]],2,2],5],
+    [[[[3,2,4],[1,1,3]],4,2],4],
   ], ["With two limits, what must a state know about the room left?","Taking an item reads which earlier state? Which loops must run downwards?","An item with weight 0 still uses volume: test both limits every time."]),
   "group-knapsack": task("groups, capacity", "Each group is a list of [weight, value] options; from each group choose at most one option. Return the largest total value with total weight at most capacity.", "0–20 groups of 1–6 options; weights 1–50; values 0–1000; 0 ≤ capacity ≤ 500.", [
     [[[[[2,5],[3,7]],[[1,4]]],3],9],
@@ -255,6 +256,7 @@ export const CORE_CHALLENGES = {
     [[[[[6,10]]],5],0],
     [[[[[1,1],[2,5]],[[2,4],[3,9]],[[1,2]]],5],14],
     [[[[[3,3],[3,4]],[[3,5]]],6],9],
+    [[[[[1,6],[1,5]]],1],6],
   ], ["A group gives one choice, not several independent items. Which row must every option of a group read from?","Build the new row from the old row only; skipping the group keeps the old value.","With options (2, 5) and (3, 7) in one group and capacity 5, you may not take both."]),
   "exact-capacity": task("weights, values, capacity", "Choose items (each at most once) whose weights add up to exactly capacity. Return the largest total value, or −1 if no choice fills it exactly. Filling 0 with nothing is worth 0.", "0–60 items; weights 1–100; values 0–1000; 0 ≤ capacity ≤ 1000.", [
     [[[2,3],[5,4],3],4],
