@@ -68,6 +68,17 @@ xlabel('x'); ylabel('y'); legend('v', 'A*v: three times longer, same direction')
       'Repeat for many nights and p settles at 2/3 of the bikes at station 1 and 1/3 at station 2, whatever the start. That steady split s satisfies Pᵀs = s. It is an **eigenvector of Pᵀ with eigenvalue 1**, scaled so that its entries add up to 1.',
       'Expected values run the other way. If v lists a payoff for being at each station tomorrow, P·v gives the expected payoff from each station today. Keep the two directions straight: distributions use Pᵀ, expectations use P.',
     ],
+    derive: {
+      claim: 'Find how fast the bikes settle: show that the gap to the steady split shrinks by the same factor every night, and find that factor.',
+      given: t`$P^T = \begin{bmatrix} 0.9 & 0.2 \\ 0.1 & 0.8 \end{bmatrix}$ and the steady split $\mathbf s = [2/3;\,1/3]$ satisfies $P^T\mathbf s = \mathbf s$. Call today's gap $\mathbf e = \mathbf p - \mathbf s$.`,
+      steps: [
+        { ask: t`Tomorrow's gap is $P^T\mathbf p - \mathbf s$. Replace $\mathbf s$ by $P^T\mathbf s$. What is it?`, options: [t`$P^T(\mathbf p - \mathbf s) = P^T\mathbf e$`, t`$\mathbf e$, unchanged`, t`$P^T\mathbf p$`], answer: 0, why: t`$P^T\mathbf p - P^T\mathbf s = P^T(\mathbf p - \mathbf s)$. The gap moves by the same matrix as the bikes.` },
+        { ask: t`The entries of $\mathbf p$ add up to 1, and so do those of $\mathbf s$. What does that say about $\mathbf e$?`, options: [t`Its entries add up to 0, so it is a multiple of $[1;\,-1]$`, t`Its entries add up to 1`, t`It is zero`], answer: 0, why: t`$1 - 1 = 0$. In two entries, "adds up to 0" means $[x;\,-x] = x\,[1;\,-1]$.` },
+        { ask: t`Compute $P^T[1;\,-1]$.`, options: [t`$[0.7;\,-0.7] = 0.7\,[1;\,-1]$`, t`$[1;\,-1]$`, t`$[1.1;\,-0.7]$`], answer: 0, why: t`$0.9 - 0.2 = 0.7$ and $0.1 - 0.8 = -0.7$. So $[1;\,-1]$ is an eigenvector of $P^T$, with eigenvalue 0.7.` },
+        { ask: t`So each night multiplies the gap by 0.7. What is the gap after $k$ nights?`, options: [t`$0.7^k\,\mathbf e_0$`, t`$0.7k\,\mathbf e_0$`, t`$\mathbf e_0 / k$`], answer: 0, why: 'Multiplying by 0.7 again and again gives a power, not a product with k.' },
+      ],
+      conclusion: t`The gap shrinks by 0.7 a night: after 10 nights it is $0.7^{10} \approx 0.03$ of the start, after 30 about $0.00002$. The steady state has eigenvalue 1, and 0.7 is the other eigenvalue. Power iteration always works like this: the error shrinks by the ratio $|\lambda_2/\lambda_1|$ each step, so two eigenvalues close together mean slow settling. In PageRank the random jumps keep that ratio at 0.85 or less, which is why a few dozen rounds are enough.`,
+    },
     procedure: ['Put current states on the rows of P and check that each row adds to 1.', 'Move a distribution forward with transpose(P)*p.', 'Repeat until it stops changing: that is the steady state, an eigenvector with eigenvalue 1.'],
     prediction: { question: 'Every bike starts at station 2. After one night, what fraction is at station 1?', answer: '0.2: the 20% of station 2\'s bikes that move. It is the first entry of Pᵀ[0; 1].' },
     demo: {

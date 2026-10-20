@@ -398,7 +398,12 @@ export function createExecutionEngine(options: EngineOptions = {}): {
   parser.set("vertcat",  (...args: any[]) => {
     const plainArgs = args.map(toPlain)
     if (plainArgs.length > 0 && plainArgs.every(value => typeof value === "string")) return plainArgs
-    return args.flatMap((a: any) => {
+    // Flat vectors carry no row/column orientation, so on their own they stack end to end. Next to
+    // a matrix with n > 1 columns, a flat vector of length n is a row: [P; ones(1, n)] adds a row.
+    const width = (plainArgs.find(p => Array.isArray(p) && Array.isArray(p[0]) && (p[0] as any[]).length > 1) as any[][] | undefined)?.[0].length
+    return args.flatMap((a: any, k: number) => {
+      const p = plainArgs[k]
+      if (width && Array.isArray(p) && !Array.isArray(p[0]) && p.length === width) return [normalizeVector(a)]
       const m = toNumericMatrix(a)
       return m ?? [normalizeVector(a)]
     })
@@ -1741,6 +1746,12 @@ export function executeScript(source: string, options: EngineOptions = {}): Exec
         if (!hasSemicolon && result != null && result !== "") logs.push(`${name} =\n${engine.formatOutput(result)}`)
         return hasSemicolon ? null : result
       }
+      // A bare variable name shows that variable under its own name and leaves ans alone, as in MATLAB.
+      if (/^[A-Za-z_]\w*$/.test(line) && variables.has(line) && !functionNames.has(line)) {
+        const value = toPlain(parser.get(line))
+        if (!hasSemicolon && value != null && value !== "") logs.push(`${line} =\n${engine.formatOutput(value)}`)
+        return hasSemicolon ? null : value
+      }
       const result = toPlain(parser.evaluate(replaceBackslash(line)))
       parser.set("ans", result)
       // As in MATLAB, ans is a real variable: it shows in the workspace and can be read later.
@@ -1893,8 +1904,10 @@ export function executeScript(source: string, options: EngineOptions = {}): Exec
       parts.push(cur.trim())
       const nonEmpty = parts.filter(Boolean)
       if (nonEmpty.length <= 1) { result.push(rawLine); continue }
-      nonEmpty.slice(0, -1).forEach((p: string) => result.push(p + ";"))
-      if (nonEmpty[nonEmpty.length - 1]) result.push(nonEmpty[nonEmpty.length - 1])
+      // Every part but the last was ended by a semicolon; the last keeps one only if the line did.
+      const lineEndsQuiet = /;\s*$/.test(code)
+      // (A transpose quote can hide the final semicolon inside the last part, so never add a second.)
+      nonEmpty.forEach((p: string, k: number) => result.push((k < nonEmpty.length - 1 || lineEndsQuiet) && !p.endsWith(";") ? p + ";" : p))
     }
     return result.join("\n")
   }

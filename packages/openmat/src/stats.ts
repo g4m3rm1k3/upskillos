@@ -67,12 +67,21 @@ export function statFind(value: unknown): number[] {
 
 // ── Array reshaping ───────────────────────────────────────────────────────────
 
+// As in MATLAB: elements are read and written column by column, so reshape([1 2 3 4], 2, 2) is
+// [1 3; 2 4]. One size may be [] and is then worked out from the element count.
 export function reshapeArray(value: unknown, rows: unknown, cols: unknown): number[][] {
-  const flat = normalizeVector(value)
-  const r = Number(rows), c = Number(cols)
-  const out: number[][] = []
-  for (let i = 0; i < r; i++) out.push(flat.slice(i * c, i * c + c))
-  return out
+  const plain = toPlain(value)
+  const grid = Array.isArray(plain) && Array.isArray(plain[0]) ? (plain as unknown[][]) : null
+  const flat = grid
+    ? grid[0].flatMap((_, j) => grid.map(row => realValue(row[j])))
+    : normalizeVector(value)
+  const blank = (size: unknown) => Array.isArray(toPlain(size)) && (toPlain(size) as unknown[]).length === 0
+  let r = Number(rows), c = Number(cols)
+  if (blank(rows)) r = flat.length / c
+  if (blank(cols)) c = flat.length / r
+  if (!Number.isInteger(r) || !Number.isInteger(c) || r * c !== flat.length)
+    throw new Error(`reshape needs ${flat.length} elements to fill ${blank(rows) ? "[]" : rows} × ${blank(cols) ? "[]" : cols}; the sizes must multiply to the number of elements.`)
+  return Array.from({ length: r }, (_, i) => Array.from({ length: c }, (_, j) => flat[j * r + i]))
 }
 
 export function repmatArray(value: unknown, m: unknown, n: unknown): number[][] {

@@ -10,6 +10,7 @@ import { svdLessons } from './lessons/svd.js'
 import { bestFitLessons } from './lessons/bestfit.js'
 import { graphicsLessons } from './lessons/graphics.js'
 import { engineeringLessons } from './lessons/engineering.js'
+import { circuitsLessons } from './lessons/circuits.js'
 import { ENRICH } from './lessons/enrich.js'
 import { ANGLES, USES } from './lessons/uses.js'
 
@@ -31,14 +32,14 @@ export const STAGES = [
   ['See it', ['Vectors: arrows and lists', 'The dot product']],
   ['Use it', ['Matrices are machines', 'Solving many equations']],
   ['Understand it', ['Spaces and bases', 'Best fit', 'Calculus meets matrices', "Directions that don't turn", 'Tensors in the real world', 'The SVD: the shape of any matrix']],
-  ['Optional tracks', ['Machine learning', 'Graphics and 3D', 'Engineering', 'Decisions']],
+  ['Optional tracks', ['Machine learning', 'Graphics and 3D', 'Engineering', 'Circuits', 'Decisions']],
 ]
 export const MODULES = STAGES.flatMap(([, modules]) => modules)
 // The last stage holds optional tracks, taken in any order. Their lessons carry `track`: the track name.
 export const TRACK_STAGE = STAGES.at(-1)[0]
 const TRACKS = STAGES.at(-1)[1]
 
-const assembled = assemble([...stage1, ...stage2, ...svdLessons, ...bestFitLessons, ...core, ...calculus, ...eigenLessons, ...applications, ...graphicsLessons, ...engineeringLessons], [...spaces, ...spectralTheory])
+const assembled = assemble([...stage1, ...stage2, ...svdLessons, ...bestFitLessons, ...core, ...calculus, ...eigenLessons, ...applications, ...graphicsLessons, ...engineeringLessons, ...circuitsLessons], [...spaces, ...spectralTheory])
 const unplaced = assembled.filter(lesson => !MODULES.includes(lesson.module))
 if (unplaced.length) throw new Error(`Lessons in no stage: ${unplaced.map(lesson => lesson.id).join(', ')}`)
 export const LESSONS = MODULES.flatMap(module => assembled.filter(lesson => lesson.module === module))

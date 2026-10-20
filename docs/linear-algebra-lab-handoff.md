@@ -39,13 +39,14 @@ Start every Linear Algebra Lab session by reading this file, then the phase you 
 
 ## Next (the owner picks)
 
-Phase 7 is done except one item:
+Phase 7 is done, engine fixes included (7d, 2026-10-19, NOT committed). 7d changed `packages/openmat/src/stats.ts` (reshape), `transpiler.ts` (nested indexing), `engine.ts` (row stacking, bare names, one-line statements) and added a describe block at the end of `packages/openmat/src/__tests__/engine.test.ts`. Checks after 7d: engine tests 76 passed; every OpenMAT-using suite (this lab, ML lab kit and lesson flow, spreadsheet translator, Math OS, engines) 1065 passed; `npm run typecheck` clean; `node scripts/check_notebook_series.mjs` on the 7 math lessons with OpenMAT cells: 7/7.
 
-1. **OpenMAT `reshape` order** (row-major here, column-major in MATLAB). It needs a site-wide check of every `reshape` call before changing.
-2. **Engine fixes found in 7c**, possibly worth doing with the reshape work:
-   - `[a; b]` of two row variables does not stack them into a matrix (gives one flat list); likewise `[P; ones(1, n)]` with a variable `P`. This comes from storing rows and columns as the same flat vector.
-   - Nested indexing `u(springs(s,2))` fails ("'u' is not a function").
-3. Possible new tracks or more Derive it steppers (Gram–Schmidt step, power-iteration ratio) if the owner wants more.
+Possible next steps, if the owner wants more:
+
+1. More Derive it steppers (Gram–Schmidt step, power-iteration ratio).
+2. New tracks.
+3. The one stacking case left: `[r; u; f]` of flat vectors only. OpenMAT stores rows and columns as the same flat vector, so it cannot tell two rows from two columns. Fixing it means tracking orientation through the whole engine.
+4. Run `npm run build` once before committing (last run at the start of the Phase 7 session).
 
 ## How the lab is built
 
@@ -76,10 +77,11 @@ Phase 7 is done except one item:
   - Also fixed on 2026-10-18: the "MATLAB table/file I/O" and other compatibility warnings no longer fire on words inside strings or comments, such as `disp('a table')`.
   - Fixed in Phase 6b: backslash after an indexed matrix (`D(1:2,:)\r(1:2)`); `[Q, R] = qr(X, 0)` now returns the thin factors; `norm(A)` works for non-square matrices; `rank` and `cond` use accurate singular values (one-sided Jacobi), so a badly conditioned matrix no longer reports `cond` = 1 and a singular one reports `Inf`. The `svd` factors themselves are unchanged.
   - Mixed `*` and `\` on one line, such as `2*inv(M)\b`, are not grouped as MATLAB groups them. Use brackets or separate lines.
-  - `reshape` fills row by row, not column by column as MATLAB does: `reshape([1 2 3 4], 2, 2)` gives `[1 2; 3 4]` here and `[1 3; 2 4]` in MATLAB. Only use it to turn a vector into one row or one column until this is fixed.
+  - Fixed in 7d: `reshape` now reads and fills column by column as in MATLAB (`reshape([1 2 3 4], 2, 2)` is `[1 3; 2 4]`), accepts `[]` for one size, and errors when the sizes do not match the element count.
   - Column slices such as `A(:,1:1)` and `reshape(v, 3, 1)` stored in a variable become flat vectors. An outer product works inline (`reshape(u, m, 1)*reshape(v, 1, n)`) or through the SVD form `U(:,1:k)*S(1:k,1:k)*transpose(V(:,1:k))`, which also works for k = 1.
   - Don't name a variable after a built-in function (for example `floor`).
-  - Found in 7c: `[a; b]` of row variables does not stack them; fill rows by index (`C = zeros(3,3); C(1,:) = r;`). Nested indexing `u(springs(s,2))` fails; name the index first (`j = springs(s,2); u(j)`). A bare variable name prints as `ans`; use `disp`. A line holding several statements prints the last one even with a semicolon.
+  - Still true: `[r; u; f]` of flat vectors joins them end to end; fill rows by index (`C = zeros(3,3); C(1,:) = r;`).
+  - Fixed in 7d: a flat row under a matrix of the same width stacks (`[P; ones(1, n)]`); nested indexing works (`u(springs(s,2))`, `u(abs(k))`, `u((k+1))`, `u(idx(end))`); a bare variable name prints under its own name and leaves `ans` alone; `i = 1; j = 3;` on one line prints nothing.
   - Challenge checks: a row built with brackets, such as `[a b c]`, is a 1 × N matrix and needs `expected: [[…]]`; a slice (`W(1,:)`), a backslash result or `zeros(1, n)` filled by index compares as a flat list.
   - A quick probe with `node` and `src/engines/openmat/openmatEngine.js` loads the untracked `packages/openmat/dist`, which may be older than the source the tests use. Treat probe results as a hint and the tests as the answer.
 - **Maths in text** is KaTeX between `$…$`. Inside JS single-quoted strings, backslashes must be doubled (`'$\\lambda$'`), or use the `t` = `String.raw` template. A test renders every snippet.

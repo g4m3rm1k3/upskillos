@@ -542,6 +542,31 @@ export function joinContinuationLines(source: string): string {
   return output
 }
 
+// Rewrites var(...) as var[...] for known variables, matching brackets so that an index may hold
+// another index or a call: u(springs(s,2)), u(abs(k)) and u((k+1)) all work. Inner indexes are
+// rewritten first, so `end` inside them already refers to their own variable.
+function convertIndexing(text: string, variables: Set<string>, functionNames: Set<string>): string {
+  let out = ""
+  for (let i = 0; i < text.length;) {
+    const word = i > 0 && /\w/.test(text[i - 1]) ? null : /^[A-Za-z_]\w*/.exec(text.slice(i))?.[0]
+    if (!word) { out += text[i++]; continue }
+    let open = i + word.length
+    while (open < text.length && /\s/.test(text[open])) open++
+    let close = -1
+    if (text[open] === "(" && variables.has(word) && !functionNames.has(word)) {
+      for (let k = open, depth = 0; k < text.length; k++) {
+        if (text[k] === "(") depth++
+        else if (text[k] === ")" && --depth === 0) { close = k; break }
+      }
+    }
+    const inside = close > 0 ? text.slice(open + 1, close) : ""
+    if (!inside.trim()) { out += word; i += word.length; continue }
+    out += `${word}[${convertIndexing(inside, variables, functionNames).replace(/\bend\b/g, `length(${word})`)}]`
+    i = close + 1
+  }
+  return out
+}
+
 function replaceIndexing(line: string, variables: Set<string>, functionNames = new Set<string>()): string {
   if (variables.size === 0) return line
   const strings: string[] = []
@@ -554,11 +579,7 @@ function replaceIndexing(line: string, variables: Set<string>, functionNames = n
     return variables.has(name) && !functionNames.has(name) && !isTarget ? `colonall(${name})` : match
   })
   // MATLAB () indexing for known variables: var(i) → var[i]
-  result = result.replace(/\b([A-Za-z_]\w*)\s*\(([^()]+)\)/g, (match, name, inner) => {
-    if (!variables.has(name) || functionNames.has(name)) return match
-    const expandedInner = inner.replace(/\bend\b/g, `length(${name})`)
-    return `${name}[${expandedInner}]`
-  })
+  result = convertIndexing(result, variables, functionNames)
   // MATLAB {} cell-array indexing: fields{i} → fields[i]
   result = result.replace(/\b([A-Za-z_]\w*)\s*\{([^{}]+)\}/g, (match, name, inner) => {
     const expandedInner = inner.replace(/\bend\b/g, `length(${name})`)

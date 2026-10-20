@@ -1,6 +1,6 @@
 # Linear Algebra Lab: gentle-curve redesign plan
 
-Drafted 2026-10-17. Status: Phases 1–6 done (2026-10-18); Phase 7 done except the OpenMAT reshape order (7a–7c done 2026-10-18). Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
+Drafted 2026-10-17. Status: Phases 1–7 done (7a–7c 2026-10-18, engine fixes 7d 2026-10-19). Session state and next steps: [linear-algebra-lab-handoff.md](linear-algebra-lab-handoff.md).
 
 ## Goal
 
@@ -153,4 +153,5 @@ N = new lesson, E = existing lesson (reworked where noted).
 7. **Phase 7:** the tracks in the gentle style, more Derive-it steppers, then the Graphics and Engineering tracks. See the handoff.
    - **7a (done 2026-10-18):** all 11 track lessons have a why story, 4–6 case studies and two extra angles. The gentle-curve test now covers every lesson.
    - **7b (done 2026-10-18):** six more Derive-it steppers (determinant area, 2 × 2 inverse, ridge equations, stable log loss, backpropagation, policy value), plus one in the perspective capstone.
-   - **7c (done 2026-10-18):** two new tracks, Graphics and 3D and Engineering, 4 lessons each with 6 practice families per lesson. Left: the OpenMAT `reshape` order and two engine fixes listed in the handoff.
+   - **7c (done 2026-10-18):** two new tracks, Graphics and 3D and Engineering, 4 lessons each with 6 practice families per lesson. 
+   - **7d (done 2026-10-19):** OpenMAT fixes: column-order `reshape`, nested indexing, a row stacked under a matrix, bare names, quiet one-line statements.

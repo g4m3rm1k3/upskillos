@@ -1,8 +1,9 @@
 // Optional track: "Graphics and 3D". Homogeneous coordinates make a slide a matrix; chains of
 // turns and slides place a robot arm; a camera is a change of basis; perspective is a divide by depth.
 // Each lesson carries its own why, notation, quiz, uses and angles.
-// OpenMAT notes: `[a; b]` of two row variables does not stack them, so fill matrix rows by index
-// (C(1,:) = r). A bare variable name prints as `ans`, so demos use disp.
+// OpenMAT note: OpenMAT cannot tell a flat row from a flat column, so `[r; u; f]` of three flat
+// vectors joins them end to end. Fill matrix rows by index (C(1,:) = r). A flat row stacked under
+// a matrix of the same width does work: [P; ones(1, n)].
 const t = String.raw
 const GFX = 'Graphics and 3D'
 
@@ -20,7 +21,7 @@ export const graphicsLessons = [
       'A matrix always sends the origin to the origin: A times the zero vector is zero. A **slide** (a translation) moves every point by the same amount, the origin included. So no 2 × 2 matrix can slide a shape 3 to the right, although that is the most common move in any game.',
       'The trick is to write the point (x, y) as three numbers, (x, y, 1). Then the 3 × 3 matrix T = [1 0 tx; 0 1 ty; 0 0 1] gives T * [x; y; 1] = [x + tx; y + ty; 1]. The extra 1 picks up the slide from the last column. Points written this way are in **homogeneous coordinates**.',
       'Turns and stretches fit too: put the 2 × 2 matrix in the top-left corner and 0 0 1 along the bottom. Now every move is a 3 × 3 matrix, and doing one move after another is multiplying their matrices, as in Stage 2. In T*R*H the matrix next to the points, R, acts first.',
-      'In code, keep a shape\'s corners as the columns of H, with a row of ones underneath: H = ones(3, n); H(1:2,:) = P. Then T*H moves every corner at once, and the top two rows of the result are the new corners. (In OpenMAT, `[P; ones(1, n)]` with a variable P does not stack the rows, so fill them by index.)',
+      'In code, keep a shape\'s corners as the columns of H, with a row of ones underneath: H = ones(3, n); H(1:2,:) = P. Then T*H moves every corner at once, and the top two rows of the result are the new corners. Writing H = [P; ones(1, n)] builds the same matrix in one line.',
       'A direction, such as the way a ship points or its velocity, gets a 0 instead of a 1. Then T * [dx; dy; 0] = [dx; dy; 0]: sliding a ship does not change which way it faces, but turning it does. The last entry tells points and directions apart.',
     ],
     procedure: ['Write each point as (x, y, 1), and keep a shape\'s corners as the columns of H.', 'Build the slide T = [1 0 tx; 0 1 ty; 0 0 1], or put a 2 × 2 turn in the top-left corner of a 3 × 3 identity.', 'Multiply, with the first move nearest H, and read the new corners from the top two rows.'],

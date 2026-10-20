@@ -534,3 +534,33 @@ describe('executeScript — MATLAB compatibility fixes', () => {
     expect(executeScript('t = norm([1 0; 1 1; 1 2; 1 3]);').workspace.find((w: any) => w.name === 't')?.value).toBeCloseTo(Math.sqrt(9 + Math.sqrt(61)), 12)
   })
 })
+
+describe('MATLAB behaviour fixed in the Linear Algebra Lab Phase 7 session', () => {
+  const value = (r: any, name: string) => r.workspace.find((w: any) => w.name === name)?.value
+  it('reshape reads and fills column by column, accepts [] for one size, and rejects a wrong count', () => {
+    const r = executeScript('R = reshape([1 2 3 4 5 6], 2, 3);\nA = [1 2 3; 4 5 6];\nB = reshape(A, 3, 2);\nc = reshape(A, [], 1);\nrow = reshape([1 2 3], 1, 3);')
+    expect(value(r, 'R')).toEqual([[1, 3, 5], [2, 4, 6]])
+    expect(value(r, 'B')).toEqual([[1, 5], [4, 3], [2, 6]])
+    expect(value(r, 'c')).toEqual([1, 4, 2, 5, 3, 6])
+    expect(value(r, 'row')).toEqual([[1, 2, 3]])
+    expect(() => executeScript('B = reshape([1 2 3], 2, 2);')).toThrow(/reshape needs 3 elements/)
+  })
+  it('indexes inside an index, a call or extra brackets, with end referring to the right variable', () => {
+    const r = executeScript('springs = [1 2; 2 3];\nu = [10 20 30];\ns = 2;\nk = 1;\nidx = [1 3];\na = u(springs(s,2));\nb = u(abs(-2));\nc = u((k+1));\nd = u(idx(end));\ne = u(end);')
+    expect([value(r, 'a'), value(r, 'b'), value(r, 'c'), value(r, 'd'), value(r, 'e')]).toEqual([30, 20, 20, 30, 30])
+  })
+  it('stacks a flat row under a matrix of the same width, and still joins flat vectors end to end', () => {
+    const r = executeScript('P = [0 1 1; 0 0 1];\nH = [P; ones(1, 3)];\nC = [1 0 0; 0 1 0];\nrr = [0 0 1];\nD = [C; rr];\nu = [1; 2];\nv = [3; 4];\nw = [u; v];')
+    expect(value(r, 'H')).toEqual([[0, 1, 1], [0, 0, 1], [1, 1, 1]])
+    expect(value(r, 'D')).toEqual([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+    expect(value(r, 'w')).toEqual([1, 2, 3, 4])
+  })
+  it('shows a bare variable under its own name and keeps statements on one line quiet', () => {
+    const bare = executeScript('x = 5;\nx')
+    expect(bare.output).toBe('x =\n5')
+    expect(bare.workspace.some((w: any) => w.name === 'ans')).toBe(false)
+    const quiet = executeScript('i = 1; j = 3; k = 5;')
+    expect(quiet.output).toBe('No output.')
+    expect(executeScript('i = 1; j = 3; k = 5').output).toContain('k =')
+  })
+})

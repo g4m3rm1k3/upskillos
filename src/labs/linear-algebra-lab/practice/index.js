@@ -10,6 +10,7 @@ import { svdPractice } from './svd.js'
 import { bestFitPractice } from './bestfit.js'
 import { graphicsPractice } from './graphics.js'
 import { engineeringPractice } from './engineering.js'
+import { circuitsPractice } from './circuits.js'
 import { seededRandom } from './helpers.js'
 
 // Sets for the same lesson are concatenated, so later files can add families to an existing lesson.
@@ -18,7 +19,7 @@ function mergeSets(...sets) {
   for (const set of sets) for (const [id, families] of Object.entries(set)) merged[id] = [...(merged[id] ?? []), ...families]
   return merged
 }
-export const PROBLEM_SETS = mergeSets(foundationsPractice, corePractice, applicationsPractice, theoryPractice, stage1Practice, stage2Practice, calculusPractice, eigenPractice, svdPractice, bestFitPractice, graphicsPractice, engineeringPractice)
+export const PROBLEM_SETS = mergeSets(foundationsPractice, corePractice, applicationsPractice, theoryPractice, stage1Practice, stage2Practice, calculusPractice, eigenPractice, svdPractice, bestFitPractice, graphicsPractice, engineeringPractice, circuitsPractice)
 export const PROBLEM_VERSION = 1
 export const problemsFor = lesson => PROBLEM_SETS[typeof lesson === 'string' ? lesson : lesson.id] || []
 export const familyKey = (lessonId, problemId) => `${lessonId}/${problemId}`

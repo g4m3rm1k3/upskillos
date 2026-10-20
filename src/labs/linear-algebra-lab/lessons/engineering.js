@@ -2,8 +2,8 @@
 // spring is the direct stiffness method; the same assembly on a heated wire is the finite element
 // method; the capstone turns displacements into support forces and a design check.
 // Each lesson carries its own why, notation, quiz, uses and angles.
-// OpenMAT notes: name an index before using it inside another index (j = springs(s,2); u(j)), and
-// keep one statement per line inside loops.
+// Loops name each spring's joints first (i = springs(s,1); j = springs(s,2)) because it reads
+// more clearly; u(springs(s,2)) also works.
 const t = String.raw
 const ENG = 'Engineering'
 
@@ -84,7 +84,7 @@ tension = [k(1)*u(1) k(2)*(u(2)-u(1)) k(3)*(u(3)-u(2)) -k(4)*u(3)];`,
       'Every spring has the same small pattern, only placed at different joints. So start with an all-zero K, one row and column per joint, walls included. For each spring, add k to K(i,i) and K(j,j), and subtract k from K(i,j) and K(j,i). That is the whole assembly. A branched network needs nothing new: a joint touched by three springs simply collects three contributions.',
       'The full K cannot be solved yet. Each row adds up to zero, so sliding every joint by the same amount gives K * u = 0: the whole structure can drift away, and K is singular. The walls stop that. Their movement is known (zero), so keep only the rows and columns of the free joints: Kf = K(free, free), and solve Kf * uf = f.',
       'Check with the chain of the previous lesson. Joints 1 and 4 are walls; springs join 1–2, 2–3 and 3–4. Assembling and keeping joints 2 and 3 gives [k1+k2, −k2; −k2, k2+k3] again. The recipe found the same equations without anyone writing a force balance.',
-      'In code, name each spring\'s joints before using them: i = springs(s,1); j = springs(s,2). Writing u(springs(s,2)) in one go does not work in OpenMAT.',
+      'In code, name each spring\'s joints before using them: i = springs(s,1); j = springs(s,2). Writing u(springs(s,2)) in one go also works, but the names make the loop easier to read and to check.',
     ],
     procedure: ['List the springs as pairs of joints, walls included, with their stiffnesses.', 'Start from K = zeros(n,n); for each spring add k at (i,i) and (j,j) and subtract it at (i,j) and (j,i).', 'Keep the free rows and columns, Kf = K(free, free), and solve Kf*uf = f.'],
     prediction: { question: 'What is K*ones(n,1) for an assembled K, before any wall is removed?', answer: 'The zero vector. Moving every joint by the same amount stretches no spring, so no force is needed. That is why the full K is singular and the supports must be removed before solving.' },

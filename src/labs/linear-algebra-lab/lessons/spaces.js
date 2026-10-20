@@ -321,6 +321,17 @@ axis equal`,
       'The numbers removed along the way record how to rebuild the originals. a₁ = ‖a₁‖·q₁, and a₂ = (q₁·a₂)·q₁ + ‖v₂‖·q₂. Collected in an upper-triangular matrix R, this says A = Q·R, where Q has columns q₁ and q₂. The `qr` function computes the same factors, possibly with some signs flipped.',
       'Gram–Schmidt needs independent inputs. If a₂ were a multiple of a₁, then v₂ would be zero and could not be normalised. With nearly dependent inputs, roundoff spoils the perpendicularity; library QR uses more careful steps for that reason. The next lesson puts Q and R to work on a best fit.',
     ],
+    derive: {
+      claim: String.raw`Find the number $c$ that makes $\mathbf v_2 = \mathbf a_2 - c\,\mathbf q_1$ perpendicular to $\mathbf q_1$, without being told the formula. Then use it on $\mathbf a_1 = [3;\,1]$ and $\mathbf a_2 = [2;\,2]$.`,
+      given: String.raw`$\mathbf q_1$ is a unit vector, so $\mathbf q_1\cdot\mathbf q_1 = 1$. Two vectors are perpendicular when their dot product is 0.`,
+      steps: [
+        { ask: String.raw`Which equation says that $\mathbf v_2$ is perpendicular to $\mathbf q_1$?`, options: [String.raw`$\mathbf q_1\cdot(\mathbf a_2 - c\,\mathbf q_1) = 0$`, String.raw`$\mathbf a_2 - c\,\mathbf q_1 = \mathbf 0$`, String.raw`$\|\mathbf a_2 - c\,\mathbf q_1\| = 1$`], answer: 0, why: String.raw`Perpendicular means a zero dot product. Asking for $\mathbf v_2 = \mathbf 0$ would throw away the new direction altogether.` },
+        { ask: 'Distribute the dot product. What do you get?', options: [String.raw`$\mathbf q_1\cdot\mathbf a_2 - c\,(\mathbf q_1\cdot\mathbf q_1) = 0$`, String.raw`$\mathbf q_1\cdot\mathbf a_2 - c = 1$`, String.raw`$c\,(\mathbf q_1\cdot\mathbf a_2) = 0$`], answer: 0, why: String.raw`The dot product splits over subtraction, and the number $c$ comes outside.` },
+        { ask: 'Use the given fact. What is c?', options: [String.raw`$c = \mathbf q_1\cdot\mathbf a_2$`, String.raw`$c = \|\mathbf a_2\|$`, String.raw`$c = 1$`], answer: 0, why: String.raw`With $\mathbf q_1\cdot\mathbf q_1 = 1$ the equation reads $\mathbf q_1\cdot\mathbf a_2 - c = 0$.` },
+        { ask: String.raw`Now the numbers. $\mathbf q_1 = [3;\,1]/\sqrt{10}$, so $c = 8/\sqrt{10}$ and $c\,\mathbf q_1 = 0.8\,[3;\,1]$. What is $\mathbf v_2$?`, options: [String.raw`$[-0.4;\,1.2]$`, String.raw`$[2.4;\,0.8]$`, String.raw`$[-1;\,1]$`], answer: 0, why: String.raw`$[2;\,2] - [2.4;\,0.8] = [-0.4;\,1.2]$. Check: $3(-0.4) + 1(1.2) = 0$, so it is perpendicular to $\mathbf a_1$. $[2.4;\,0.8]$ is the part that was removed.` },
+      ],
+      conclusion: String.raw`The amount to remove is $c = \mathbf q_1\cdot\mathbf a_2$: the projection coefficient, and the entry $R(1,2)$. Had $\mathbf q_1$ not been a unit vector, the same steps would give $c = (\mathbf q_1\cdot\mathbf a_2)/(\mathbf q_1\cdot\mathbf q_1)$, the projection formula from earlier. Normalising first is what makes the formula short.`,
+    },
     procedure: ['Normalise the first vector: q₁ = a₁/norm(a₁).', 'For each next vector, subtract its projection onto every earlier q, then normalise what remains.', 'Record the removed coefficients and the lengths in an upper-triangular R, so that A = Q*R.'],
     prediction: { question: 'If a₂ were already perpendicular to a₁, what would Gram–Schmidt do to it?', answer: 'Nothing except normalise it: its projection onto q₁ is zero, so v₂ = a₂ and q₂ = a₂/‖a₂‖. The entry R(1,2) would be 0.' },
     demo: {
