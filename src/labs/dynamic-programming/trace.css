@@ -981,3 +981,8 @@
   background: var(--dp-panel);
   color: var(--dp-text);
 }
+
+/* Check yourself (Checks.jsx): space between what you need to know and the question. */
+.dp-lab .dp-checks-know {
+  margin-bottom: 14px;
+}

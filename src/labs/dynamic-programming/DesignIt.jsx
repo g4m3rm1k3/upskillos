@@ -11,7 +11,7 @@ import { readProgress, saveProgress } from './progress.js'
 const LABEL = Object.fromEntries(KINDS)
 const same = (a, b) => a === b || (typeof a === 'number' && typeof b === 'number' && Math.abs(a - b) < 1e-9)
 
-function NumberCheck({ spec, label, onSolved, onShown, diagnoseGuess }) {
+export function NumberCheck({ spec, label, onSolved, onShown, diagnoseGuess }) {
   const [text, setText] = useState('')
   const [state, setState] = useState(null)
   const [misses, setMisses] = useState(0)
@@ -51,7 +51,7 @@ function NumberCheck({ spec, label, onSolved, onShown, diagnoseGuess }) {
   )
 }
 
-function Decision({ step, order, onRight }) {
+export function Decision({ step, order, onRight }) {
   const [tried, setTried] = useState([])
   const right = step.options.findIndex(o => o.right)
   const solved = tried.includes(right)

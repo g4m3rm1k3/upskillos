@@ -3,7 +3,7 @@
 // to its walkthrough, plays the table and the tree, fills one cell by typing, tries the fill-order
 // game, walks the answer back where it can, and saves a screenshot of each. Every lesson with "Design it yourself" is designed start to
 // finish, with one wrong pick per decision. Every bug hunt is played in real Python: run the bug, click a
-// right line, click the bug, type the fix, pass. `--only` takes lesson ids, plus `design`, `hunt` and `run`. Any page error, console error or missing piece is reported.
+// right line, click the bug, type the fix, pass. Every lesson's "Check yourself" is played with one mistake per check. `--only` takes lesson ids, plus `design`, `checks`, `hunt` and `run`. Any page error, console error or missing piece is reported.
 //
 //   node src/labs/dynamic-programming/tools/browser-check.mjs [out-folder] [--only id1,id2]
 import { chromium } from 'playwright'
@@ -16,6 +16,7 @@ import { TREE_FOR } from '../trees.js'
 import { DESIGNS, applyCell } from '../lessons/designs.js'
 import { WALKS } from '../walks.js'
 import { BUG_HUNTS, bugLines, buggyCode, show } from '../hunt.js'
+import { CHECKS } from '../lessons/checks.js'
 
 const args = process.argv.slice(2)
 const onlyArg = args.includes('--only') ? args[args.indexOf('--only') + 1] : null
@@ -123,6 +124,39 @@ try {
     const overflow = await page.evaluate(() => { const m = document.querySelector('.dp-detail'); return m.scrollWidth > m.clientWidth + 2 })
     if (overflow) problems.push(`${id}: the design stage scrolls sideways`)
     console.log(`${id} design: ok`)
+  }
+  // Check yourself: every check, with one mistake first (a wrong option, or a misconception typed).
+  for (const [id, checks] of Object.entries(CHECKS).filter(([id]) => wanted('checks') || (onlyArg && wanted(id)))) {
+    const title = CONCEPTS.find(c => c.id === id).title
+    await openConcept(title)
+    await page.getByRole('button', { name: /Check yourself/ }).click()
+    const cy = page.getByRole('region', { name: 'Check yourself' })
+    if (await cy.getByRole('button', { name: 'Do them again' }).isVisible().catch(() => false)) await cy.getByRole('button', { name: 'Do them again' }).click()
+    for (const [k, c] of checks.entries()) {
+      await cy.getByText(c.know, { exact: true }).waitFor({ timeout: 5000 })
+      if (c.options) {
+        await cy.getByRole('button', { name: c.options.find(o => !o.right).text, exact: true }).click()
+        await cy.locator('.dp-tt-feedback.is-bad').waitFor({ timeout: 5000 }).catch(() => problems.push(`${id} check ${k + 1}: a wrong pick got no reason`))
+        await cy.getByRole('button', { name: c.options.find(o => o.right).text, exact: true }).click()
+      } else if (c.kind === 'yesno') {
+        await cy.getByRole('button', { name: c.answer ? 'No' : 'Yes', exact: true }).click()
+        await cy.locator('.dp-tt-feedback.is-bad').waitFor({ timeout: 5000 }).catch(() => problems.push(`${id} check ${k + 1}: a wrong answer got no feedback`))
+        await cy.getByRole('button', { name: c.answer ? 'Yes' : 'No', exact: true }).click()
+      } else {
+        await cy.getByRole('textbox').fill(String(c.misconceptions[0].answer))
+        await cy.getByRole('button', { name: 'Check', exact: true }).click()
+        const said = await cy.locator('.dp-tt-feedback.is-bad').textContent({ timeout: 5000 }).catch(() => '')
+        if (!said.includes(c.misconceptions[0].feedback)) problems.push(`${id} check ${k + 1}: the misconception was not named`)
+        await cy.getByRole('textbox').fill(String(c.answer))
+        await cy.getByRole('button', { name: 'Check', exact: true }).click()
+      }
+      await cy.locator('.dp-tt-feedback.is-good').waitFor({ timeout: 5000 })
+      if (k === 0) await cy.screenshot({ path: path.join(out, `${id}-checks.png`) })
+      await cy.getByRole('button', { name: k + 1 < checks.length ? 'Next check →' : 'Finish →' }).click()
+    }
+    await cy.getByText(/checks done/).waitFor({ timeout: 5000 }).catch(() => problems.push(`${id}: the checks did not finish`))
+    if (!(await page.getByRole('button', { name: /Check yourself ✓/ }).isVisible().catch(() => false))) problems.push(`${id}: the Check yourself stage is not marked done`)
+    console.log(`${id} checks: ok`)
   }
   // Bug hunts, in Python (each Run starts real Pyodide): the bug shows, a right line says why it is
   // right, the bug line is accepted, the fix passes, and the stage is marked.

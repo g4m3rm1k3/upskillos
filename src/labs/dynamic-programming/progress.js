@@ -1,7 +1,7 @@
 // Progress for every DP lesson, in one localStorage key so the app's sign-in sync (SYNC_KEYS in
 // src/context/AuthContext.jsx) backs it up to the user's account; mergeDpLab in
 // src/context/progressMigration.ts merges two devices without ever un-solving a lesson.
-// Shape: { [lessonId]: { revision, Python?, JavaScript?, quiz?, design?, hunt? } }.
+// Shape: { [lessonId]: { revision, Python?, JavaScript?, quiz?, design?, hunt?, checks? } }.
 export const STORE = 'oc-dp-lab'
 // Before 2026-10-17 each lesson had its own key; those are moved into STORE the first time they are read.
 export const progressKey = id => `upskillos.dp.v1.${id}`
@@ -19,6 +19,7 @@ export function cleanRecord(data, revision) {
   }
   if (data.quiz && typeof data.quiz.answer === 'string') clean.quiz = { answer: data.quiz.answer, passed: data.quiz.passed === true }
   if (data.hunt && typeof data.hunt === 'object') clean.hunt = cleanHunt(data.hunt)
+  if (data.checks?.done === true) clean.checks = { done: true, total: Number.isInteger(data.checks.total) ? Math.max(0, data.checks.total) : 0, firstTry: Number.isInteger(data.checks.firstTry) ? Math.max(0, data.checks.firstTry) : 0 }
   if (data.design?.done === true) clean.design = { done: true, misses: Number.isInteger(data.design.misses) ? Math.max(0, data.design.misses) : 0, assisted: data.design.assisted === true }
   return clean
 }

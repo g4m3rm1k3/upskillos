@@ -18,6 +18,8 @@ import Hunt from './Hunt.jsx'
 import { BUG_HUNTS } from './hunt.js'
 import Explained from './Explained.jsx'
 import { EXPLAINED } from './explain.js'
+import Checks from './Checks.jsx'
+import { CHECKS } from './lessons/checks.js'
 
 const short = value => {
   const text = JSON.stringify(value)
@@ -47,6 +49,8 @@ export default function Lesson({
         ['solve', hasChallenge ? '03 · Solve a problem' : '03 · Check understanding'],
         ...(hunt ? [['hunt', `04 · Bug hunt${readProgress(lesson.id, lesson.revision).hunt?.passed ? ' ✓' : ''}`]] : []),
       ]
+  const checks = isRecursion ? null : CHECKS[lesson.id]
+  if (checks) stages.push(['checks', `${String(stages.length - (design ? 1 : 0) + 1).padStart(2, '0')} · Check yourself${readProgress(lesson.id, lesson.revision).checks?.done ? ' ✓' : ''}`])
 
   // The stage is remembered for this tab, so returning from CodeLens reopens the challenge.
   const stageKey = `dp-lab.stage.${lesson.id}`
@@ -305,6 +309,9 @@ export default function Lesson({
       )}
 
       {/* BUG HUNT: a solution with one classic DP bug */}
+      {stage === 'checks' && checks && (
+        <Checks key={lesson.id} id={lesson.id} checks={checks} revision={lesson.revision} onProgress={onProgress} />
+      )}
       {stage === 'hunt' && hunt && (
         <Hunt
           key={lesson.id}
