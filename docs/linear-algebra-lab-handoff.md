@@ -16,8 +16,14 @@ Start every Linear Algebra Lab session by reading this file, then the phase you 
 - **One heavy run at a time.** Never overlap vitest runs, builds or the browser check.
 - Plain language in replies. Make technical decisions without asking.
 
-## State of the project (2026-10-18, Phase 7a–7c)
+## State of the project (2026-10-19, Phase 8)
 
+- **Phase 8 (2026-10-19), NOT committed** (the owner pushed Phase 7 and 7d to main mid-session; everything below this bullet up to "Size" is from Phase 7 and is now pushed):
+  - Two new optional tracks, in `STAGES` between Engineering and Decisions: **Circuits** (`lessons/circuits.js`, `practice/circuits.js`: Kirchhoff and G·v = I, the incidence matrix G = AᵀCA with a Derive it, capacitors and backward Euler, capstone sensor bridge with a voltage source as a known node and a power check) and **Physics** (`lessons/physics.js`, `practice/physics.js`: ray-transfer matrices with a Derive it of the lens equation, Lorentz boosts with a Derive it of velocity addition, particle in a box as eig of the second-difference matrix, capstone double well and tunnelling). Wired in `curriculum.js` and `practice/index.js`.
+  - Derive it added to `laml-gram-schmidt` (find c so a₂ − c·q₁ ⊥ q₁; `spaces.js`) and `laml-markov-state-vectors` (gap to steady state shrinks by λ₂ = 0.7 a night, the power-iteration ratio; `eigen.js`).
+  - Size now 84 lessons in 16 modules. Checks: full suite 801 passed; browser (light) transient and bridge demos, (dark) optics and double-well demos, no page errors. `npm run build` passed at the start of this session (before Phase 8).
+  - Engine facts learned: `eig` returns eigenvalues smallest first (even when the diagonal is not ordered); two-output `[s, idx] = sort(d)` prints nothing (avoid); `cosh`, `sinh`, `tanh`, `diag(row)`, `1./R` work. Physics double-well expected values came from an independent Jacobi solver (scratchpad `phys.mjs`), matching the engine.
+  - To print engine output in a probe, write a temporary `*.test.js` in the lab folder that `writeFileSync`s `executeScript(...).output` to the scratchpad (console output is hidden), then delete it.
 - **Committed:** Phases 1–6d (the tree was clean at the start of the Phase 7 session).
 - **Done but NOT committed:** Phases 7a, 7b and 7c. Files in `src/labs/linear-algebra-lab/`:
   - New: `lessons/graphics.js`, `lessons/engineering.js`, `practice/graphics.js`, `practice/engineering.js`.
@@ -41,12 +47,11 @@ Start every Linear Algebra Lab session by reading this file, then the phase you 
 
 Phase 7 is done, engine fixes included (7d, 2026-10-19, NOT committed). 7d changed `packages/openmat/src/stats.ts` (reshape), `transpiler.ts` (nested indexing), `engine.ts` (row stacking, bare names, one-line statements) and added a describe block at the end of `packages/openmat/src/__tests__/engine.test.ts`. Checks after 7d: engine tests 76 passed; every OpenMAT-using suite (this lab, ML lab kit and lesson flow, spreadsheet translator, Math OS, engines) 1065 passed; `npm run typecheck` clean; `node scripts/check_notebook_series.mjs` on the 7 math lessons with OpenMAT cells: 7/7.
 
-Possible next steps, if the owner wants more:
+Phase 8 (Circuits and Physics tracks, two more Derive it) is done; see the state above. The owner has three unfinished labs (this one, Dynamic Programming, Data Science) and wants each session to make as much progress as possible, so this lab can be considered complete enough to switch to the others. Possible next steps here, if the owner wants more:
 
-1. More Derive it steppers (Gram–Schmidt step, power-iteration ratio).
-2. New tracks.
+1. Run `npm run build` before committing Phase 8.
+2. More tracks (for example Statistics, or Signals with real-only DFT as a matrix), or Derive it on more track lessons.
 3. The one stacking case left: `[r; u; f]` of flat vectors only. OpenMAT stores rows and columns as the same flat vector, so it cannot tell two rows from two columns. Fixing it means tracking orientation through the whole engine.
-4. Run `npm run build` once before committing (last run at the start of the Phase 7 session).
 
 ## How the lab is built
 

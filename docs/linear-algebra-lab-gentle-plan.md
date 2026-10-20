@@ -155,3 +155,4 @@ N = new lesson, E = existing lesson (reworked where noted).
    - **7b (done 2026-10-18):** six more Derive-it steppers (determinant area, 2 × 2 inverse, ridge equations, stable log loss, backpropagation, policy value), plus one in the perspective capstone.
    - **7c (done 2026-10-18):** two new tracks, Graphics and 3D and Engineering, 4 lessons each with 6 practice families per lesson. 
    - **7d (done 2026-10-19):** OpenMAT fixes: column-order `reshape`, nested indexing, a row stacked under a matrix, bare names, quiet one-line statements.
+   - **8 (done 2026-10-19, not committed):** two more tracks, Circuits and Physics, 4 lessons each with 6 practice families per lesson; Derive it on Gram–Schmidt and the Markov chain lesson. Every phase of this plan is now built.
