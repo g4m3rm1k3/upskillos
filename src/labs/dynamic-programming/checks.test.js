@@ -41,6 +41,15 @@ const CLAIMS = [
   ['decode-ways', ['12'], 2],
   ['word-break', ['abcd', ['abc', 'ab', 'cd']], true],
   ['word-break-count', ['aaaaaa', ['a', 'aa']], 13],
+  ['grid-paths', [3, 3], 13],
+  ['obstacle-paths', [[[0, 0, 0], [0, 0, 0], [0, 0, 0]]], 6],
+  ['min-grid-path', [[[1, 1, 1], [1, 1, 1]]], [4, 3]],
+  ['min-grid-path', [[[1, 3, 1], [1, 5, 1], [4, 2, 1]]], [7, 1]],
+  ['triangle-path', [[[2], [9, 9]]], 11],
+  ['triangle-path', [[[9], [9, 1]]], 10],
+  ['grid-resources', [[[0, 1, 0], [1, 0, 1], [0, 1, 0]], 2], 6],
+  ['grid-direction', [[[0, 1, 1], [1, 1, 1]], 3], 6],
+  ['grid-multiagent', [[[1, 0, 1]]], 2],
 ]
 
 const entries = Object.entries(CHECKS).flatMap(([id, checks]) => checks.map((c, k) => [id, c, k]))
