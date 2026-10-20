@@ -7,7 +7,11 @@ import { PART5 } from './part5.js'
 import { PART6 } from './part6.js'
 import { PART7 } from './part7.js'
 import { PART8 } from './part8.js'
+import { PART9 } from './part9.js'
+import { PART10 } from './part10.js'
+import { PART11 } from './part11.js'
+import { PART12 } from './part12.js'
 
-export const PARTS = [PART1, PART2, PART3, PART4, PART5, PART6, PART7, PART8]
+export const PARTS = [PART1, PART2, PART3, PART4, PART5, PART6, PART7, PART8, PART9, PART10, PART11, PART12]
 export const LESSONS = PARTS.flatMap(part => part.lessons.map(lesson => ({ ...lesson, part })))
 export const lessonById = id => LESSONS.find(l => l.id === id)

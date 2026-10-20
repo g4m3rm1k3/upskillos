@@ -12,6 +12,12 @@ import * as P from './patterns.js'
 import * as M from './samples.js'
 import * as Q from './significance.js'
 import * as F from './models.js'
+import * as W from './forecasting.js'
+import * as B from './database.js'
+import * as L from './mlData.js'
+import * as Y from './story.js'
+import { MESSAGES } from '../../nlp-studio/engine/data.js'
+import { SHOP_TABLES, typedRows } from './sqlRun.js'
 
 function close(got, want, where = '') {
   if (typeof want === 'number') {
@@ -316,5 +322,87 @@ describe('Parts 7 and 8 give the same answers as the Python', () => {
     close([[-2, 0, 3].map(F.sigmoid), F.logLoss([1, 0, 1], [0.9, 0.2, 0.6])], [p8.sigmoid, p8.log_loss], 'sigmoid, log loss')
     close(F.logisticFit(LX, LY, 1, 200), p8.logistic, 'logistic')
     close([F.thresholdAccuracy(deliveries.map(r => Number(r.days)), LY), F.thresholdAccuracy([1, 2, 3], [1, 0, 1])], p8.threshold, 'threshold')
+  })
+
+  const p9 = parity.part9, dates = days.map(r => r.date), VI = days.map(r => r.visits)
+  it('dates, resampling, moving averages, decomposition and autocorrelation', () => {
+    expect(['2025-01-01', '2025-01-05', '2025-01-06', '2025-12-31'].map(W.weekOf)).toEqual(p9.week_of)
+    close([W.resample(dates, RI, 'month'), W.resample(dates.slice(0, 20), RI.slice(0, 20), 'week')], p9.resample, 'resample')
+    close([W.movingAverageSlow(RI, 7).slice(0, 20), W.movingAverage(RI, 7), W.movingAverage([1, 2, 3, 4], 2)], p9.moving, 'moving')
+    close(W.centredAverage(RI.slice(0, 30), 7), p9.centred, 'centred')
+    close(W.decompose(RI, 7), p9.decompose, 'decompose')
+    close(W.difference(RI.slice(0, 20), 7), p9.difference, 'difference')
+    close([W.acf(RI, 14), W.acf(VI, 3), W.autocorrelation([1, 2, 3, 4, 5], 1)], p9.acf, 'acf')
+  })
+  it('naive forecasts, scores, smoothing, Holt, Holt–Winters and walk-forward splits', () => {
+    close([W.naiveForecasts(RI.slice(0, 10)), W.seasonalNaive(RI.slice(0, 10), 7), W.meanForecasts(RI.slice(0, 10))], p9.naive, 'naive')
+    const pairs = W.scored(RI, W.seasonalNaive(RI, 7))
+    close([W.mae(pairs), W.rmseOf(pairs), W.mape(pairs)], p9.scores, 'scores')
+    close([W.exponentialSmoothing(RI, 0.1), W.smoothingWeights(0.3, 6), W.bestAlpha(RI, [0.05, 0.1, 0.3, 0.5])], p9.smoothing, 'smoothing')
+    close([W.holt(RI, 0.3, 0.1), W.holtAhead(RI.slice(0, 200), 0.5, 0.3, 8)], p9.holt, 'holt')
+    close([W.holtWinters(RI, 0.1, 0.01, 0.2, 7), W.holtWinters(RI, 0.1, 0.01, 0.2, 7, 7)], p9.holt_winters, 'holt winters')
+    expect(W.walkForward(10, 7, 2)).toEqual(p9.walk_forward)
+    close(W.weekdayProfile(dates, RI), p9.profile, 'profile')
+  })
+
+  const p10 = parity.part10, SHOP = SHOP_TABLES(), TO = typedRows(SHOP.orders), TD = typedRows(SHOP.days)
+  const shop4 = { orders: SHOP.orders, catalogue: SHOP.catalogue, returns: SHOP.returns, days: SHOP.days }
+  it('column types, tables, projection, selection with NULL, aggregates and groups (and SQLite agrees)', () => {
+    expect([['1', '', '3'], ['1', '2.5'], ['x', '1'], ['', ''], ['25.00', '2500']].map(B.columnType)).toEqual(p10.types)
+    expect(Object.entries(shop4).map(([n, t]) => B.createSql(n, t[0], t.slice(1)))).toEqual(p10.create)
+    expect([B.project(TO.slice(0, 6), ['town', 'item']), B.project(TO, ['channel'], true)]).toEqual(p10.project)
+    expect([B.where(TO, 'price', 'is null').length, B.where(TO, 'price', '=', null).length, B.where(TO, 'price', '>', 1000).map(r => r.order_id)]).toEqual(p10.where)
+    close([...['count_all', 'count', 'sum', 'avg', 'min', 'max'].map(h => B.aggregate([1, null, 3], h)), B.aggregate([null], 'sum')], p10.aggregate, 'aggregate')
+    const groups = ['count_all', 'count', 'avg'].map(h => B.groupAggregate(TO, 'item', 'price', h))
+    close(groups, p10.group, 'group')
+    close(groups, p10.group_sql, 'group against SQLite')
+  })
+  it('the index and binary search, B-tree levels, windows, ranks, dependencies, normalising, the transaction', () => {
+    const idx = B.buildIndex(TO, 'order_id')
+    expect([idx.slice(0, 5), B.binarySearch(idx, 'A1100'), B.binarySearch(idx, 'A1018'), B.binarySearch(idx, 'Z')]).toEqual(p10.index)
+    expect([[402, 100], [1e6, 100], [1e9, 100], [1e6, 2], [1, 100]].map(([n, f]) => B.btreeLevels(n, f))).toEqual(p10.btree)
+    close(B.windowAverage(TD.map(r => r.riders), 6).slice(0, 20), p10.window[0], 'window')
+    close(B.windowAverage(TD.map(r => r.riders), 6).slice(0, 20), p10.window[1].map(r => r[0]), 'window against SQLite')
+    expect(B.rankWithin([{ g: 'a', v: 3 }, { g: 'a', v: 5 }, { g: 'b', v: 1 }, { g: 'a', v: 5 }], 'g', 'v')).toEqual(p10.rank)
+    expect([B.determines(TO, 'order_id', 'item'), B.determines(TO, 'item', 'channel')]).toEqual(p10.determines)
+    expect(B.splitOut([{ id: 1, item: 'Lock', cat: 'kit' }, { id: 2, item: 'Bike', cat: 'bikes' }, { id: 3, item: 'Lock', cat: 'kit' }], 'item', ['cat'])).toEqual(p10.split)
+    const monthly = B.monthlyRevenue(TO)
+    close([monthly, monthly, monthly], p10.monthly, 'monthly revenue: by hand, pandas, SQLite')
+    expect([B.placeOrders({ Bike: 3, Helmet: 5 }, [['Bike', 2], ['Helmet', 1]]), B.placeOrders({ Bike: 3, Helmet: 5 }, [['Bike', 2], ['Bike', 2]]), B.placeOrders({ Lock: 1 }, [['Pump', 4]])]).toEqual(p10.orders)
+  })
+
+  const p11 = parity.part11, msgTokens = MESSAGES.map(([text]) => L.tokens(text)), msgLabels = MESSAGES.map(([, lab]) => (lab === 'spam' ? 1 : 0))
+  it('date features, the circle, target encoding in and out of fold, hashing, tokens and TF-IDF', () => {
+    expect(['2025-01-01', '2025-06-07', '2025-12-31'].map(L.dateFeatures)).toEqual(p11.dates)
+    close([[0, 365], [364, 365], [91, 365], [6, 12]].map(([v, p]) => L.cyclical(v, p)), p11.cyclical, 'cyclical')
+    close([0, 2].map(m => L.targetMeans(['a', 'b', 'a', 'c'], [1, 0, 0, 1], m)), p11.target, 'target')
+    close(L.outOfFoldEncode(days.slice(0, 40).map(r => r.date), days.slice(0, 40).map(r => (r.riders > 600 ? 1 : 0)), F.kFolds(40, 4, 3), 1), p11.oof, 'out of fold')
+    expect(['', 'a', 'bike', 'Café', 'free prize'].map(L.fnv1a)).toEqual(p11.fnv)
+    expect([L.featureHash(msgTokens[0], 8), L.featureHash(msgTokens[5], 64)]).toEqual(p11.hash)
+    expect([...msgTokens.slice(0, 6), L.tokens("Don't  stop--now, 2 bikes!")]).toEqual(p11.tokens)
+    close(L.tfIdf(msgTokens.slice(0, 8)), p11.tf_idf, 'tf-idf')
+  })
+  it('scaling, nearest neighbours, the confusion matrix and its scores, stratified folds', () => {
+    const sc = L.fitScaler([[1, 10], [2, 30], [3, 20], [4, 20]])
+    close([sc, L.scale([[1, 10], [5, 0]], sc)], [p11.scaler, p11.scale], 'scaler')
+    close([...[1, 2, 3].map(k => L.knnPredict([[0, 0], [1, 0], [0, 1], [5, 5]], [1, 2, 3, 10], [0.2, 0.1], k)), L.knnPredict(days.slice(0, 300).map(r => [r.high_c, r.rain_mm]), RI.slice(0, 300), [20, 0], 10)], p11.knn, 'knn')
+    close([L.confusion([1, 0, 1, 1, 0], [1, 1, 0, 1, 0]), L.precisionRecallF1([[2, 1], [1, 1]]), L.precisionRecallF1([[0, 3], [0, 5]])], p11.confusion, 'confusion')
+    expect([L.stratifiedFolds(msgLabels, 5, 1), L.stratifiedFolds([1, 0, 0, 0, 1, 0, 0, 0, 0, 1], 3, 2)]).toEqual(p11.folds)
+    expect(L.positivesPerFold(msgLabels, L.stratifiedFolds(msgLabels, 5, 1))).toEqual(p11.per_fold)
+  })
+
+  const p12 = parity.part12
+  it('intervals, error bands and their coverage, risk told four ways, linked views, fingerprints', () => {
+    const hw1 = W.holtWinters(RI, 0.1, 0.01, 0.2, 7), errs = RI.slice(91, 273).map((y, k) => y - hw1[91 + k])
+    close([Y.groupIntervals(days.map(r => F.weekday(r.date)), RI), Y.groupIntervals(['a', 'b', 'a', 'b', 'a'], [1, 2, 3, 5, 2], 2)], p12.intervals, 'intervals')
+    close([Y.errorBand(errs, 0.8), Y.errorBand(errs, 0.95), Y.errorBand([3, -1, 2, 0, -4], 0.5)], p12.band, 'band')
+    close([Y.coverage(RI.slice(273), hw1.slice(273), Y.errorBand(errs, 0.8)), Y.coverage([1, 2, 3], [1, 1, 1], [0, 1])], p12.coverage, 'coverage')
+    close([Y.riskSummary(1434, 7381, 1588, 7425), Y.riskSummary(5, 100, 5, 100)], p12.risk, 'risk')
+    const rule = { a: { low: 1, high: 5 }, b: ['x'] }
+    expect([Y.passes({ a: 3, b: 'x' }, rule), Y.passes({ a: 3, b: 'y' }, rule), Y.passes({ a: 3, b: 'y' }, rule, 'b')]).toEqual(p12.passes)
+    const prices12 = Object.fromEntries(T.readCsv(D.CATALOGUE_CSV()).map(r => [r.item, T.toPence(r.list_price)]))
+    const dash = C.cleanOrders(T.readCsv(D.ORDERS_CSV()), prices12).filter(r => r.price !== null).map(r => ({ town: r.town, channel: r.channel, price: r.price }))
+    expect(['town', 'channel'].map(k => Y.linkedCounts(dash, { channel: ['web'], price: { low: 0, high: 5000 } }, k))).toEqual(p12.linked)
+    expect([Y.fingerprint(''), Y.fingerprint(D.ORDERS_CSV()), Y.fingerprint(['a,b', '1,2', ''].join(String.fromCharCode(10)))]).toEqual(p12.fingerprint)
   })
 })

@@ -4,10 +4,10 @@ import { compare } from '../evaluate.js'
 
 // Define a function with its documentation. Every function in the lab has
 // learner-facing docs: they drive the help panel, autocomplete and the tests.
-export function def(category, syntax, summary, fn, { min, max, args = [], example, learn, scalar, lazy, volatile, returnsArray } = {}) {
+export function def(category, syntax, summary, fn, { min, max, args = [], example, learn, scalar, lazy, volatile, returnsArray, refs } = {}) {
   const required = (syntax.match(/\(([^)]*)\)/)?.[1] ?? '').split(',').map((s) => s.trim()).filter((s) => s && !s.startsWith('[') && s !== '…')
   return {
-    category, syntax, summary, fn, args, example, learn, scalar, lazy, volatile, returnsArray,
+    category, syntax, summary, fn, args, example, learn, scalar, lazy, volatile, returnsArray, refs,
     min: min ?? required.length,
     max: max ?? (syntax.includes('…') ? Infinity : (syntax.match(/\(([^)]*)\)/)?.[1] ?? '').split(',').filter((s) => s.trim()).length),
   }

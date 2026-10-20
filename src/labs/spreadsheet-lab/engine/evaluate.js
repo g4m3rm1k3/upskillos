@@ -166,7 +166,9 @@ function call(node, ctx) {
   }
   // An error in an argument is passed to the function as a value, not thrown
   // past it: ISERROR(1/0) is TRUE. Functions that need a number raise it again.
-  const args = node.args.map((a) => attempt(() => evalNode(a, ctx)))
+  // A function that needs a reference, not a value (OFFSET, ROW, COLUMN), names the
+  // arguments in `refs`: a single cell there is read as a one-cell range, which keeps its address.
+  const args = node.args.map((a, i) => attempt(() => evalNode(def.refs?.includes(i) && a.type === 'cell' ? { type: 'range', sheet: a.sheet, r1: a.row, c1: a.col, r2: a.row, c2: a.col } : a, ctx)))
   if (def.scalar) return scalarCall(def, args, ctx)
   return def.fn(args, ctx)
 }

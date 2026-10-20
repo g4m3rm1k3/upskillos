@@ -64,3 +64,12 @@ def bin_counts(values, edges):
     sort=False counts them in the order of the bins."""
     bins = pd.cut(pd.Series(values), edges, right=False)
     return [int(n) for n in bins.value_counts(sort=False)]
+
+
+def monthly_revenue_frame(rows, under=1000):
+    """Lesson 10.10: revenue by month in pandas, the same question as the SQL GROUP BY. A mask
+    keeps the prices that are known and under the limit; a new month column groups them."""
+    frame = pd.DataFrame(rows)
+    kept = frame[frame["price"].notna() & (frame["price"] < under)]
+    revenue = (kept["price"] * kept["quantity"]).groupby(kept["date"].str[:7]).sum()
+    return [[month, float(total)] for month, total in revenue.items()]

@@ -7,6 +7,8 @@ import { readCsv, withNumbers, toPence } from './engine/tables.js'
 import { cleanOrders } from './engine/cleaning.js'
 import { ORDERS_CSV, CATALOGUE_CSV, DAYS_CSV } from './engine/data.js'
 import { normalEquations, weekday, standardise } from './engine/models.js'
+import { buildIndex } from './engine/database.js'
+import { SHOP_TABLES, typedRows } from './engine/sqlRun.js'
 
 export const lineOf = (file, text) => SOURCES[file].split('\n').findIndex(l => l.includes(text)) + 1
 // The first line holding `text` inside one function: for a line that other functions share.
@@ -183,6 +185,7 @@ PROGRAMS.benjamini_hochberg = {
 // rain and the weekend, and the first days in standard units for gradient descent.
 const daysDesign = () => readCsv(DAYS_CSV()).map(r => [1, Number(r.high_c), Number(r.rain_mm), weekday(r.date) >= 5 ? 1 : 0])
 const dayRiders = () => readCsv(DAYS_CSV()).map(r => Number(r.riders))
+const orderIndex = () => buildIndex(typedRows(SHOP_TABLES().orders), 'order_id')
 PROGRAMS.solve = {
   label: 'Gaussian elimination (8.3)', file: 'models.py', module: 'models', function: 'solve', view: 'watch',
   about: 'Lesson 8.3: the normal equations of riders on temperature, rain and the weekend. Each column: the pivot row swapped up, then a multiple of it taken from each row below. Then back substitution, from the last row up.',
@@ -200,6 +203,54 @@ PROGRAMS.gradient_descent = {
   focus: ['w', 'grad'],
   watch: { w: ['[round(v, 3) for v in w]'] },
   jump: { label: 'Next step', targets: () => [['models.py', lineOf('models.py', '        w = [w[j] - rate * grad[j] for j in range(k)]')]] },
+}
+
+PROGRAMS.moving_average = {
+  label: 'Moving average with a running sum (9.2)', file: 'forecasting.py', module: 'forecasting', function: 'moving_average', view: 'watch',
+  about: 'Lesson 9.2: the 7-day moving average of the riders. The first window is added up once; after that, each step adds the day coming in and takes away the day dropping out. Watch `s` change by two values each step.',
+  input: { name: 'k', label: 'Window k (days)', value: '7' },
+  kwargs: v => ({ ys: dayRiders().slice(0, 30), k: firstN(v, 7, 30) }),
+  focus: ['s', 'end', 'out'],
+  watch: { s: ['s'], average: ['round(s / k, 2)'] },
+  jump: { label: 'Next window', targets: () => [['forecasting.py', lineIn('forecasting.py', 'moving_average', '        out.append(s / k)')]] },
+}
+PROGRAMS.exponential_smoothing = {
+  label: 'Exponential smoothing (9.6)', file: 'forecasting.py', module: 'forecasting', function: 'exponential_smoothing', view: 'watch',
+  about: 'Lesson 9.6: the level moves a share alpha of the way towards each new day’s riders. Each step: the forecast made before the day (appended), then the day arrives and the level moves.',
+  input: { name: 'alpha', label: 'α', value: '0.1' },
+  kwargs: v => ({ ys: dayRiders().slice(0, 30), alpha: Math.min(1, Math.max(0.01, Number.parseFloat(v) || 0.1)) }),
+  focus: ['level', 't', 'out'],
+  watch: { level: ['round(level, 2)'] },
+  jump: { label: 'Next day', targets: () => [['forecasting.py', lineOf('forecasting.py', '        level += alpha * (ys[t] - level)')]] },
+}
+PROGRAMS.holt_winters = {
+  label: 'Holt–Winters (9.8)', file: 'forecasting.py', module: 'forecasting', function: 'holt_winters', view: 'watch',
+  about: 'Lesson 9.8: a level, a trend and seven weekday indices, on the first four weeks of riders. Each day: the forecast, then the level (with the season taken out), the trend, and that weekday’s index.',
+  input: { name: 'gamma', label: 'γ', value: '0.2' },
+  kwargs: v => ({ ys: dayRiders().slice(0, 28), alpha: 0.1, beta: 0.01, gamma: Math.min(1, Math.max(0, Number.parseFloat(v) || 0.2)), period: 7 }),
+  focus: ['level', 'trend', 'season', 't'],
+  watch: { level: ['round(level, 2)'], season: ['[round(s, 1) for s in season]'] },
+  jump: { label: 'Next day', targets: () => [['forecasting.py', lineOf('forecasting.py', '        season[t % period] = gamma * (ys[t] - level) + (1 - gamma) * season[t % period]')]] },
+}
+
+PROGRAMS.binary_search = {
+  label: 'Binary search in an index (10.5)', file: 'database.py', module: 'database', function: 'binary_search', view: 'watch',
+  about: 'Lesson 10.5: an order id looked up in the sorted index of the 402 orders. Each step looks at the middle of what is left and keeps one half: watch `lo` and `hi` close in.',
+  input: { name: 'value', label: 'Order id', value: 'A1100' },
+  kwargs: v => ({ index: orderIndex(), value: (v || 'A1100').trim().toUpperCase() }),
+  focus: ['lo', 'hi', 'mid', 'steps'],
+  watch: { middle: ['index[mid][0] if lo < hi else None'] },
+  jump: { label: 'Next halving', targets: () => [['database.py', lineOf('database.py', '        steps += 1')]] },
+}
+
+PROGRAMS.fnv1a = {
+  label: 'FNV-1a, a hash (11.4)', file: 'ml_data.py', module: 'ml_data', function: 'fnv1a', view: 'watch',
+  about: 'Lesson 11.4: a word hashed one byte at a time. Each step mixes a byte in with exclusive or, then multiplies by the FNV prime and keeps 32 bits: watch `h` jump to an unrelated number at every byte.',
+  input: { name: 'text', label: 'Text', value: 'bike' },
+  kwargs: v => ({ text: (v ?? '').slice(0, 24) }),
+  focus: ['b', 'h'],
+  watch: { h: ['h'], bucket_of_64: ['h % 64'] },
+  jump: { label: 'Next byte', targets: () => [['ml_data.py', lineOf('ml_data.py', '        h = (h * 16777619) % 4294967296')]] },
 }
 
 export const SAMPLE_ORDERS = () => makeOrders().slice(0, 5)

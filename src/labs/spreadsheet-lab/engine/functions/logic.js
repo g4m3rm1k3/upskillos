@@ -122,6 +122,21 @@ export default {
     for (const v of Matrix.of(arr).values()) acc = fn(acc, v)
     return acc
   }, { example: ['=REDUCE(0, A1:A5, LAMBDA(acc, x, acc + x^2))', 'the sum of squares'] }),
+  SCAN: def(C, 'SCAN(initial_value, array, lambda)', 'Like REDUCE, but keeps every step: the accumulator after each element, in an array the shape of the input.', ([init, arr, fn]) => {
+    if (typeof fn !== 'function') fail('#VALUE!', 'The last argument of SCAN must be a LAMBDA.')
+    let acc = init ?? 0
+    return Matrix.of(arr).map((v) => { acc = fn(acc, v); return acc })
+  }, {
+    returnsArray: true,
+    example: ['=SCAN(0, A1:A5, LAMBDA(total, x, total + x))', 'the running total'],
+    learn: 'SCAN is a loop that carries one value forward: a running total, a running maximum, or exponential smoothing, where each smoothed value is the last one moved part of the way to the new data point.',
+  }),
+  MAKEARRAY: def(C, 'MAKEARRAY(rows, columns, lambda)', 'Builds an array of the given size; the LAMBDA(row, column) gives each entry, counting from 1.', ([r, c, fn]) => {
+    if (typeof fn !== 'function') fail('#VALUE!', 'The last argument of MAKEARRAY must be a LAMBDA.')
+    const rows = Math.trunc(toNumber(r)), cols = Math.trunc(toNumber(c))
+    if (!(rows >= 1 && cols >= 1)) fail('#VALUE!', 'MAKEARRAY needs at least one row and one column.')
+    return new Matrix(Array.from({ length: rows }, (_, i) => Array.from({ length: cols }, (_, j) => attempt(() => fn(i + 1, j + 1)))))
+  }, { returnsArray: true, example: ['=MAKEARRAY(3, 3, LAMBDA(r, c, r*c))', 'a times table'] }),
   BYROW: def(C, 'BYROW(array, lambda)', 'Applies a LAMBDA to each row, giving one value per row.', ([arr, fn]) => {
     if (typeof fn !== 'function') fail('#VALUE!', 'BYROW needs a LAMBDA.')
     return new Matrix(Matrix.of(arr).rows.map((row) => [attempt(() => fn(new Matrix([row])))]))

@@ -155,8 +155,8 @@ export default {
     if (i < 1 || i >= args.nodes.length) fail('#VALUE!', 'The index must be between 1 and ' + (args.nodes.length - 1) + '.')
     return args[i]()
   }, { min: 2, lazy: true, example: ['=CHOOSE(2, "red", "green", "blue")', 'green'] }),
-  ROW: def(C, 'ROW([reference])', 'The row number of a reference (or of this cell).', ([r], ctx) => (r instanceof Matrix && r.ref ? r.ref.r1 + 1 : r === undefined ? ctx.row + 1 : fail('#VALUE!', 'ROW needs a reference.')), { min: 0, max: 1 }),
-  COLUMN: def(C, 'COLUMN([reference])', 'The column number of a reference (or of this cell).', ([r], ctx) => (r instanceof Matrix && r.ref ? r.ref.c1 + 1 : r === undefined ? ctx.col + 1 : fail('#VALUE!', 'COLUMN needs a reference.')), { min: 0, max: 1 }),
+  ROW: def(C, 'ROW([reference])', 'The row number of a reference (or of this cell).', ([r], ctx) => (r instanceof Matrix && r.ref ? r.ref.r1 + 1 : r === undefined ? ctx.row + 1 : fail('#VALUE!', 'ROW needs a reference.')), { min: 0, max: 1, refs: [0] }),
+  COLUMN: def(C, 'COLUMN([reference])', 'The column number of a reference (or of this cell).', ([r], ctx) => (r instanceof Matrix && r.ref ? r.ref.c1 + 1 : r === undefined ? ctx.col + 1 : fail('#VALUE!', 'COLUMN needs a reference.')), { min: 0, max: 1, refs: [0] }),
   ROWS: def(C, 'ROWS(array)', 'The number of rows.', ([a]) => toMatrix(a).height),
   COLUMNS: def(C, 'COLUMNS(array)', 'The number of columns.', ([a]) => toMatrix(a).width),
   ADDRESS: def(C, 'ADDRESS(row_num, column_num, [abs_num], [a1], [sheet_text])', 'A cell address as text.', ([r, c, ab, , sh]) => {
@@ -172,7 +172,7 @@ export default {
     if (top < 0 || left < 0 || height < 1 || width < 1) fail('#REF!', 'OFFSET moved off the edge of the sheet.')
     const M = ctx.getRange(ref.ref.sheet, top, left, top + height - 1, left + width - 1)
     return M.height === 1 && M.width === 1 ? M.get(0, 0) : M
-  }, { volatile: true }),
+  }, { volatile: true, refs: [0], example: ['=SUM(OFFSET(A1, 2, 0, 3, 1))', 'A3:A5: three cells, starting two rows below A1'] }),
 
   // ── Dynamic arrays ──────────────────────────────────────────────────────
   TRANSPOSE: def(A, 'TRANSPOSE(array)', 'Swaps rows and columns.', ([a]) => { const M = toMatrix(a); return Matrix.fill(M.width, M.height, (r, c) => M.get(c, r)) }, { returnsArray: true, example: ['=TRANSPOSE(A1:C2)', 'a 3×2 block'] }),

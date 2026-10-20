@@ -61,6 +61,23 @@ try {
       wrote += ` · write ${b.write.fn}: ${passed ? 'passed' : 'FAILED'} in ${((Date.now() - t0) / 1000).toFixed(1)} s`
       if (!passed) problems.push(`${lesson.number}: write ${b.write.fn} failed in the page: ${(await block.textContent()).slice(-300)}`)
     }
+    // Every SQL block (Part 10 on): the starter run first where there is one (it must not pass), then
+    // the lab's query, both in real SQLite in the page (sql.js and its WebAssembly, loaded by Vite).
+    for (const [k, b] of lesson.blocks.entries()) {
+      if (!b.sql) continue
+      const block = page.locator('.ds-sql').nth(lesson.blocks.slice(0, k).filter(x => x.sql).length)
+      const run = async text => {
+        await block.locator('textarea').fill(text)
+        await block.getByRole('button', { name: /Run the query/ }).click()
+        await block.locator('[role=status]').first().waitFor({ timeout: 120000 })
+        await block.getByRole('button', { name: /Run the query/ }).waitFor({ timeout: 120000 })
+        return block.evaluate(el => el.classList.contains('passed'))
+      }
+      if (b.sql.starter && await run(b.sql.starter)) problems.push(`${lesson.number}: SQL block ${k}’s starter passed in the page`)
+      const right = await run(b.sql.solution)
+      wrote += ` · SQL block ${k}: ${right ? 'right' : 'FAILED'}`
+      if (!right) problems.push(`${lesson.number}: SQL block ${k} did not pass in the page: ${(await block.textContent()).slice(-300)}`)
+    }
     // Every D3 block: the lab's solution pasted in, drawn and checked in the page.
     for (const [k, b] of lesson.blocks.entries()) {
       if (!b.chart) continue

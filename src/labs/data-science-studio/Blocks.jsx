@@ -8,6 +8,7 @@ import { codeLines } from './source.js'
 import WriteIt from './WriteIt.jsx'
 import FormulaIt from './FormulaIt.jsx'
 import ChartIt from './ChartIt.jsx'
+import SqlIt from './SqlIt.jsx'
 
 // A lesson is an ordered list of blocks:
 //   { h }                         a section heading
@@ -24,10 +25,11 @@ import ChartIt from './ChartIt.jsx'
 //   { write: { file, fn, prompt, starter, cases, given, forbid, hint, packages } }   see WriteIt.jsx
 //   { formula: { table, prompt, solution, must, tolerance, hint, explain } }   see FormulaIt.jsx
 //   { chart: { prompt, starter, solution, data | runs, checks, keep, hint, explain } }   D3, see ChartIt.jsx
+//   { sql: { prompt, solution, must, starter, hint, explain, answer } }   SQLite in the page, see SqlIt.jsx
 //   { note, kind: 'key' | 'warn' | 'try' }   a callout
 //   { python: { program, label } }  a button that opens the Real Python tab on that program
-export const KINDS = ['h', 'md', 'figure', 'code', 'mathCode', 'predict', 'choice', 'derive', 'write', 'formula', 'chart', 'note', 'python']
-export const isCheck = b => b.predict || b.choice || b.derive || b.write || b.formula || b.chart
+export const KINDS = ['h', 'md', 'figure', 'code', 'mathCode', 'predict', 'choice', 'derive', 'write', 'formula', 'chart', 'sql', 'note', 'python']
+export const isCheck = b => b.predict || b.choice || b.derive || b.write || b.formula || b.chart || b.sql
 
 const Md = ({ children }) => <div className="qm-md"><Markdown>{children}</Markdown></div>
 const LessonText = ({ children }) => <Markdown inline>{children}</Markdown>
@@ -129,6 +131,8 @@ export default function Blocks({ lesson, saved, onSolved, onSave, onPython }) {
     if (b.write) return <WriteIt key={key} spec={b.write} done={solved.includes(k)} code={saved?.code?.[k]}
       onCode={code => onSave?.(s => ({ ...s, code: { ...s.code, [k]: code } }))} onDone={() => onSolved(k)} />
     if (b.chart) return <ChartIt key={key} spec={b.chart} done={solved.includes(k)} code={saved?.code?.[k]}
+      onCode={code => onSave?.(s => ({ ...s, code: { ...s.code, [k]: code } }))} onDone={() => onSolved(k)} />
+    if (b.sql) return <SqlIt key={key} spec={b.sql} done={solved.includes(k)} code={saved?.code?.[k]}
       onCode={code => onSave?.(s => ({ ...s, code: { ...s.code, [k]: code } }))} onDone={() => onSolved(k)} />
     if (b.formula) return <FormulaIt key={key} exercise={key} spec={b.formula} done={solved.includes(k)} onDone={() => onSolved(k)} />
     if (b.python) return <div key={k} className="qm-python-link"><button onClick={() => onPython?.(b.python)}>🐍 {b.python.label ?? 'Step through it in real Python'}</button><span>Desktop app: runs the real program one line at a time.</span></div>

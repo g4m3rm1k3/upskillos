@@ -172,6 +172,18 @@
 .ds-sheet td.head{font-weight:700;background:#f7f8f5}.ds-sheet td.num{text-align:right}
 .ds-formula-form{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
 
+/* Data Science Studio: the SQL lens */
+.ds-sql{border:1px solid var(--line);border-left:4px solid #6a4fb3;border-radius:10px;padding:10px 14px;margin:16px 0;background:#fcfbff}
+.ds-sql.passed{border-left-color:#2f7d4f;background:#f3faf5}
+.ds-sql-box{width:100%;box-sizing:border-box;font-size:13px;line-height:1.45;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;resize:vertical}
+.ds-sql-rows{max-height:300px;overflow:auto;margin:8px 0}
+.ds-null{color:#9a8fb5}
+
+/* Part 12's dashboard */
+.ds-dash{display:flex;flex-wrap:wrap;gap:18px}
+.ds-dash-view{display:flex;flex-direction:column;gap:3px;min-width:200px}
+.ds-dash-bar{display:flex;align-items:center;background:none;border:0;padding:1px 0;cursor:pointer;font-size:13px;text-align:left}
+
 /* Real Python: variables that changed on the last line */
 .ds-vars{width:100%;border-collapse:collapse;font-size:13px}
 .ds-vars td{padding:3px 6px;border-bottom:1px solid #eee;vertical-align:top}

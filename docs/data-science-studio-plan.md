@@ -335,9 +335,76 @@ Measured or found while building Parts 7 and 8, and taught in the lessons:
 - A degree-8 curve in the day of the year: 97.3 with 12 random folds, 183.1 holding out whole months; the line in temperature: 79.6 and 79.4 (8.9).
 - Logistic regression on courier × distance: probabilities 0.716, 0.929, 0.375, 0.908 (the groups' own rates; truth 0.70, 0.97, 0.50, 0.85), log loss 0.458 against 0.530 for the overall rate, accuracy 80.2% against 77.8% (8.10). With the days column: 100% accuracy, log loss 0.163, 0.038, 0.0056 after 100, 1,000, 10,000 steps, the weight on days −1.42, −3.54, −7.30; one cut on days alone is right every time (8.11).
 
-## How it is built: two parts per session
+## Part 9 as built: Time and forecasting
 
-The owner's working rule: build two parts per session, then update the handoff (`docs/data-science-studio-handoff.md`) and clear the chat. The checking scripts live in the lab's `tools/` folder, so each session reuses them instead of writing them again.
+The days table is a time series with a known truth: riders follow the temperature (and so the seasons) and gain 90 at weekends, a weekly season; visits follow the temperature, with the news day's 9,412 in them; orders per day have no pattern at all (the generator draws every day evenly). Everything is in `python/forecasting.py` and `engine/forecasting.js`. Every method is scored the same honest way: its one-step forecasts for the days it could not have seen.
+
+Spreadsheet Lab first: **SCAN** (a loop carrying one value forward: running totals, exponential smoothing in one formula) and **MAKEARRAY**, with Microsoft's examples as tests.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, D3 |
+|---|---|---|---|---|
+| 9.1 Time order is information | dates as day numbers, weeks starting Monday; resampling to weeks and months (July's riders 774 a day, February's 420); shuffling destroys it: yesterday predicts today (lag-1 r 0.69, shuffled about 0) | `week_of`, `resample` | the week of a day: (day + 2) // 7 | TimeShuffle; `=SUMIFS` between DATE and EOMONTH; Excel's WEEKNUM is week_of + 1 |
+| 9.2 Moving averages | trailing windows; the running sum (2 steps a day, not k): for k = 28, 9,464 additions against 702 | `moving_average_slow`, `moving_average` | S(t+1) = S(t) + y(t+k) − y(t) | WindowSlide; `=AVERAGE(OFFSET(…))`, `SCAN` for the running total; D3: the days and the 7-day line; Real Python `moving_average` |
+| 9.3 Trend and season | the centred average; seasonal indices; trend + season + rest; differencing; theory: weekend +64.3, weekday −25.7 (90 × 5/7, 90 × 2/7), measured Sat +49.7, Sun +71.5 | `centred_average`, `seasonal_indices`, `decompose`, `difference`, `weekday_profile` | a full period's average cancels the season; the indices 90·5/7 and −90·2/7 | Decomposition; `=AVERAGE(FILTER(…WEEKDAY…))` |
+| 9.4 Autocorrelation | the ACF; the band ±1.96/√n = 0.103; riders 0.69 at lag 1, a bump at lag 7 (0.68 against 0.61 at 6); rain about 0; visits 0.02 because of one news day (0.71 without it); orders: two lags of 14 outside the band, chance | `autocorrelation`, `acf` | the band from the standard error 1/√n | AcfBars; `=CORREL(D2:D365, D3:D366)`; D3: the ACF bars and band |
+| 9.5 The forecast to beat | naive, seasonal naive, mean so far; MAE, RMSE, MAPE; the news day (visits' RMSE 690 against 93 without it); orders: MAPE impossible on 108 zero days, the constant 1 beats the mean so far on MAE (0.697 against 0.753) | `naive_forecasts`, `seasonal_naive`, `mean_forecasts`, `scored`, `mae`, `rmse_of`, `mape` | MAE is smallest at the median, RMSE at the mean; MAPE's cap at 100% below | ForecastRace; `=AVERAGE(ABS(…))` of last week's misses |
+| 9.6 Exponential smoothing | the recursion; weights α(1 − α)^j summing to 1; the average age (1 − α)/α; the best α for riders 0.1 (RMSE 100.8) | `exponential_smoothing`, `smoothing_weights`, `best_alpha` | the geometric series; the average age | SmoothingAlpha; `=SCAN(…, LAMBDA(s, y, s + 0.1*(y − s)))`; Real Python `exponential_smoothing` |
+| 9.7 Holt's trend | level and trend; the h-step forecast; weekly totals; extrapolating June's rise past the summer peak; on the daily riders the trend chases noise (MAE 89 against smoothing's 80) | `holt`, `holt_ahead` | the forecast h steps ahead, level + h × trend | HoltAhead; weekly totals with `WEEKNUM` |
+| 9.8 The weekly season: Holt–Winters | level, trend and seven indices; tuned on the first 91 days (α 0.1, β 0.01, γ 0.2); MAE 73.2 on the rest against seasonal naive's 96.9; seven days ahead only 75.6 | `holt_winters` | the update of a seasonal index | SeasonUpdates; Real Python `holt_winters` |
+| 9.9 Walk-forward validation | never shuffle time; expanding windows; the centred average "forecast" uses three future days and wins (72.2); tuning on the test days; inputs known in time: the weather model scores 33 with the real weather and 89 with yesterday's | `walk_forward` | – | WalkForwardView |
+| 9.10 Project: next week's riders | forecasting a week ahead for staffing; Holt–Winters against the seasonal naive, walk-forward; what to tell the shop; orders per day: nothing to forecast | – | – | the forecasts, the misses and the honest error |
+
+Measured while planning Part 9 (riders scored from day 7 unless said): naive MAE 101.6, seasonal naive 96.4, mean so far 134.6; smoothing α 0.1 79.7 (best α by RMSE 0.1 on the whole year and on the first 91 days); Holt (0.3, 0.1) 89.3; Holt–Winters (0.1, 0.01, 0.1) 74.6. Scored on days 91 on, with parameters chosen on days 0–90: Holt–Winters 73.2 (horizon 7: 75.6), smoothing 80.2, seasonal naive 96.9, naive 101.0, mean 150.4. The regression of 8.4 refitted each day from day 60: MAE 33.2 with the day's own weather, 89.2 with yesterday's. Weekly totals (51 full weeks): Holt (0.5, 0.3) cut at week 26 forecasts 5,512 rising to 6,007; the weeks were 5,939 then 5,171 to 5,717. Orders per day (the 400 cleaned orders, as in lesson 7.7): mean 1.10, median 1, 108 days with none; on days 91 on, the mean so far MAE 0.753, RMSE 0.959; the constant 1 MAE 0.697, RMSE 0.957.
+
+## Part 10 as built: Databases and SQL
+
+The six sheets the spreadsheet lessons use (orders, catalogue, returns, days, deliveries, trial), flaws and all, loaded into SQLite with typed columns and blanks as NULL: the same tables in all four views. A new block, **"Query it in SQL"** (`sql`), runs the learner's query in real SQLite in the page (sql.js, the npm dependency the SQL course uses) and compares its result with the lab's query; the tests run every block's query in SQLite and hold its result to the by-hand engine. Write blocks use Python's `sqlite3` (`packages: ['sqlite3']` in Pyodide). Everything by hand is in `python/database.py` and `engine/database.js`.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, SQL |
+|---|---|---|---|---|
+| 10.1 Tables in a database | relations, typed columns, NULL; the six tables loaded; a key: order_id is not unique (A1018 and A1234 twice), so a PRIMARY KEY would refuse the raw orders | `column_type`, `sql_value`, `create_sql`, `load` | – | SQL `COUNT(*)`, `COUNT(price)`, `COUNT(DISTINCT order_id)`: 402, 384, 400; `=COUNTA` against `=COUNT` |
+| 10.2 SELECT and WHERE | projection and selection; NULL: `price = NULL` matches 0 rows, `IS NULL` 18; three-valued logic; the price typed in pence found by a WHERE | `project`, `compare`, `where` | AND and OR with unknown | NullLogic; SQL; `=FILTER` |
+| 10.3 GROUP BY and HAVING | split–apply–combine in SQL; COUNT(*) against COUNT(price); 11 town spellings, 4 after `LOWER(TRIM(town))`; HAVING finds the duplicates; the order SQL runs its clauses | `aggregate`, `group_aggregate` | AVG skips NULL: Helmet 3,378.15 / 75 = 45.04, not / 78 | SQL; `=AVERAGEIFS` |
+| 10.4 Joins in SQL | a join as a filtered cross product (25 × 402 = 10,050 pairs); inner and left; the anti-join finds the 8 returns that match no order (lesson 3.7); revenue by category | – | the cross product’s size | SQL; `XLOOKUP` |
+| 10.5 Indexes | a scan reads all 402 rows; binary search at most 9; log₂ n derived; a B-tree of fanout 100 holds a million keys in 3 levels; SQLite’s plan: SCAN, then SEARCH USING INDEX | `build_index`, `binary_search`, `btree_levels` | halving to one: n / 2^k = 1 | IndexSearch; SQL `EXPLAIN QUERY PLAN` |
+| 10.6 Subqueries | a scalar subquery (30 orders above the average price, 72.98, which the pence typos inflate); IN and NOT IN; a correlated subquery; WITH | – | – | SQL |
+| 10.7 Window functions | an aggregate per row without collapsing; the running total; AVG OVER (ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) is lesson 9.2’s average after day 6, a shorter window before; RANK with ties; PARTITION BY | `window_average`, `rank_within` | – | WindowFrame; SQL |
+| 10.8 Normalisation | the joined table repeats category and list price; the update anomaly; functional dependencies; first, second and third normal forms; `split_out` recovers the catalogue | `determines`, `split_out` | – | SQL `COUNT(DISTINCT …)` |
+| 10.9 Transactions | atomicity, consistency, isolation, durability; a CHECK constraint; all or nothing | `place_orders` | – | – |
+| 10.10 Project: four views of one question | revenue by category and month, and returns by item, each in SQL, the spreadsheet, by hand and pandas | – | – | SQL, formula, pandas |
+
+## Part 11 as built: Data for machine learning
+
+The tables already here, plus one from another lab: the days (dates and seasons), the deliveries (36 late of 162: a class that accuracy hides), the cleaned orders with a "returned" flag (20 of 400: a rare class), and NLP Studio's 40 spam and ham messages as a table of text. Everything is in `python/ml_data.py` and `engine/mlData.js`.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, SQL |
+|---|---|---|---|---|
+| 11.1 Features from dates | weekday, month, day of year, weekend; the day number as a line (riders RMSE 153), twelve month columns (88.7) or a circle, sin and cos (86.9 with 2 columns) | `date_features`, `cyclical` | the gap from 31 December to 1 January on the circle, 2 sin(π/365) = 0.0172, the same as any two neighbouring days | DateCircle; `=SIN(2*PI()*…)` |
+| 11.2 Categories and target encoding | one-hot against target encoding; smoothing towards the overall mean; the leak: the order date (132 values for 162 deliveries) target-encoded on all rows, cross-validated 96.3%, out of fold 79.0%, the courier model 80.2%, always on time 77.8% | `target_means`, `out_of_fold_encode` | the smoothed mean as a weighted average | EncodingLeak; `=AVERAGEIFS` |
+| 11.3 Text as counts | tokens, bag of words, TF-IDF; NLP Studio’s messages as a table; logistic regression on TF-IDF: 92.5% in five stratified folds | `tokens`, `tf_idf` | idf of a word in every document is log 1 = 0 | – |
+| 11.4 Feature hashing | the hashing trick; FNV-1a; collisions: 162 words in 128 buckets leave 109 sharing, in 1,024 only 18; spam accuracy with 4, 16, 64 buckets (77.5%, 80%, 87.5%) | `fnv1a`, `feature_hash` | a word shares its bucket with probability 1 − (1 − 1/k)^(n−1) | HashBuckets |
+| 11.5 Scaling for distances | k nearest neighbours; the day number (sd 105) outweighs everything raw: RMSE 85.4 raw, 56.5 in standard units; the scaler fitted on the training rows | `fit_scaler`, `scale`, `knn_predict` | a feature’s share of a squared distance grows with its variance | KnnScaling |
+| 11.6 What accuracy hides | the confusion matrix; precision, recall, F1 for late parcels: always on time 77.8% accurate with recall 0; the model at 0.5: precision 0.63, recall 0.28; at 0.2: 0.35 and 0.81 | `confusion`, `precision_recall_f1` | F1 as a harmonic mean | ThresholdTradeoff; `=COUNTIFS` |
+| 11.7 Rare classes and stratified folds | 20 returned orders of 400; random ten folds leave a fold with none in 140 of 200 splits; stratified folds 2 in each | `stratified_folds`, `positives_per_fold` | the chance a fold gets none, about (9/10)^20 | FoldBalance |
+| 11.8 A pipeline fitted on training rows | every step that learns from data (scaler, encoding, model) is fitted inside each fold; the leaky and honest numbers of 11.2 and 11.5 side by side | – | – | – |
+| 11.9 Project: datasheet and a late-parcel model | the late-delivery model end to end, honest; a datasheet for the shop’s data (Gebru and others, 2018): what it is, how it was made, its known flaws | – | – | – |
+
+## Part 12 as built: Telling the story
+
+The last part turns analysis into something a person can act on: uncertainty shown honestly, a change told in absolute and relative terms, a dashboard whose views filter each other, a fingerprint that makes an analysis checkable, and the capstone. Everything is in `python/story.py` and `engine/story.js`.
+
+| Lesson | Teaches | You write | You derive | Figure, spreadsheet, SQL, D3 |
+|---|---|---|---|---|
+| 12.1 Error bars | what a bar can mean (sd, standard error, 95% interval); riders by weekday with intervals; overlapping intervals (Saturday 607–691, Monday 540–619) and a clear difference all the same (lesson 7.4) | `group_intervals` | why two 95% intervals can overlap while the difference is clear: √(a² + b²) < a + b | D3: means with error bars; `=CONFIDENCE.T` |
+| 12.2 Fan charts | bands from the forecast’s own past errors (lesson 9.8’s Holt–Winters); 80% and 95% bands from April to September’s errors (after tuning on January to March) held 77% and 91% of October to December’s days | `error_band`, `coverage` | – | FanChart |
+| 12.3 Absolute and relative | the A/B test of 7.10: 19.43% to 21.39%, +1.96 points, +10.1%, one more click per 51 visitors; a big relative change of a small risk | `risk_summary` | the number needed, 1 / difference | – |
+| 12.4 A dashboard with linked views | crossfiltering: each view counts the rows that pass the other views’ filters | `passes`, `linked_counts` | – | Dashboard; SQL with WHERE per view |
+| 12.5 Reproducible work | raw data read-only, every step code, seeds, versions (pandas 2 in the page, 3 on the authoring machine), a fingerprint of the data (the orders: 4fc9232f) | `fingerprint` | – | – |
+| 12.6 Capstone: the shop’s year | from the raw CSV to a recommendation, each number from a lesson’s method, with its uncertainty | – | – | – |
+
+## How it is built
+
+The owner's working rule (2026-10-20): keep building part after part until clearing the chat is cheaper than carrying on, then update the handoff (`docs/data-science-studio-handoff.md`) and clear the chat. The checking scripts live in the lab's `tools/` folder, so each session reuses them instead of writing them again.
 
 ## Constraints
 

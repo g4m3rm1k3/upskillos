@@ -19,6 +19,11 @@ import patterns as p  # noqa: E402
 import samples as sm  # noqa: E402
 import significance as g  # noqa: E402
 import models as m  # noqa: E402
+import forecasting as fc  # noqa: E402
+import database as db  # noqa: E402
+import ml_data as ml  # noqa: E402
+import story as st  # noqa: E402
+import importlib.util  # noqa: E402
 
 csv_text = d.to_csv(d.HEADER, d.make_orders())
 rows = t.read_csv(csv_text)
@@ -234,8 +239,93 @@ part8 = {
     "logistic": m.logistic_fit(LX, LY, 1.0, 200),
     "threshold": [m.threshold_accuracy([float(r["days"]) for r in deliveries], LY), m.threshold_accuracy([1, 2, 3], [1, 0, 1])],
 }
+dates = [r["date"] for r in num]
+VI = [r["visits"] for r in num]
+hw = fc.holt_winters(RI, 0.1, 0.01, 0.2, 7)
+part9 = {
+    "week_of": [fc.week_of(x) for x in ["2025-01-01", "2025-01-05", "2025-01-06", "2025-12-31"]],
+    "resample": [fc.resample(dates, RI, "month"), fc.resample(dates[:20], RI[:20], "week")],
+    "moving": [fc.moving_average_slow(RI, 7)[:20], fc.moving_average(RI, 7), fc.moving_average([1, 2, 3, 4], 2)],
+    "centred": fc.centred_average(RI[:30], 7),
+    "decompose": fc.decompose(RI, 7),
+    "difference": fc.difference(RI[:20], 7),
+    "acf": [fc.acf(RI, 14), fc.acf(VI, 3), fc.autocorrelation([1, 2, 3, 4, 5], 1)],
+    "naive": [fc.naive_forecasts(RI[:10]), fc.seasonal_naive(RI[:10], 7), fc.mean_forecasts(RI[:10])],
+    "scores": [f(fc.scored(RI, fc.seasonal_naive(RI, 7))) for f in [fc.mae, fc.rmse_of, fc.mape]],
+    "smoothing": [fc.exponential_smoothing(RI, 0.1), fc.smoothing_weights(0.3, 6), fc.best_alpha(RI, [0.05, 0.1, 0.3, 0.5])],
+    "holt": [fc.holt(RI, 0.3, 0.1), fc.holt_ahead(RI[:200], 0.5, 0.3, 8)],
+    "holt_winters": [hw, fc.holt_winters(RI, 0.1, 0.01, 0.2, 7, 7)],
+    "walk_forward": fc.walk_forward(10, 7, 2),
+    "profile": fc.weekday_profile(dates, RI),
+}
+raw_orders = d.make_orders()
+shop = {"orders": [d.HEADER] + raw_orders, "catalogue": [d.CATALOGUE_HEADER] + d.make_catalogue(),
+        "returns": [d.RETURNS_HEADER] + d.make_returns(raw_orders), "days": [d.DAYS_HEADER] + d.make_days()}
+
+
+def typed(table):
+    header, body = table[0], table[1:]
+    kinds = [db.column_type([row[j] for row in body]) for j in range(len(header))]
+    return [{h: db.sql_value(row[j], kinds[j]) for j, h in enumerate(header)} for row in body]
+
+
+T_ORDERS, T_DAYS = typed(shop["orders"]), typed(shop["days"])
+conn = db.load(shop)
+sq = lambda text: [list(r) for r in conn.execute(text).fetchall()]
+idx = db.build_index(T_ORDERS, "order_id")
+part10 = {
+    "types": [db.column_type(v) for v in [["1", "", "3"], ["1", "2.5"], ["x", "1"], ["", ""], ["25.00", "2500"]]],
+    "create": [db.create_sql(n, t[0], t[1:]) for n, t in shop.items()],
+    "project": [db.project(T_ORDERS[:6], ["town", "item"]), db.project(T_ORDERS, ["channel"], True)],
+    "where": [len(db.where(T_ORDERS, "price", "is null")), len(db.where(T_ORDERS, "price", "=", None)), [r["order_id"] for r in db.where(T_ORDERS, "price", ">", 1000)]],
+    "aggregate": [db.aggregate([1, None, 3], h) for h in ["count_all", "count", "sum", "avg", "min", "max"]] + [db.aggregate([None], "sum")],
+    "group": [db.group_aggregate(T_ORDERS, "item", "price", h) for h in ["count_all", "count", "avg"]],
+    "group_sql": [sq("SELECT item, COUNT(*) FROM orders GROUP BY item ORDER BY item"), sq("SELECT item, COUNT(price) FROM orders GROUP BY item ORDER BY item"), sq("SELECT item, AVG(price) FROM orders GROUP BY item ORDER BY item")],
+    "index": [idx[:5], db.binary_search(idx, "A1100"), db.binary_search(idx, "A1018"), db.binary_search(idx, "Z")],
+    "btree": [db.btree_levels(n, f) for n, f in [(402, 100), (10 ** 6, 100), (10 ** 9, 100), (10 ** 6, 2), (1, 100)]],
+    "window": [db.window_average([r["riders"] for r in T_DAYS], 6)[:20], sq("SELECT AVG(riders) OVER (ORDER BY date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) FROM days LIMIT 20")],
+    "rank": db.rank_within([{"g": "a", "v": 3}, {"g": "a", "v": 5}, {"g": "b", "v": 1}, {"g": "a", "v": 5}], "g", "v"),
+    "determines": [db.determines(T_ORDERS, "order_id", "item"), db.determines(T_ORDERS, "item", "channel")],
+    "split": db.split_out([{"id": 1, "item": "Lock", "cat": "kit"}, {"id": 2, "item": "Bike", "cat": "bikes"}, {"id": 3, "item": "Lock", "cat": "kit"}], "item", ["cat"]),
+    "monthly": [db.monthly_revenue(T_ORDERS), f.monthly_revenue_frame(T_ORDERS), sq("SELECT substr(date, 1, 7) AS month, SUM(price * quantity) FROM orders WHERE price < 1000 GROUP BY month ORDER BY month")],
+    "orders": [db.place_orders({"Bike": 3, "Helmet": 5}, [["Bike", 2], ["Helmet", 1]]), db.place_orders({"Bike": 3, "Helmet": 5}, [["Bike", 2], ["Bike", 2]]), db.place_orders({"Lock": 1}, [["Pump", 4]])],
+}
+nlp_spec = importlib.util.spec_from_file_location("nlp_data", os.path.join(HERE, "..", "..", "nlp-studio", "python", "data.py"))
+nlp_data = importlib.util.module_from_spec(nlp_spec)
+nlp_spec.loader.exec_module(nlp_data)
+msg_tokens = [ml.tokens(m) for m, _ in nlp_data.MESSAGES]
+msg_labels = [1 if lab == "spam" else 0 for _, lab in nlp_data.MESSAGES]
+dates9 = [r["date"] for r in num]
+part11 = {
+    "dates": [ml.date_features(x) for x in ["2025-01-01", "2025-06-07", "2025-12-31"]],
+    "cyclical": [ml.cyclical(v, p) for v, p in [(0, 365), (364, 365), (91, 365), (6, 12)]],
+    "target": [ml.target_means(["a", "b", "a", "c"], [1, 0, 0, 1], m) for m in [0, 2]],
+    "oof": ml.out_of_fold_encode(dates9[:40], [int(r["riders"] > 600) for r in num[:40]], m.k_folds(40, 4, 3), 1),
+    "fnv": [ml.fnv1a(x) for x in ["", "a", "bike", "Café", "free prize"]],
+    "hash": [ml.feature_hash(msg_tokens[0], 8), ml.feature_hash(msg_tokens[5], 64)],
+    "tokens": msg_tokens[:6] + [ml.tokens("Don't  stop--now, 2 bikes!")],
+    "tf_idf": ml.tf_idf(msg_tokens[:8]),
+    "scaler": ml.fit_scaler([[1, 10], [2, 30], [3, 20], [4, 20]]),
+    "scale": ml.scale([[1, 10], [5, 0]], ml.fit_scaler([[1, 10], [2, 30], [3, 20], [4, 20]])),
+    "knn": [ml.knn_predict([[0, 0], [1, 0], [0, 1], [5, 5]], [1, 2, 3, 10], [0.2, 0.1], k) for k in [1, 2, 3]] + [ml.knn_predict([[r["high_c"], r["rain_mm"]] for r in num[:300]], RI[:300], [20.0, 0.0], 10)],
+    "confusion": [ml.confusion([1, 0, 1, 1, 0], [1, 1, 0, 1, 0]), ml.precision_recall_f1([[2, 1], [1, 1]]), ml.precision_recall_f1([[0, 3], [0, 5]])],
+    "folds": [ml.stratified_folds(msg_labels, 5, 1), ml.stratified_folds([1, 0, 0, 0, 1, 0, 0, 0, 0, 1], 3, 2)],
+    "per_fold": ml.positives_per_fold(msg_labels, ml.stratified_folds(msg_labels, 5, 1)),
+}
+hw1 = fc.holt_winters(RI, 0.1, 0.01, 0.2, 7)
+errs = [RI[t] - hw1[t] for t in range(91, 273)]
+dash = [{"town": r["town"], "channel": r["channel"], "price": r["price"]} for r in clean if r["price"] is not None]
+part12 = {
+    "intervals": [st.group_intervals([m.weekday(x) for x in dates9], RI), st.group_intervals(["a", "b", "a", "b", "a"], [1, 2, 3, 5, 2], 2.0)],
+    "band": [st.error_band(errs, 0.8), st.error_band(errs, 0.95), st.error_band([3, -1, 2, 0, -4], 0.5)],
+    "coverage": [st.coverage(RI[273:], hw1[273:], st.error_band(errs, 0.8)), st.coverage([1, 2, 3], [1, 1, 1], [0, 1])],
+    "risk": [st.risk_summary(1434, 7381, 1588, 7425), st.risk_summary(5, 100, 5, 100)],
+    "passes": [st.passes({"a": 3, "b": "x"}, {"a": {"low": 1, "high": 5}, "b": ["x"]}), st.passes({"a": 3, "b": "y"}, {"a": {"low": 1, "high": 5}, "b": ["x"]}), st.passes({"a": 3, "b": "y"}, {"a": {"low": 1, "high": 5}, "b": ["x"]}, "b")],
+    "linked": [st.linked_counts(dash, {"channel": ["web"], "price": {"low": 0, "high": 5000}}, k) for k in ["town", "channel"]],
+    "fingerprint": [st.fingerprint(""), st.fingerprint(csv_text), st.fingerprint("a,b" + chr(10) + "1,2" + chr(10))],
+}
 path = os.path.join(HERE, "..", "engine", "parity.json")
 with open(path, "w", encoding="utf-8", newline="\n") as handle:
-    json.dump({"part1": part1, "part2": part2, "part3": part3, "part4": part4, "part5": part5, "part6": part6, "part7": part7, "part8": part8}, handle, ensure_ascii=False)
+    json.dump({"part1": part1, "part2": part2, "part3": part3, "part4": part4, "part5": part5, "part6": part6, "part7": part7, "part8": part8, "part9": part9, "part10": part10, "part11": part11, "part12": part12}, handle, ensure_ascii=False)
     handle.write("\n")
 print(f"wrote {os.path.normpath(path)}")

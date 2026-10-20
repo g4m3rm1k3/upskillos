@@ -109,6 +109,13 @@ describe('logic', () => {
   is('=LET(x, 2, y, 3, x*y)', 6)
   is('=MAP({1,2,3}, LAMBDA(x, x*10))', [[10, 20, 30]])
   is('=REDUCE(0, {1,2,3,4}, LAMBDA(acc, x, acc+x))', 10)
+  // Microsoft's examples: a running total, and a running product down a column.
+  is('=SCAN(0, {1,2,3,4}, LAMBDA(acc, x, acc+x))', [[1, 3, 6, 10]])
+  is('=SCAN(1, {1;2;3}, LAMBDA(acc, x, acc*x))', [[1], [2], [6]])
+  is('=SCAN(10, {20,40}, LAMBDA(s, y, s + 0.5*(y - s)))', [[15, 27.5]])
+  is('=MAKEARRAY(2, 3, LAMBDA(r, c, r*c))', [[1, 2, 3], [2, 4, 6]])
+  is('=SUM(MAKEARRAY(3, 3, LAMBDA(r, c, IF(r=c, 1, 0))))', 3)
+  is('=MAKEARRAY(0, 2, LAMBDA(r, c, 1))', '#VALUE!')
   is('=AND(TRUE, 1, 0)', false)
   is('=XOR(TRUE, FALSE, TRUE)', false)
   is('=ISERROR(1/0)', true)
@@ -119,6 +126,15 @@ describe('logic', () => {
 })
 
 describe('lookup and arrays', () => {
+  // A single cell is a reference too, on this sheet or another: OFFSET, ROW and COLUMN read its address.
+  const col = { A1: '10', A2: '20', A3: '30', A4: '40', A5: '50' }
+  is('=SUM(OFFSET(A1, 2, 0, 3, 1))', 120, col)
+  is('=OFFSET(A1, 1, 0)', 20, col)
+  is('=OFFSET(A1:A2, 3, 0, 1, 1)', 40, col)
+  is('=AVERAGE(OFFSET(Sheet1!A1, 1, 0, 2, 1))', 25, col)
+  is('=ROW(C7)', 7)
+  is('=COLUMN(D2)', 4)
+  is('=OFFSET(A1, -1, 0)', '#REF!', col)
   const table = { A1: '1', B1: 'one', A2: '2', B2: 'two', A3: '3', B3: 'three' }
   is('=VLOOKUP(2, A1:B3, 2, FALSE)', 'two', table)
   is('=VLOOKUP(2.5, A1:B3, 2, TRUE)', 'two', table)

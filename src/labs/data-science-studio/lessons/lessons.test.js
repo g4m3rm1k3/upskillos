@@ -3,7 +3,8 @@
 // exists. The "write it yourself" checks are run in real Python against the lab's own answer
 // (it must pass) and against the starter code (it must not: an exercise that passes before you
 // write anything teaches nothing).
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
+import initSqlJs from 'sql.js'
 import { spawnSync } from 'node:child_process'
 import { LESSONS, lessonById } from './index.js'
 import { KINDS } from '../Blocks.jsx'
@@ -13,6 +14,7 @@ import { FIGURES } from '../figures/index.js'
 import { checkScript, readResults, forbiddenIn } from '../checks.js'
 import { PROGRAMS } from '../programs.js'
 import { evaluateFormula, plain } from '../engine/sheet.js'
+import { loadShop, runQuery, sameRows, isOrdered, missingWords } from '../engine/sqlRun.js'
 
 // A Python with pandas, which the lab's programs use (the browser loads it into Pyodide).
 const PYTHON = ['python3', 'python'].find(cmd => { try { return spawnSync(cmd, ['-c', 'import pandas']).status === 0 } catch { return false } })
@@ -23,6 +25,12 @@ function runChecks(spec, code) {
   const r = spawnSync(PYTHON, ['-'], { input: program, encoding: 'utf8', timeout: 30000, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } })
   return { ok: r.status === 0, results: readResults(r.stdout ?? ''), stderr: r.stderr }
 }
+
+// The shop's tables in real SQLite, for the "Query it in SQL" blocks.
+let SQL = null
+beforeAll(async () => { SQL = await initSqlJs() })
+// A fresh copy for each query, as the page does: a query may change the tables.
+const query = text => { const db = loadShop(SQL), r = runQuery(db, text); db.close(); return r }
 
 describe('lessons', () => {
   it('have unique ids', () => {
@@ -91,6 +99,17 @@ describe('lessons', () => {
           expect(r.error, b.formula.solution).toBeUndefined()
           expect(plain(r.value)?.error, b.formula.solution).toBeUndefined()
           for (const fn of b.formula.must ?? []) expect(b.formula.solution.toUpperCase(), fn).toContain(fn.toUpperCase() + '(')
+        }
+      })
+      it('has SQL queries SQLite runs, using the words they ask for, giving the rows the by-hand engine gives', () => {
+        for (const b of lesson.blocks.filter(x => x.sql)) {
+          const r = query(b.sql.solution)
+          expect(r.error, b.sql.solution).toBeUndefined()
+          expect(missingWords(b.sql.solution, b.sql.must), b.sql.solution).toEqual([])
+          if (b.sql.answer) expect(sameRows(r.rows, b.sql.answer, isOrdered(b.sql.solution)), `${b.sql.solution}
+${JSON.stringify(r.rows.slice(0, 5))}
+${JSON.stringify(b.sql.answer.slice(0, 5))}`).toBe(true)
+          if (b.sql.starter) expect(sameRows(query(b.sql.starter).rows ?? [], r.rows, isOrdered(b.sql.solution)), `starter: ${b.sql.starter}`).toBe(false)
         }
       })
       for (const b of lesson.blocks.filter(x => x.write)) {

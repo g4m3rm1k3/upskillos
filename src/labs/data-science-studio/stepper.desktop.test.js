@@ -18,6 +18,9 @@ import * as P from './engine/patterns.js'
 import * as M from './engine/samples.js'
 import * as Q from './engine/significance.js'
 import * as F from './engine/models.js'
+import * as W from './engine/forecasting.js'
+import * as B from './engine/database.js'
+import * as L from './engine/mlData.js'
 import { ORDERS_CSV, CATALOGUE_CSV } from './engine/data.js'
 
 const root = path.resolve(import.meta.dirname, '../../..')
@@ -143,5 +146,37 @@ describe.skipIf(!existsSync(python))('the lab’s programs in the real Python st
     expect(n).toBe(20)
     const g = PROGRAMS.gradient_descent.kwargs('0.5')
     near(plain(r.result), F.gradientDescent(g.X, g.y, 0.5, 20))
+  }, 60000)
+
+  it('moving_average, exponential_smoothing and holt_winters stop once per day and give the engine’s forecasts', async () => {
+    const near = (got, want) => { expect(got.length).toBe(want.length); got.forEach((g, k) => (want[k] === null ? expect(g).toBeNull() : expect(g).toBeCloseTo(want[k], 9))) }
+    await load(s, 'moving_average')
+    let [r, n] = await jumps(s, 'moving_average', 40)
+    expect(n).toBe(23)   // 30 days, a 7-day window: the first window, then 23 moves
+    const m = PROGRAMS.moving_average.kwargs('7')
+    near(plain(r.result), W.movingAverage(m.ys, 7))
+    await load(s, 'exponential_smoothing');[r, n] = await jumps(s, 'exponential_smoothing', 40)
+    expect(n).toBe(29)
+    const e = PROGRAMS.exponential_smoothing.kwargs('0.1')
+    near(plain(r.result), W.exponentialSmoothing(e.ys, 0.1))
+    await load(s, 'holt_winters');[r, n] = await jumps(s, 'holt_winters', 40)
+    expect(n).toBe(21)   // 28 days, the first week starts it (the stepper shows 32 items of a list at most)
+    const h = PROGRAMS.holt_winters.kwargs('0.2')
+    near(plain(r.result), W.holtWinters(h.ys, 0.1, 0.01, 0.2, 7))
+  }, 60000)
+
+  it('binary_search halves the index once per step and finds the engine’s rows', async () => {
+    await load(s, 'binary_search')
+    const [r, n] = await jumps(s, 'binary_search', 20)
+    const k = PROGRAMS.binary_search.kwargs('A1100'), want = B.binarySearch(k.index, 'A1100')
+    expect(n).toBe(want[1])
+    expect(plain(r.result)).toEqual(want)
+  }, 60000)
+
+  it('fnv1a stops once per byte and gives the engine’s hash', async () => {
+    await load(s, 'fnv1a')
+    const [r, n] = await jumps(s, 'fnv1a', 30)
+    expect(n).toBe(4)   // b, i, k, e
+    expect(plain(r.result)).toBe(L.fnv1a('bike'))
   }, 60000)
 })

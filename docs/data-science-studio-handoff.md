@@ -4,7 +4,7 @@ Start every Data Science Studio session by reading this file, then the plan (`do
 
 ## The owner's rules
 
-- **Two parts per session**, then update this handoff and stop. Plan a part lesson by lesson (a table in the plan) before building it.
+- **Keep building part after part** until clearing the chat is cheaper than carrying on (the owner, 2026-10-20; it was two parts per session), then update this handoff and stop. Plan a part lesson by lesson (a table in the plan) before building it.
 - **The deepest lab.** Data science feeds machine learning, statistics, visualisation and databases. Every part teaches its **maths** (derived step by step), its **algorithms** (written by hand, counted, stepped through) and its **concepts**. The bar is "better than QMaze": more code the learner writes, more maths they derive.
 - **Four ways to see each idea**, where it fits: Python by hand first, then a spreadsheet formula (the Spreadsheet Lab's engine), then pandas, and D3 for charts.
 - **Labs give the intuition; Project Studio is the deep code dive.** Overlap with Frontier or other series is wanted, never a reason to leave a topic out. It's open source: write for every learner.
@@ -12,9 +12,45 @@ Start every Data Science Studio session by reading this file, then the plan (`do
 - **Nothing claimed without a measurement.** Numbers in a lesson come from the engine (checked by tests) or were measured, and say so.
 - One heavy job at a time (the owner's PC once froze); never leave a dev server running; commit and push only when asked; never write the owner's coursework into the repo.
 
-## State (2026-10-16, night)
+## State (2026-10-20, later): all twelve parts built
 
-**Parts 1 to 8 are built: 75 lessons**, all tested and checked in a browser. Parts 1–6 are committed (`d5855f54`); Parts 7 and 8 were built in the night session and were **not committed** when this was written (check `git status`; the owner commits when asked). Every Part 7–8 lesson table and every number they quote are in the plan.
+**Parts 1 to 12 are built: 110 lessons.** Parts 9–12 were built on 2026-10-20 and were **not committed** when this was written (the owner commits when asked). Every Part 9–12 lesson table, with the numbers it quotes, is in the plan.
+
+| Part | Lessons |
+|---|---|
+| 11 · Data for machine learning | 11.1 features from dates, the seasons on a circle · 11.2 target encoding and its leak (96.3% leaky against 79.0% honest) · 11.3 text as counts, TF-IDF on NLP Studio’s messages · 11.4 feature hashing, FNV-1a, collisions · 11.5 scaling for nearest neighbours · 11.6 confusion matrix, precision, recall, F1, the threshold · 11.7 stratified folds for a rare class · 11.8 a pipeline fitted on training rows · 11.9 project: the late-parcel model, and a datasheet |
+| 12 · Telling the story | 12.1 error bars (D3), overlapping intervals and a clear difference · 12.2 fan charts from past errors, and how often they held · 12.3 absolute against relative, the number needed · 12.4 a dashboard with linked views · 12.5 reproducible work, fingerprints · 12.6 capstone: the shop’s year, from raw CSV to a recommendation |
+
+**New code:** `python/ml_data.py` + `engine/mlData.js` (Part 11; JS-only helpers `deliveryTable`, `returnedFlags`), `python/story.py` + `engine/story.js` (Part 12), `figures/part11.jsx`, `figures/part12.jsx`, `lessons/part11.js`, `lessons/part12.js`. NLP Studio’s `MESSAGES` are imported from `../../nlp-studio/engine/data.js` (read only), and `make_parity.py` loads its `data.py` by path (both labs have a `data.py`). Real Python program: `fnv1a`.
+
+**Checks at the end:** the lab’s suite 1,444 passed, 1 skipped; the stepper 11 (with `DS_PYTHON`); the browser check, every lesson of Parts 1–12, all D3 and SQL blocks and write blocks `tf_idf`, `stratified_folds`, `linked_counts` in the page: “no problems”; `npm run build` passed (sql.js’s WebAssembly is in `dist`); `npm run typecheck` passed with no diagnostics.
+
+**What is left for this lab:** nothing in the plan. Possible extras, only if the owner asks: bring the Real Python tab’s variable view to the other labs (asked for in Part 1’s time, not done); a learner-facing note on SQL in the page needing the WebAssembly file (offline desktop builds include it, since it is imported with `?url`).
+
+### Earlier state: Parts 9 and 10 (2026-10-20)
+
+**Parts 9 and 10** (95 lessons with Parts 1–8).
+
+| Part | Lessons |
+|---|---|
+| 9 · Time and forecasting | 9.1 time order, weeks and resampling · 9.2 moving averages and the running sum · 9.3 trend + season + rest, differencing · 9.4 autocorrelation and its band · 9.5 the naive forecasts; MAE, RMSE, MAPE · 9.6 exponential smoothing · 9.7 Holt’s trend · 9.8 Holt–Winters, tuned on January to March · 9.9 walk-forward validation and three leaks · 9.10 project: next week’s riders, and orders with nothing to forecast |
+| 10 · Databases and SQL | 10.1 tables, types, NULL, keys · 10.2 SELECT, WHERE, three-valued logic · 10.3 GROUP BY, HAVING, the order clauses run in · 10.4 joins as a filtered cross product, the anti-join · 10.5 indexes, binary search, B-trees, EXPLAIN QUERY PLAN · 10.6 subqueries, NOT IN with a NULL, WITH · 10.7 window functions · 10.8 functional dependencies and normal forms · 10.9 transactions and ACID · 10.10 project: one question four ways |
+
+**New code:** `python/forecasting.py` + `engine/forecasting.js` (Part 9), `python/database.py` + `engine/database.js` (Part 10), `figures/part9.jsx`, `figures/part10.jsx`, `lessons/part9.js`, `lessons/part10.js`, `frames.py`’s `monthly_revenue_frame`. JS-only lesson helpers: `maeFrom`, `tuneHoltWinters`, `holtWintersAhead` (forecasting.js). Real Python programs: `moving_average`, `exponential_smoothing`, `holt_winters` (28 days: the stepper shows at most 32 items of a list), `binary_search`.
+
+**A new block kind, "Query it in SQL" (`sql`, `SqlIt.jsx`, `engine/sqlRun.js`).** The six sheets in real SQLite in the page (sql.js, already an npm dependency, its WebAssembly imported with `?url`, loaded on the first Run), typed by `column_type`, blanks as NULL. **Every run gets a fresh database** (a few ms), so a learner’s `CREATE INDEX`, `UPDATE` or `DROP` can’t break the next query. Right = the same rows as the lab’s query (in order only when the lab’s query has an ORDER BY outside a window) and the `must` words used. Spec: `{ prompt, solution, must, starter, hint, explain, answer }`; `answer` is the by-hand engine’s rows, which `lessons.test.js` holds SQLite to; a `starter` must not pass. Write blocks can use `sqlite3` (`packages: ['sqlite3']`). The parity file also stores what Python’s `sqlite3` returns, so the JavaScript is held to SQLite too. `bundle.test.js` treats `*?url` and `sql.js` as external.
+
+**The Spreadsheet Lab gained:** **SCAN** and **MAKEARRAY** (Microsoft’s examples as tests); and a fix for every spreadsheet user: **a single cell is a reference** for OFFSET, ROW and COLUMN (`refs: [0]` in a function’s definition; `evaluate.js` reads a one-cell argument there as a one-cell range). `=OFFSET(A1, 1, 0)`, `=OFFSET(days!D2, …)`, `=ROW(C7)` all failed before.
+
+**Checks run at the end of the session:** the lab’s suite (1,275 passed, 1 skipped), the stepper with `DS_PYTHON=C:/Python314/python.exe` (10; the app’s own environment isn’t installed on this machine, so it skips without that), the Spreadsheet Lab (456 passed; the one failure, “handles 5,000 cumulative SUM ranges quickly”, takes 3.5 s against a 3 s limit and fails the same on the committed engine: this machine, not this work), and the browser check (every lesson of Parts 1–10, both Part 9 D3 blocks, every SQL block’s starter and query in the page, write blocks `resample`, `best_alpha`, `holt_winters`, `binary_search`, `place_orders` with `sqlite3`, `monthly_revenue` in Pyodide). `npm run typecheck` and `npm run build` were not run this session.
+
+**Machine setup done this session:** pandas 3.0.6 installed for Python 3.14 (`py -3.14 -m pip install --user pandas`; the write-block tests skip silently without it), and Playwright’s Chromium downloaded (`npx playwright install chromium`).
+
+(Then: Parts 11 and 12, built the same day.)
+
+### Earlier state: Parts 7 and 8 (2026-10-16, night)
+
+**Parts 1 to 8: 75 lessons**, committed in `09282f48`. Every Part 7–8 lesson table and every number they quote are in the plan.
 
 | Part | Lessons |
 |---|---|
@@ -31,7 +67,7 @@ Start every Data Science Studio session by reading this file, then the plan (`do
 
 **Checks run at the end of the session:** the lab's suite (962 passed, 1 skipped), the stepper (8), the Spreadsheet Lab (all), and the browser check (every lesson of Parts 1–8 drawn, every D3 block matched, write blocks `t_two_sided`, `solve`, `logistic_fit`, `benjamini_hochberg` and `chi2_tail` passed in Pyodide, lessons 7.7 and 8.3’s formulas solved in their grids: “no problems”). `npm run typecheck` and `npm run build` failed only on another session’s unfinished `src/labs/discrete-math-lab/` (parse errors there); nothing in this lab or the Spreadsheet Lab. `npm run catalog:check` is out of date for the same reason (that session’s new lab); this work added no labs or courses.
 
-**Next: Parts 9 (time and forecasting) and 10 (databases and SQL).** Plan each lesson by lesson in the plan first. Part 9 has its data: the days table's temperature (and so riders and visits) follows the seasons, the orders have dates, and the trial runs day by day; lesson 8.9 already showed a curve in the date failing on held-out months, and 7.9 showed a running statistic. Part 10: the shop's tables (orders, catalogue, returns, days, deliveries, trial) into SQLite (Pyodide's standard library), each query next to the spreadsheet, plain Python and pandas.
+(Planned then: Parts 9 and 10, built 2026-10-20.) Part 9 has its data: the days table's temperature (and so riders and visits) follows the seasons, the orders have dates, and the trial runs day by day; lesson 8.9 already showed a curve in the date failing on held-out months, and 7.9 showed a running statistic. Part 10: the shop's tables (orders, catalogue, returns, days, deliveries, trial) into SQLite (Pyodide's standard library), each query next to the spreadsheet, plain Python and pandas.
 
 ### Earlier state: Parts 5 and 6 (2026-10-16, evening)
 
@@ -89,8 +125,11 @@ The shop's data now has two more tables, made by the generator with the truth ke
 | `python/patterns.py`, `samples.py`, `engine/patterns.js`, `samples.js` | Parts 5 and 6 by hand, and their JavaScript copies (parity-tested) |
 | `python/significance.py`, `models.py`, `engine/significance.js`, `models.js` | Parts 7 and 8 by hand, and their JavaScript copies (parity-tested) |
 | `lessons/given.js` | code put before a write block's: the generator `Rng` (and `noise`, `MONTH_DAYS`) taken from the real `data.py` |
+| `python/forecasting.py`, `database.py`, `engine/forecasting.js`, `database.js` | Parts 9 and 10 by hand, and their JavaScript copies (parity-tested; database.js also against `sqlite3`) |
+| `python/ml_data.py`, `story.py`, `engine/mlData.js`, `story.js` | Parts 11 and 12 by hand, and their JavaScript copies (parity-tested) |
+| `SqlIt.jsx`, `engine/sqlRun.js` | the `sql` block: the six sheets in SQLite (sql.js) in the page, a fresh copy per run; `typedRows` gives the by-hand engine the same typed rows |
 
-Block kinds: `h, md, figure, code, mathCode, predict, choice, derive, write, formula, chart, note, python`. A `chart` ("Draw it with D3") takes `prompt`, `starter`, `solution` (JavaScript run with `d3`, `svg`, `data`, `width` 480, `height` 300), `data` (or `runs`: several data sets drawn in turn, with `keep`: the field whose marks must stay the same elements), `checks` (`[{ select, attrs }]`: positions to within 0.5 px, `#text` for text, paths and transforms as lists of numbers), `verify` (the tests' check of the solution's marks against the Python maths), `hint`, `explain`. The answer key is the solution, run the same way. A formula may name the other sheets: `catalogue!A2:C8`, `returns!B2:B26`. A `write` takes `packages: ['pandas']` and `prelude: 'import pandas as pd'` for pandas. A `formula` takes `table` (`orders` or `small`), `prompt`, `solution`, `must` (functions it has to use), `hint`, `explain`. Its id (`lesson id:block index`) is also its exercise id in the Spreadsheet Lab, so moving blocks around changes it (as it changes progress).
+Block kinds: `h, md, figure, code, mathCode, predict, choice, derive, write, formula, chart, sql, note, python`. A `chart` ("Draw it with D3") takes `prompt`, `starter`, `solution` (JavaScript run with `d3`, `svg`, `data`, `width` 480, `height` 300), `data` (or `runs`: several data sets drawn in turn, with `keep`: the field whose marks must stay the same elements), `checks` (`[{ select, attrs }]`: positions to within 0.5 px, `#text` for text, paths and transforms as lists of numbers), `verify` (the tests' check of the solution's marks against the Python maths), `hint`, `explain`. The answer key is the solution, run the same way. A formula may name the other sheets: `catalogue!A2:C8`, `returns!B2:B26`. A `write` takes `packages: ['pandas']` and `prelude: 'import pandas as pd'` for pandas. A `formula` takes `table` (`orders` or `small`), `prompt`, `solution`, `must` (functions it has to use), `hint`, `explain`. Its id (`lesson id:block index`) is also its exercise id in the Spreadsheet Lab, so moving blocks around changes it (as it changes progress).
 
 **Spreadsheet Lab additions:**
 - `SpreadsheetLab.jsx` exports `<Spreadsheet book lesson start>`, the whole spreadsheet on a given workbook. In `lesson` mode it has no New/Open, Enter stays on the cell, and preferences aren't saved.
@@ -104,13 +143,19 @@ Block kinds: `h, md, figure, code, mathCode, predict, choice, derive, write, for
 |---|---|
 | `python src/labs/data-science-studio/tools/make_parity.py` | regenerates `engine/parity.json` after a Python change |
 | `npx vitest run src/labs/data-science-studio --exclude "**/*.desktop.test.js"` | parity, every lesson's numbers, write blocks (lab answer passes, starter fails, in real Python), D3 blocks (solution passes, starter fails, marks agree with the Python), the chart maths against D3 and the Spreadsheet Lab, formulas, renders, bundle |
-| `npx vitest run src/labs/data-science-studio/stepper.desktop.test.js` | the Real Python programs in the desktop app's Python |
+| `npx vitest run src/labs/data-science-studio/stepper.desktop.test.js` | the Real Python programs in the desktop app's Python (set `DS_PYTHON` to a Python 3 when the app’s environment isn’t installed) |
 | `npx vitest run src/labs/spreadsheet-lab` | after any Spreadsheet Lab change |
-| `npx vite-node src/labs/data-science-studio/tools/browser-check.mjs <out> --write fn1,fn2` | the real browser (Part 5 on: the days and deliveries sheets, and Spearman typed into lesson 5.3's grid; Part 7 on: the trial sheet, lesson 7.7's CHISQ.TEST from COUNTIFS arrays and lesson 8.3's normal equations with MINVERSE typed into their grids): every lesson, chosen write blocks in Pyodide (pandas included), every D3 block (the solution pasted, drawn, checked), a formula typed into the embedded grid, its steps, folding and copying the table, the Spreadsheet Lab button and its lesson list, the catalogue and returns sheets and a cross-sheet formula, a histogram's bin rule and its D3 code in the Spreadsheet Lab; a screenshot of every lesson, figure and D3 block; starts and stops its own server (about 3 minutes) |
+| `npx vite-node src/labs/data-science-studio/tools/browser-check.mjs <out> --write fn1,fn2` | the real browser (Part 5 on: the days and deliveries sheets, and Spearman typed into lesson 5.3's grid; Part 7 on: the trial sheet, lesson 7.7's CHISQ.TEST from COUNTIFS arrays and lesson 8.3's normal equations with MINVERSE typed into their grids): every lesson, chosen write blocks in Pyodide (pandas included), every D3 block (the solution pasted, drawn, checked), a formula typed into the embedded grid, its steps, folding and copying the table, the Spreadsheet Lab button and its lesson list, the catalogue and returns sheets and a cross-sheet formula, a histogram's bin rule and its D3 code in the Spreadsheet Lab; a screenshot of every lesson, figure and D3 block; starts and stops its own server (over 10 minutes since Part 10, with every SQL block run in the page: run it in the background, not under a 10-minute tool limit); Part 10 on: every SQL block’s starter (must not pass) and query (must) |
 | `npm run facts`, `npm run catalog:check`, `npm run typecheck`, `npm run build` | before committing |
 
 ## Learned the hard way
 
+- **Heredoc and inline-Python edits turn a typed backslash-n into a real line break** (again, in `make_parity.py`’s fingerprint test): build such strings with `chr(10)` or `String.fromCharCode(10)`, or use the Edit tool.
+- **Lesson ids are unique across all parts**: Part 10’s first draft reused `group-by` (Part 2’s lesson 2.8), and the only symptom was a “links only to earlier lessons” failure. Grep the ids before naming a lesson.
+- **The Real Python stepper shows at most 32 items of a list** (`aarcade_stepper.py`’s `summarise`): a program whose answer is longer comes back cut short. Keep program inputs under 32 results.
+- **A single cell was not a reference in the Spreadsheet Lab** (OFFSET, ROW, COLUMN): fixed with `refs`. Any new function that needs a reference rather than a value should list its position in `refs`.
+- **SQL answers from a by-hand engine must follow SQLite’s rules exactly**: AVG and SUM skip NULL, SUM of nothing is NULL, GROUP BY sorts NULL first, text compares by code unit, and a window AVG near the start averages the rows it has (Part 9’s moving average waits for a full window). `parity.test.js` checks these against Python’s `sqlite3`.
+- **The orders in Part 7’s and later lessons are the cleaned ones** (400 rows, not the raw 402): a number measured on the raw table can differ (orders per day’s MAE moved from 0.704 to 0.697). Measure with the same table the lesson uses.
 - **An apostrophe inside parentheses in a docstring** stops the shared Python parser (`a-arcade-python/analysis.js`): every function after it vanishes from the lessons' quotes. Reword: "(the fix named after Bessel)", not "(Bessel's correction)".
 - **Python 3.12+ `sum()` of floats is compensated**, so it won't match JavaScript to the last digit. Library code here adds with explicit loops (`total`), which is also what lesson 2.5's cancellation needs.
 - **A starter must not loop forever**: the test runs it (now with a 30-second limit). Return `None`/`pass` without `while True`.
