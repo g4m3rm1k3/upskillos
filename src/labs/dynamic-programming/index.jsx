@@ -5,6 +5,8 @@ import { LESSONS } from './lessons/index.js'
 import Lesson from './Lesson.jsx'
 import CodeViewer from './CodeViewer.jsx'
 import { readProgress, isSolved } from './progress.js'
+import { Review, MasteryMap } from './Study.jsx'
+import { dueItems } from './review.js'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { TRACES } from './tables.js'
 import { TREE_FOR } from './trees.js'
@@ -33,6 +35,9 @@ export default function DynamicProgrammingLab() {
   const [difficulty, setDifficulty] = useState('all')
   const [selectedId, setSelectedId] = useState(() => { const id = readPlace(); return CONCEPTS.some(c => c.id === id) ? id : null })
   const [collapsed, setCollapsed] = useState(new Set())
+  // The spaced review or the mastery map, shown instead of the overview when no lesson is open.
+  const [page, setPage] = useState(null)
+  const [reviewRound, setReviewRound] = useState(0)
   const [language, setLanguage] = useState('Python')
   const [progress, setProgress] = useState(() =>
     Object.fromEntries(
@@ -44,6 +49,7 @@ export default function DynamicProgrammingLab() {
   const { user, pushNow } = useAuth() ?? {}
   const solvedIn = concepts => concepts.filter(c => isSolved(progress[c.id])).length
   const solvedCount = solvedIn(CONCEPTS)
+  const dueCount = dueItems(progress).length
   function recordProgress(id, record) {
     const before = progress[id]
     if ((isSolved(record) && !isSolved(before)) || (record.design?.done && !before?.design?.done) || (record.hunt?.passed && !before?.hunt?.passed) || (record.checks?.done && !before?.checks?.done)) pushNow?.()
@@ -87,6 +93,7 @@ export default function DynamicProgrammingLab() {
   }
 
   function select(id) {
+    setPage(null)
     setSelectedId(id)
     writePlace(id)
     detailRef.current?.scrollTo?.({ top: 0, behavior: 'smooth' })
@@ -162,11 +169,27 @@ export default function DynamicProgrammingLab() {
 
             <button
               type="button"
-              className={`dp-overview-button ${!selected ? 'is-selected' : ''}`}
-              aria-current={!selected ? 'page' : undefined}
+              className={`dp-overview-button ${!selected && !page ? 'is-selected' : ''}`}
+              aria-current={!selected && !page ? 'page' : undefined}
               onClick={() => select(null)}
             >
               ▦ <span>Curriculum overview</span>
+            </button>
+            <button
+              type="button"
+              className={`dp-overview-button ${page === 'review' ? 'is-selected' : ''}`}
+              aria-current={page === 'review' ? 'page' : undefined}
+              onClick={() => { select(null); setPage('review'); setReviewRound(r => r + 1) }}
+            >
+              ↻ <span>Review</span>{dueCount > 0 && <span className="dp-due" aria-label={`${dueCount} due`}>{dueCount}</span>}
+            </button>
+            <button
+              type="button"
+              className={`dp-overview-button ${page === 'map' ? 'is-selected' : ''}`}
+              aria-current={page === 'map' ? 'page' : undefined}
+              onClick={() => { select(null); setPage('map') }}
+            >
+              ▥ <span>Mastery map</span>
             </button>
 
             <p className="dp-results" role="status">
@@ -275,9 +298,13 @@ export default function DynamicProgrammingLab() {
         <main
           ref={detailRef}
           className="dp-detail"
-          aria-label={selected ? 'Concept preview' : 'Curriculum overview'}
+          aria-label={selected ? 'Concept preview' : page === 'review' ? 'Spaced review' : page === 'map' ? 'Mastery map' : 'Curriculum overview'}
         >
-          {!selected ? (
+          {!selected && page === 'review' ? (
+            <Review key={reviewRound} progress={progress} onProgress={recordProgress} onOpen={select} onFinish={() => pushNow?.()} />
+          ) : !selected && page === 'map' ? (
+            <MasteryMap progress={progress} onOpen={select} />
+          ) : !selected ? (
             <>
               <div className="dp-hero">
                 <p className="dp-eyebrow">THE COMPLETE DP CURRICULUM · FOUNDATIONS TO SPECIALIST</p>

@@ -382,6 +382,14 @@ export function mergeDpLab(
     for (const part of ['Python', 'JavaScript', 'quiz', 'design', 'hunt']) {
       if (won(theirs[part]) && !won(mine[part])) record[part] = theirs[part]
     }
+    // Spaced review: each check keeps whichever device scheduled it last.
+    if (isObject(mine.review) || isObject(theirs.review)) {
+      const review: Record<string, any> = { ...(isObject(theirs.review) ? theirs.review : {}) }
+      for (const [k, entry] of Object.entries(isObject(mine.review) ? mine.review : {})) {
+        if (!isObject(review[k]) || (entry?.at ?? 0) >= (review[k].at ?? 0)) review[k] = entry
+      }
+      record.review = review
+    }
     merged[id] = record
   }
   return merged

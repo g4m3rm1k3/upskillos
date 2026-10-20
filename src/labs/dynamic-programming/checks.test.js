@@ -1,8 +1,11 @@
 import { expect, it } from 'vitest'
 import { CHECKS } from './lessons/checks.js'
 import { displayOrder } from './lessons/designs.js'
-import { ORACLES } from './lessons/core-oracles.js'
+import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
+import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
 import { LESSONS } from './lessons/index.js'
+
+const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES }
 
 // Answers that are not a lesson's challenge answer, computed without DP.
 const EXTRA = {
@@ -50,6 +53,54 @@ const CLAIMS = [
   ['grid-resources', [[[0, 1, 0], [1, 0, 1], [0, 1, 0]], 2], 6],
   ['grid-direction', [[[0, 1, 1], [1, 1, 1]], 3], 6],
   ['grid-multiagent', [[[1, 0, 1]]], 2],
+  ['zero-one-knapsack', [[1, 2, 3], [6, 10, 12], 5], 22],
+  ['unbounded-knapsack', [[1, 2, 3], [6, 10, 12], 5], 30],
+  ['zero-one-knapsack', [[2, 3], [3, 5], 7], 8],
+  ['unbounded-knapsack', [[3, 4], [4, 5], 4], 5],
+  ['unbounded-knapsack', [[2, 3], [3, 5], 9], 15],
+  ['zero-one-knapsack', [[2, 3], [3, 5], 9], 8],
+  ['equal-partition', [[1, 2, 3]], 0],
+  ['target-signs', [[1, 2, 3], 0], 2],
+  ['coin-permutations', [[1, 2, 3], 4], 7],
+  ['coin-combinations', [[1, 3], 5], 2],
+  ['coin-permutations', [[1, 2], 5], 8],
+  ['coin-combinations', [[1, 2], 5], 3],
+  ['zero-one-knapsack', [[1, 2, 1, 3], [3, 5, 2, 6], 3], 8],
+  ['zero-one-knapsack', [[2, 3, 4], [6, 1, 1], 7], 7],
+  ['rod-cutting', [[2, 5, 7, 8, 10], 4], 10],
+  ['binomial', [6, 2], 15],
+  ['binomial', [5, 2], 10],
+  ['binomial', [5, 3], 10],
+  ['coin-combinations', [[1, 2, 3, 4, 5, 6], 6], 11],
+  ['coin-permutations', [[1, 2, 3, 4, 5, 6], 6], 32],
+  ['binomial', [8, 4], 70],
+  ['catalan', [3], 5],
+  ['catalan', [2], 2],
+  ['derangements', [4], 9],
+  ['derangements', [3], 2],
+  ['stirling', [4, 1], 1],
+  ['stirling', [4, 3], 6],
+  ['stirling', [4, 4], 1],
+  ['stirling', [3, 2], 3],
+  ['inversion-counting', [3, 2], 2],
+  ['inversion-counting', [4, 1], 3],
+  ['inversion-counting', [4, 4], 5],
+  ['lis-count', [[2, 2, 2]], 3],
+  ['lis-count', [[1, 1, 2, 2, 3, 3]], 8],
+  ['lis', [[1, 3, 5, 4, 2, 6]], 4],
+  ['bitonic', [[1, 2, 3, 4]], 4],
+  ['common-substring', ['xaybzc', 'abcxyz'], 1],
+  ['lcs-reconstruct', ['aa', 'a'], 1],
+  ['lcs-reconstruct', ['abxab', 'baxba'], 6],
+  ['lcs-reconstruct', ['abxabyab', 'baxbayba'], 18],
+  ['lcs', ['abxcd', 'abycd'], 4],
+  ['edit-distance', ['abcd', 'acbd'], 2],
+  ['edit-distance', ['ab', 'ba'], 2],
+  ['damerau', ['ca', 'abc'], 2],
+  ['regex', ['ab', '.*c'], false],
+  ['binomial', [30, 15], 155117520],
+  ['stock-cooldown', [[1, 5, 3, 6], 0, 2], 3],
+  ['stock-states', [[1, 5, 3, 6]], 7],
 ]
 
 const entries = Object.entries(CHECKS).flatMap(([id, checks]) => checks.map((c, k) => [id, c, k]))

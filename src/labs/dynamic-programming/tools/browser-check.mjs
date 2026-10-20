@@ -3,7 +3,7 @@
 // to its walkthrough, plays the table and the tree, fills one cell by typing, tries the fill-order
 // game, walks the answer back where it can, and saves a screenshot of each. Every lesson with "Design it yourself" is designed start to
 // finish, with one wrong pick per decision. Every bug hunt is played in real Python: run the bug, click a
-// right line, click the bug, type the fix, pass. Every lesson's "Check yourself" is played with one mistake per check. `--only` takes lesson ids, plus `design`, `checks`, `hunt` and `run`. Any page error, console error or missing piece is reported.
+// right line, click the bug, type the fix, pass. Every lesson's "Check yourself" is played with one mistake per check. `--only` takes lesson ids, plus `design`, `checks`, `review`, `hunt` and `run`. Any page error, console error or missing piece is reported.
 //
 //   node src/labs/dynamic-programming/tools/browser-check.mjs [out-folder] [--only id1,id2]
 import { chromium } from 'playwright'
@@ -157,6 +157,45 @@ try {
     await cy.getByText(/checks done/).waitFor({ timeout: 5000 }).catch(() => problems.push(`${id}: the checks did not finish`))
     if (!(await page.getByRole('button', { name: /Check yourself ✓/ }).isVisible().catch(() => false))) problems.push(`${id}: the Check yourself stage is not marked done`)
     console.log(`${id} checks: ok`)
+  }
+  // Spaced review and the mastery map: one finished lesson (house robber) with all three checks due,
+  // played from the sidebar's Review button (one miss first), then the map, which must show it checked.
+  if (wanted('review')) {
+    await page.evaluate(() => {
+      const all = JSON.parse(localStorage.getItem('oc-dp-lab') || '{}')
+      const due = { box: 2, due: Date.now() - 1000, at: 0 }
+      all['house-robber'] = { ...(all['house-robber'] ?? {}), revision: 1, checks: { done: true, firstTry: 3, total: 3 }, review: { 0: due, 1: due, 2: due } }
+      localStorage.setItem('oc-dp-lab', JSON.stringify(all))
+    })
+    // Reload so the lab reads the seeded record. The reload shows the desktop's home page with the
+    // lab's address still set, so step to #/ and back to open the lab.
+    await page.reload()
+    await page.goto(URL.replace(/#.*/, '#/'))
+    await page.goto(URL)
+    const gotIt = page.getByRole('button', { name: 'Got it' })
+    await gotIt.waitFor({ timeout: 15000 }).then(() => gotIt.click()).catch(() => {})
+    await page.getByRole('searchbox').waitFor({ timeout: 60000 }).catch(async e => { await page.screenshot({ path: path.join(out, 'review-failed.png') }); throw e })
+    await page.getByRole('button', { name: /Review/ }).first().click()
+    const rv = page.getByRole('region', { name: 'Spaced review' })
+    for (const [k, c] of CHECKS['house-robber'].entries()) {
+      await rv.getByText(c.know, { exact: true }).waitFor({ timeout: 5000 }).catch(async e => { await page.screenshot({ path: path.join(out, 'review-failed.png') }); throw e })
+      if (c.options) await rv.getByRole('button', { name: c.options.find(o => o.right).text, exact: true }).click()
+      else {
+        await rv.getByRole('textbox').fill(String(c.misconceptions[0].answer))
+        await rv.getByRole('button', { name: 'Check', exact: true }).click()
+        await rv.getByRole('textbox').fill(String(c.answer))
+        await rv.getByRole('button', { name: 'Check', exact: true }).click()
+      }
+      if (k === 0) await rv.screenshot({ path: path.join(out, 'review.png') })
+      await rv.getByRole('button', { name: k + 1 < 3 ? 'Next question →' : 'Finish review' }).click()
+    }
+    const said = await rv.getByRole('status').textContent({ timeout: 5000 }).catch(() => '')
+    if (!said.includes('2 of 3 right the first time')) problems.push(`review: expected 2 of 3 right, got "${said}"`)
+    await page.getByRole('button', { name: /^▥ Mastery map/ }).click()
+    const map = page.getByRole('region', { name: 'Mastery map' })
+    await map.getByRole('button', { name: /Non-adjacent selection: .*Checked yourself yes/ }).waitFor({ timeout: 5000 }).catch(() => problems.push('map: house robber not shown as checked'))
+    await map.screenshot({ path: path.join(out, 'mastery-map.png') })
+    console.log('review and map: ok')
   }
   // Bug hunts, in Python (each Run starts real Pyodide): the bug shows, a right line says why it is
   // right, the bug line is accepted, the fix passes, and the stage is marked.

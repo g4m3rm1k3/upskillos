@@ -48,7 +48,7 @@ it('is a stage of a lesson that has checks, marked once done, and merges without
   fireEvent.click(screen.getByRole('button', { name: /Check yourself/ }))
   expect(screen.getByText(CHECKS.fibonacci[0].know)).toBeTruthy()
   cleanup()
-  render(<Lesson lesson={LESSONS['matrix-chain']} concepts={[]} onSelect={() => {}} language="JavaScript" />)
+  render(<Lesson lesson={LESSONS.induction} concepts={[]} onSelect={() => {}} language="JavaScript" />)
   expect(screen.queryByRole('button', { name: /Check yourself/ })).toBeNull()
 
   const phone = { fibonacci: { revision: 1, checks: { done: true, firstTry: 2, total: 3 } } }

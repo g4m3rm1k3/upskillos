@@ -1,11 +1,13 @@
 // "Check yourself": after a lesson, several short checks, one at a time. Each opens with what you need
 // to know, then asks a choice (every option says why) or a number on a new input (wrong answers that a
 // real mistake gives are named). Content: lessons/checks.js. Finishing is saved as `checks` in the
-// lesson's synced record, with how many were right the first time.
+// lesson's synced record, with how many were right the first time; the checks then join spaced review
+// (review.js), first due a day later.
 import React, { useState } from 'react'
 import { Decision, NumberCheck } from './DesignIt.jsx'
 import { displayOrder } from './lessons/designs.js'
 import { readProgress, saveProgress } from './progress.js'
+import { enterReview } from './review.js'
 import './hunt.css'
 
 export default function Checks({ id, checks, revision, onProgress }) {
@@ -24,6 +26,7 @@ export default function Checks({ id, checks, revision, onProgress }) {
     if (at + 1 < checks.length) return
     const record = readProgress(id, revision)
     record.checks = { done: true, firstTry, total: checks.length }
+    record.review = enterReview(record.review, checks.length)
     saveProgress(id, record)
     onProgress?.(id, record)
   }

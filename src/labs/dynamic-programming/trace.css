@@ -986,3 +986,25 @@
 .dp-lab .dp-checks-know {
   margin-bottom: 14px;
 }
+
+/* Mastery map and spaced review (Study.jsx), ported from the Linear Algebra lab's progress map. */
+.dp-lab .dp-map { display: grid; gap: 12px; }
+.dp-lab .dp-map h3 { margin: 0; }
+.dp-lab .dp-map-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 8px 0 14px; }
+.dp-lab .dp-map-totals > div { border: 1px solid var(--dp-line); background: var(--dp-card); border-radius: 12px; padding: 12px 14px; border-top: 4px solid var(--mark); }
+.dp-lab .dp-map-totals strong { display: block; font-size: 24px; }
+.dp-lab .dp-map-totals small { font-size: 13px; color: var(--dp-muted); }
+.dp-lab .dp-map-totals span { font-size: 12px; color: var(--dp-muted); }
+.dp-lab .dp-mark-0 { --mark: #a78bfa; } .dp-lab .dp-mark-1 { --mark: #10b981; } .dp-lab .dp-mark-2 { --mark: #f59e0b; }
+.dp-lab .dp-mark-3 { --mark: #38bdf8; } .dp-lab .dp-mark-4 { --mark: #f472b6; }
+.dp-lab .dp-map-group h4 { margin: 6px 0 8px; font-size: 14px; color: var(--level-color, var(--dp-text)); }
+.dp-lab .dp-map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.dp-lab .dp-map-tile { display: flex; flex-direction: column; justify-content: space-between; gap: 10px; text-align: left; min-height: 72px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--dp-line); border-left: 4px solid var(--level-color, var(--dp-primary)); background: var(--dp-card); color: var(--dp-text); font-size: 13px; font-weight: 600; cursor: pointer; }
+.dp-lab .dp-map-tile:hover { background: var(--dp-card-hover); }
+.dp-lab .dp-pips { display: flex; gap: 5px; }
+.dp-lab .dp-pips i, .dp-lab .dp-map-key i { width: 22px; height: 6px; border-radius: 3px; background: var(--dp-line); display: inline-block; }
+.dp-lab .dp-pips i.on, .dp-lab .dp-map-key i.on { background: var(--mark); }
+.dp-lab .dp-pips i.na { background: transparent; border: 1px dashed var(--dp-line-bright); }
+.dp-lab .dp-map-key { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 12px; color: var(--dp-muted); }
+.dp-lab .dp-map-key i { margin-right: 6px; vertical-align: middle; }
+.dp-lab .dp-due { margin-left: auto; padding: 1px 8px; border-radius: 999px; background: var(--dp-primary); color: #fff; font-size: 11px; font-weight: 700; }
