@@ -3,12 +3,17 @@ import { CHECKS } from './lessons/checks.js'
 import { displayOrder } from './lessons/designs.js'
 import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
 import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
+import { ADVANCED_ORACLES } from './lessons/advanced-oracles.js'
 import { LESSONS } from './lessons/index.js'
 
-const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES }
+const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES }
 
 // Answers that are not a lesson's challenge answer, computed without DP.
 const EXTRA = {
+  // The mask-language answer as a number (it fits for small positions).
+  'mask-number': ([sets]) => Number(ADVANCED_ORACLES['mask-language']([sets])),
+  // The shortest distance from the first vertex to the last.
+  'floyd-first-last': ([n, edges]) => ADVANCED_ORACLES['floyd-warshall']([n, edges])[0][n - 1],
   // Every call of the plain Fibonacci recursion, the first one included.
   'fib-calls': ([n]) => { const calls = k => 1 + (k < 2 ? 0 : calls(k - 1) + calls(k - 2)); return calls(n) },
   // The greedy climb: always step onto the cheaper of the next two stairs (the first on a tie).

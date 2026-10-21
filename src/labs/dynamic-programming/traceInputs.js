@@ -65,6 +65,22 @@ export function parseField(field, raw) {
       }
       return { value }
     }
+    case 'edges': {
+      // "0 1, 1 2" (from to), or "0 1 5, 1 2 -3" with a weight when field.weighted.
+      const parts = text.split(/[,;\n]+/).map(p => p.trim()).filter(Boolean)
+      const [lo, hi] = field.len
+      if (parts.length < lo || parts.length > hi) return { error: `${field.label}: give ${lo} to ${hi} edges, separated by commas.` }
+      const size = field.weighted ? 3 : 2, value = []
+      for (const p of parts) {
+        const nums = p.split(/\s+/)
+        if (nums.length !== size || !nums.every(isInt)) return { error: `“${p}”: an edge is ${field.weighted ? 'from, to and weight' : 'from and to'}, whole numbers separated by spaces.` }
+        const e = nums.map(Number)
+        if (e[0] < 0 || e[1] < 0) return { error: `“${p}”: vertices are numbered from 0.` }
+        if (field.weighted) { const bad = inRange(e[2], field, 'Each weight'); if (bad) return { error: bad } }
+        value.push(e)
+      }
+      return { value }
+    }
     case 'grid':
     case 'matrix': {
       const { value, error } = parseRows(text, field)
@@ -101,6 +117,8 @@ export function formatField(field, value) {
       return value.map(r => r.join(' ')).join('; ')
     case 'groups':
       return value.map(g => g.map(o => o.join(' ')).join(', ')).join('; ')
+    case 'edges':
+      return value.map(e => e.join(' ')).join(', ')
     default:
       return String(value)
   }

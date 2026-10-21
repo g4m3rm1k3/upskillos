@@ -5,9 +5,15 @@
 //
 // notes: [pythonText, javascriptText, note]: the note goes under the first line, at or after the previous
 // note's line, that contains that language's text. math: [maths, python, javascript, meaning].
+import { DAG_EXPLAINED } from './explained-dag.js'
+import { TREE_EXPLAINED } from './explained-tree.js'
+import { SUBSET_EXPLAINED } from './explained-subset.js'
+import { DIGIT_EXPLAINED } from './explained-digit.js'
+import { SPACE_EXPLAINED } from './explained-space.js'
+
 const pair = (Python, JavaScript) => ({ Python, JavaScript })
 
-export const EXPLAINED = {
+const CORE_EXPLAINED = {
   fibonacci: {
     code: pair(`def solve(n):
     a, b = 0, 1
@@ -1481,3 +1487,6 @@ export const EXPLAINED = {
     ],
   },
 }
+
+// The Advanced lessons' explained code lives beside its family (explained-dag.js, …).
+export const EXPLAINED = { ...CORE_EXPLAINED, ...DAG_EXPLAINED, ...TREE_EXPLAINED, ...SUBSET_EXPLAINED, ...DIGIT_EXPLAINED, ...SPACE_EXPLAINED }

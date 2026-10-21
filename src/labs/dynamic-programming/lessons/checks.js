@@ -16,5 +16,9 @@ import { COUNTING_CHECKS } from './checks-counting.js'
 import { SEQUENCE_CHECKS } from './checks-sequences.js'
 import { STRING_CHECKS } from './checks-strings.js'
 import { INTERVAL_CHECKS } from './checks-intervals.js'
+import { DAG_CHECKS } from './checks-dag.js'
+import { TREE_CHECKS } from './checks-tree.js'
+import { SUBSET_CHECKS } from './checks-subset.js'
+import { DIGIT_CHECKS } from './checks-digit.js'
 
-export const CHECKS = { ...LINEAR_CHECKS, ...GRID_CHECKS, ...KNAPSACK_CHECKS, ...COUNTING_CHECKS, ...SEQUENCE_CHECKS, ...STRING_CHECKS, ...INTERVAL_CHECKS }
+export const CHECKS = { ...LINEAR_CHECKS, ...GRID_CHECKS, ...KNAPSACK_CHECKS, ...COUNTING_CHECKS, ...SEQUENCE_CHECKS, ...STRING_CHECKS, ...INTERVAL_CHECKS, ...DAG_CHECKS, ...TREE_CHECKS, ...SUBSET_CHECKS, ...DIGIT_CHECKS }

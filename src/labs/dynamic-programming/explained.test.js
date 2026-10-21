@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
 import { EXPLAINED, explainLines } from './explain.js'
-import { CORE_CHALLENGES } from './lessons/core-challenges.js'
+import { ALL_CHALLENGES as CHALLENGES } from './lessons/index.js'
 import { runJavaScriptCases } from './runtime/checks.js'
 
 const LANGUAGES = ['Python', 'JavaScript']
 const entries = Object.entries(EXPLAINED)
 
 describe('explained reference solutions', () => {
-  it('explains Core lessons that have a challenge', () => {
+  it('explains lessons that have a challenge', () => {
     expect(entries.length).toBeGreaterThanOrEqual(12)
-    for (const [id] of entries) expect(CORE_CHALLENGES[id], id).toBeTruthy()
+    for (const [id] of entries) expect(CHALLENGES[id], id).toBeTruthy()
   })
 
   it('attaches every note to a line, in order, in both languages', () => {
@@ -37,7 +37,7 @@ describe('explained reference solutions', () => {
 
   for (const [id, entry] of entries) {
     it(`${id}: the JavaScript passes its challenge`, () => {
-      const r = runJavaScriptCases(entry.code.JavaScript, CORE_CHALLENGES[id].cases)
+      const r = runJavaScriptCases(entry.code.JavaScript, CHALLENGES[id].cases)
       expect(r.passed, `${id}: ${r.error ?? JSON.stringify(r.rows.filter(x => !x.passed))}`).toBe(true)
     })
   }
@@ -45,7 +45,7 @@ describe('explained reference solutions', () => {
 
 const PYTHON = ['python', 'python3'].find(cmd => { try { return spawnSync(cmd, ['-c', 'print(1)']).status === 0 } catch { return false } })
 it.skipIf(!PYTHON)('every explained Python solution passes its challenge, in real Python', () => {
-  const jobs = Object.fromEntries(entries.map(([id, e]) => [id, { code: e.code.Python, cases: CORE_CHALLENGES[id].cases }]))
+  const jobs = Object.fromEntries(entries.map(([id, e]) => [id, { code: e.code.Python, cases: CHALLENGES[id].cases }]))
   const script = [
     'import json, sys',
     'sys.setrecursionlimit(10000)',

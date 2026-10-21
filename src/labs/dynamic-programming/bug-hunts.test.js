@@ -1,8 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
 import { BUG_HUNTS, buggyCode, bugLines, decoyNote, fill } from './hunt.js'
-import { CORE_CHALLENGES } from './lessons/core-challenges.js'
-import { ORACLES } from './lessons/core-oracles.js'
+import { ALL_CHALLENGES as CORE_CHALLENGES } from './lessons/index.js'
+import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
+import { ADVANCED_ORACLES } from './lessons/advanced-oracles.js'
+import { EXPERT_ORACLES } from './lessons/expert-oracles.js'
+
+// Every challenge and answer key the hunts' lessons use (Core and Advanced).
+const ORACLES = { ...CORE_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES }
 import { runJavaScriptCases } from './runtime/checks.js'
 
 const LANGUAGES = ['Python', 'JavaScript']

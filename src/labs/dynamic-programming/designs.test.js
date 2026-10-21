@@ -2,17 +2,18 @@ import { expect, it } from 'vitest'
 import { DESIGNS, KINDS, applyCell, displayOrder } from './lessons/designs.js'
 import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
 import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
+import { ADVANCED_ORACLES } from './lessons/advanced-oracles.js'
 import { LESSONS } from './lessons/index.js'
 import { LEVELS } from './curriculum.js'
 import { TRACES } from './tables.js'
 
 // What the hand-solved questions ask for, when it is not the whole challenge answer.
 // Core lessons are checked against their challenges' oracles; Structured ones against enumeration only.
-const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES }
-const PICK = { 'max-subarray': v => v[0], 'min-grid-path': v => v[0] }
+const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES }
+const PICK = { 'max-subarray': v => v[0], 'min-grid-path': v => v[0], 'bellman-ford-dp': v => v[v.length - 1], 'floyd-warshall': v => v[0][v.length - 1], ...Object.fromEntries(['tree-basics', 'tree-reroot', 'reroot-prefix', 'tree-distances', 'tree-small-large'].map(id => [id, v => v[1]])), 'subset-enumeration': v => v[v.length - 1], 'mask-language': v => Number(v) }
 const oracle = (id, args) => (PICK[id] ?? (v => v))(ORACLES[id](args))
 // The curriculum groups whose every lesson has a design.
-const DESIGNED = ['linear', 'grids', 'knapsack', 'basic-counting', 'sequences', 'strings', 'intervals', 'scheduling']
+const DESIGNED = ['linear', 'grids', 'knapsack', 'basic-counting', 'sequences', 'strings', 'intervals', 'scheduling', 'dag', 'trees', 'subsets', 'digits-automata']
 
 // Numbers quoted inside option explanations and answers, checked by brute force: [oracle, args, value].
 const CLAIMS = [

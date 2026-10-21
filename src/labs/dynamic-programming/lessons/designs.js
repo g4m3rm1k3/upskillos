@@ -4,7 +4,7 @@
 //   problem   the problem in plain words
 //   tryFirst  { prompt, args, answer, kind?: 'yesno', oracle?, misconceptions: [{ answer, feedback }], explain }:
 //             solve a small case by hand first. args are the challenge's arguments, so the test can
-//             check answer against the brute-force oracle: core-oracles.js, or structured-oracles.js for
+//             check answer against the brute-force oracle: core-oracles.js or advanced-oracles.js, or structured-oracles.js for
 //             lessons with no challenge (oracle names another lesson's when the challenge asks a variant).
 //   steps     six decisions, one per kind in KINDS order, each { kind, ask, options: [{ text, why, right? }] }.
 //             Exactly one option is right; every option says why, and the wrong ones are real mistakes.
@@ -19,6 +19,10 @@ import { SEQUENCE_DESIGNS } from './design-sequences.js'
 import { STRING_DESIGNS } from './design-strings.js'
 import { INTERVAL_DESIGNS } from './design-intervals.js'
 import { SCHEDULING_DESIGNS } from './design-scheduling.js'
+import { DAG_DESIGNS } from './design-dag.js'
+import { TREE_DESIGNS } from './design-tree.js'
+import { SUBSET_DESIGNS } from './design-subset.js'
+import { DIGIT_DESIGNS } from './design-digit.js'
 
 export const KINDS = [
   ['state', 'What a cell means'],
@@ -29,7 +33,7 @@ export const KINDS = [
   ['answer', 'Where the answer is'],
 ]
 
-export const DESIGNS = { ...LINEAR_DESIGNS, ...GRID_DESIGNS, ...KNAPSACK_DESIGNS, ...COUNTING_DESIGNS, ...SEQUENCE_DESIGNS, ...STRING_DESIGNS, ...INTERVAL_DESIGNS, ...SCHEDULING_DESIGNS }
+export const DESIGNS = { ...LINEAR_DESIGNS, ...GRID_DESIGNS, ...KNAPSACK_DESIGNS, ...COUNTING_DESIGNS, ...SEQUENCE_DESIGNS, ...STRING_DESIGNS, ...INTERVAL_DESIGNS, ...SCHEDULING_DESIGNS, ...DAG_DESIGNS, ...TREE_DESIGNS, ...SUBSET_DESIGNS, ...DIGIT_DESIGNS }
 
 // The apply step on a live trace: the trace, the step that writes the cell, and every value known before it.
 export function applyCell(id, apply) {

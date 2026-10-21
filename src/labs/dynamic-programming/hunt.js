@@ -27,7 +27,8 @@ export function decoyNote(hunt, language, lineText) {
 // Values as the learner's language writes them: Python spells true and false True and False.
 export const show = (value, language) => {
   const text = JSON.stringify(value)
-  return language === 'Python' ? text.replace(/\btrue\b/g, 'True').replace(/\bfalse\b/g, 'False') : text
+  // Python writes strings as repr does, in single quotes.
+  return language === 'Python' ? text.replace(/"([^"\\]*)"/g, "'$1'").replace(/\btrue\b/g, 'True').replace(/\bfalse\b/g, 'False').replace(/\bnull\b/g, 'None') : text
 }
 export const callText = (hunt, language) => `solve(${hunt.symptom.args.map(a => show(a, language)).join(', ')})`
 

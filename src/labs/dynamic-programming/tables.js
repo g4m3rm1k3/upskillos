@@ -63,6 +63,78 @@ const intervals = (labels, name) => table(labels, labels, (l, r) => `${name}(${l
 // Every piece l … r with r − l from `gap` up to n − 1, shortest first: the order interval DP fills in.
 function byLength(n, gap, visit) { for (let len = gap; len < n; len++) for (let l = 0; l + len < n; l++) visit(l, l + len) }
 
+// Graphs (the DAG lessons): Kahn's topological order, always taking the smallest ready vertex, so a
+// table's columns are the same every time. Vertices on a cycle never become ready and are left out.
+function topoOrder(n, edges) {
+  const indeg = Array(n).fill(0)
+  for (const e of edges) indeg[e[1]]++
+  const ready = range(0, n - 1).filter(v => indeg[v] === 0), order = []
+  while (ready.length) {
+    ready.sort((x, y) => x - y)
+    const v = ready.shift()
+    order.push(v)
+    for (const e of edges) if (e[0] === v && --indeg[e[1]] === 0) ready.push(e[1])
+  }
+  return order
+}
+// Strongly connected components by mutual reachability: comps[c] lists its vertices, of[v] is v's component.
+function components(n, edges) {
+  const reach = range(0, n - 1).map(i => range(0, n - 1).map(j => i === j))
+  for (const [a, b] of edges) reach[a][b] = true
+  for (let k = 0; k < n; k++) for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (reach[i][k] && reach[k][j]) reach[i][j] = true
+  const comps = [], of = Array(n).fill(-1)
+  for (let v = 0; v < n; v++) if (of[v] < 0) { const c = range(0, n - 1).filter(u => reach[v][u] && reach[u][v]); c.forEach(u => { of[u] = comps.length }); comps.push(c) }
+  return { comps, of }
+}
+const sum = xs => xs.reduce((s, x) => s + x, 0)
+const plus = w => (w < 0 ? ` − ${-w}` : ` + ${w}`)
+
+// Trees (the tree lessons): rooted at 0. post lists the vertices children first (a breadth-first order
+// reversed), which is the order the tables' columns use; kids[v] are v's children.
+function rootTree(n, edges) {
+  const adj = range(0, n - 1).map(() => [])
+  for (const e of edges) { adj[e[0]].push(e[1]); adj[e[1]].push(e[0]) }
+  const parent = Array(n).fill(-1), order = [0]
+  for (let i = 0; i < order.length; i++) for (const u of adj[order[i]]) if (u !== parent[order[i]]) { parent[u] = order[i]; order.push(u) }
+  const kids = range(0, n - 1).map(v => order.filter(u => parent[u] === v))
+  return { parent, kids, post: [...order].reverse(), pre: order }
+}
+const product = xs => xs.reduce((p, x) => p * x, 1)
+
+// Masks (the bitmask lessons): a mask in binary with item 0 on the right, and its number of 1 bits.
+const bits = (m, n) => m.toString(2).padStart(Math.max(1, n), '0')
+const popcount = m => { let c = 0; for (; m; m &= m - 1) c++; return c }
+// The first cell holding the smallest value in row r: the answer when it is a minimum over a row.
+function lowestInRow(t, r) {
+  let c = 0
+  t.cells[r].forEach((v, k) => { if (v < t.get(r, c)) c = k })
+  return [r, c]
+}
+
+// Digits and automata (the digit lessons). digitCell fills a digit-DP cell from the next column:
+// terms are [row, how many digits lead there, a note].
+const digitsOfNumber = n => String(n).split('').map(Number)
+function digitCell(t, r, p, terms) {
+  const live = terms.filter(([, k]) => k > 0)
+  const value = sum(live.map(([to, k]) => k * t.get(to, p + 1)))
+  t.set(r, p, value, live.map(([to]) => [to, p + 1]), live.length ? `${live.map(([to, k]) => `${k} × ${t.name(to, p + 1)}`).join(' + ')} = ${live.map(([to, k]) => `${k} × ${t.get(to, p + 1)}`).join(' + ')}` : 'no digit is allowed: 0')
+}
+// The KMP automaton: step[q][c] is the matched length after reading c with q letters matched.
+function kmpStep(pattern, alphabet) {
+  const fail = Array(pattern.length + 1).fill(0)
+  for (let i = 1; i < pattern.length; i++) { let k = fail[i]; while (k && pattern[i] !== pattern[k]) k = fail[k]; fail[i + 1] = pattern[i] === pattern[k] ? k + 1 : 0 }
+  return range(0, pattern.length).map(q => Object.fromEntries([...alphabet].map(c => { let k = q; while (k && (k === pattern.length || pattern[k] !== c)) k = fail[k]; return [c, k < pattern.length && pattern[k] === c ? k + 1 : 0] })))
+}
+// The Aho–Corasick automaton: go[u][c], forbidden nodes, and the string each node stands for.
+function ahoAutomaton(alphabet, patterns) {
+  const go = [{}], fail = [0], bad = [false], word = ['']
+  for (const p of patterns) { let u = 0; for (const c of p) { if (!(c in go[u])) { go.push({}); fail.push(0); bad.push(false); word.push(word[u] + c); go[u][c] = go.length - 1 } u = go[u][c] } bad[u] = true }
+  const queue = []
+  for (const c of alphabet) { if (c in go[0]) queue.push(go[0][c]); else go[0][c] = 0 }
+  for (let i = 0; i < queue.length; i++) { const u = queue[i]; bad[u] = bad[u] || bad[fail[u]]; for (const c of alphabet) { if (c in go[u]) { const v = go[u][c]; fail[v] = go[fail[u]][c]; queue.push(v) } else go[u][c] = go[fail[u]][c] } }
+  return { go, bad, word }
+}
+
 export const TRACES = {
   fibonacci: ({ n = 8 } = {}) => {
     const t = line(n, 'F', t => { t.seed(0, 0, 0, 'F(0) = 0'); t.seed(0, 1, 1, 'F(1) = 1') }, (t, i) => [t.get(0, i - 1) + t.get(0, i - 2), [i - 1, i - 2], `F(${i - 1}) + F(${i - 2}) = ${t.get(0, i - 1)} + ${t.get(0, i - 2)}`])
@@ -1057,6 +1129,647 @@ export const TRACES = {
     }
     return { title: `Boxes ${list(a)}`, setup: 'D(l, r, k): the most points from boxes l … r with k more boxes of box r’s colour waiting to its right. One interval table per k, stacked. Box r’s group (k + 1 boxes) is removed now, or saved: clear the boxes between it and an earlier box m of the same colour, and carry k + 1 to m.', table: t, answer: [0, n - 1], args: [a] }
   },
+  // ── DAGs and graph recurrences (Advanced). Graphs are a vertex count n and edges [from, to, (weight)]. ──
+  'dag-paths': ({ n = 5, edges = [[0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [1, 4]], s = 0, t: goal = 4 } = {}) => {
+    const order = topoOrder(n, edges)
+    const t = table(['ways'], order.map(String), (r, c) => `ways(${order[c]})`)
+    const col = v => order.indexOf(v)
+    t.seed(0, col(s), 1, `ways(${s}) = 1: the empty path at the start`)
+    for (const v of order) {
+      if (v === s) continue
+      const from = edges.filter(e => e[1] === v).map(e => e[0])
+      t.set(0, col(v), from.reduce((sum, u) => sum + t.get(0, col(u)), 0), from.map(u => [0, col(u)]), sumRule(from.map(u => `ways(${u})`), from.map(u => t.get(0, col(u))), 'no edge comes in: 0'))
+    }
+    return { title: `Paths from ${s} to ${goal}`, setup: 'Columns are the vertices in topological order, so every edge points right. ways(v) adds ways(u) over the edges u → v: each path into v has exactly one last edge.', table: t, answer: [0, col(goal)], args: [n, edges, s, goal] }
+  },
+  'dag-longest': ({ n = 5, edges = [[0, 1, 5], [0, 2, 2], [2, 1, 1], [1, 3, -4], [2, 3, 6], [3, 4, 2], [1, 4, 9]], s = 0, t: goal = 4 } = {}) => {
+    const order = topoOrder(n, edges)
+    const t = table(['best'], order.map(String), (r, c) => `best(${order[c]})`)
+    const col = v => order.indexOf(v)
+    t.seed(0, col(s), 0, `best(${s}) = 0: the start costs nothing`)
+    for (const v of order) {
+      if (v === s) continue
+      const into = edges.filter(e => e[1] === v)
+      const live = into.filter(e => t.get(0, col(e[0])) !== INF)
+      const value = live.length ? minOf(live.map(e => t.get(0, col(e[0])) + e[2])) : INF
+      t.set(0, col(v), value, into.map(e => [0, col(e[0])]), live.length ? `min(${live.map(e => `best(${e[0]})${plus(e[2])}`).join(', ')}) = min(${live.map(e => t.get(0, col(e[0])) + e[2]).join(', ')})` : into.length ? 'every vertex leading here is unreached: ∞' : 'no edge comes in: ∞')
+    }
+    return { title: `Cheapest from ${s} to ${goal}`, setup: 'Columns are the vertices in topological order. best(v) is the smallest best(u) + w over edges u → v; ∞ means no path reaches v yet. Negative weights are safe because every best(u) is final before it is read.', table: t, answer: [0, col(goal)], args: [n, edges, s, goal], check: w => (w === null ? INF : w) }
+  },
+  'increasing-grid': ({ grid: g = [[9, 9, 4], [6, 6, 8], [2, 1, 1]] } = {}) => {
+    const R = g.length, C = g[0].length
+    const t = table(range(0, R - 1).map(String), range(0, C - 1).map(String), (r, c) => `L(${r},${c})`)
+    const cells = range(0, R * C - 1).map(k => [Math.floor(k / C), k % C]).sort((x, y) => g[y[0]][y[1]] - g[x[0]][x[1]])
+    for (const [i, j] of cells) {
+      const up = [[i + 1, j], [i - 1, j], [i, j + 1], [i, j - 1]].filter(([a, b]) => a >= 0 && b >= 0 && a < R && b < C && g[a][b] > g[i][j])
+      t.set(i, j, 1 + maxOf([0, ...up.map(([a, b]) => t.get(a, b))]), up, up.length ? `1 + max(${up.map(([a, b]) => `L(${a},${b})`).join(', ')}) = 1 + max(${up.map(([a, b]) => t.get(a, b)).join(', ')})` : 'no larger neighbour: 1')
+    }
+    return { title: `Grid ${rowsOf(g)}`, setup: 'L(i,j) is the longest strictly increasing path starting at cell (i,j): 1 + the largest L of a strictly larger neighbour. Cells are filled from the largest value down, so every larger neighbour is ready. The answer is the largest cell.', table: t, answer: bestCell(t), args: [g] }
+  },
+  'critical-path': ({ durations: d = [2, 3, 1, 4, 2, 1], deps = [[0, 2], [1, 2], [1, 3], [2, 4], [3, 4], [4, 5], [0, 5]] } = {}) => {
+    const n = d.length, order = topoOrder(n, deps)
+    const t = table(['finish'], order.map(v => `${v} (${d[v]})`), (r, c) => `finish(${order[c]})`)
+    const col = v => order.indexOf(v)
+    for (const v of order) {
+      const pre = deps.filter(e => e[1] === v).map(e => e[0])
+      t.set(0, col(v), d[v] + maxOf([0, ...pre.map(u => t.get(0, col(u)))]), pre.map(u => [0, col(u)]), pre.length ? `${d[v]} + max(${pre.map(u => `finish(${u})`).join(', ')}) = ${d[v]} + max(${pre.map(u => t.get(0, col(u))).join(', ')})` : `no prerequisites: starts at 0, so ${d[v]}`)
+    }
+    return { title: `Tasks ${list(d)}`, setup: 'Columns are the tasks in an order that puts every prerequisite first; each is labelled with its duration. finish(v) = its duration + the latest finish among its prerequisites. Everything is done at the largest finish.', table: t, answer: bestCell(t), args: [d, deps] }
+  },
+  'bellman-ford-dp': ({ n = 4, edges = [[0, 1, 4], [0, 2, 1], [2, 1, 2], [1, 3, 1], [2, 3, 5]], s = 0, k = 3 } = {}) => {
+    const t = table(range(0, k).map(r => `≤ ${r} edges`), range(0, n - 1).map(String), (r, c) => `D(${r},${c})`)
+    for (let v = 0; v < n; v++) t.seed(0, v, v === s ? 0 : INF, v === s ? `D(0,${s}) = 0: the start, no edges` : `D(0,${v}) = ∞: not reached with no edges`)
+    for (let r = 1; r <= k; r++) for (let v = 0; v < n; v++) {
+      const into = edges.filter(e => e[1] === v)
+      const opts = [{ text: `D(${r - 1},${v})`, value: t.get(r - 1, v) }, ...into.map(e => ({ text: `D(${r - 1},${e[0]})${plus(e[2])}`, value: t.get(r - 1, e[0]) + e[2] }))]
+      t.set(r, v, minOf(opts.map(o => o.value)), [[r - 1, v], ...into.map(e => [r - 1, e[0]])], opts.length > 1 ? `min(${opts.map(o => o.text).join(', ')}) = min(${opts.map(o => show(o.value)).join(', ')})` : `no edge comes in: D(${r - 1},${v}) = ${show(t.get(r - 1, v))}`)
+    }
+    return { title: `From ${s}, at most ${k} edges`, setup: 'Row r is the cheapest walk to each vertex using at most r edges. Each cell keeps the row above, or extends a walk from the row above by one edge into its vertex. The answer cell is the last vertex; the whole last row is the challenge’s answer.', table: t, answer: [k, n - 1], args: [n, edges, s, k], check: w => (w[n - 1] === null ? INF : w[n - 1]) }
+  },
+  'floyd-warshall': ({ n = 4, edges = [[0, 1, 5], [1, 2, 3], [2, 3, 1], [3, 0, 2], [0, 2, 9], [1, 3, 10]] } = {}) => {
+    const row = (k, i) => k * n + i
+    const t = table(range(0, n).flatMap(k => range(0, n - 1).map(i => `${k ? `via ≤ ${k - 1}` : 'direct'}: ${i}`)), range(0, n - 1).map(String), (r, c) => `D${Math.floor(r / n)}(${r % n},${c})`)
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const direct = edges.filter(e => e[0] === i && e[1] === j)
+      t.seed(row(0, i), j, i === j ? 0 : direct.length ? minOf(direct.map(e => e[2])) : INF, i === j ? 'a vertex to itself: 0' : direct.length ? `the edge ${i} → ${j}` : 'no direct edge: ∞')
+    }
+    for (let k = 0; k < n; k++) for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+      const keep = t.get(row(k, i), j), via = t.get(row(k, i), k) + t.get(row(k, k), j)
+      t.set(row(k + 1, i), j, Math.min(keep, via), [[row(k, i), j], [row(k, i), k], [row(k, k), j]], `min(D${k}(${i},${j}), D${k}(${i},${k}) + D${k}(${k},${j})) = min(${show(keep)}, ${show(via)})`)
+    }
+    return { title: `${n} vertices, all pairs`, setup: `Each block of ${n} rows is the distance matrix with one more vertex allowed in between: block k allows vertices 0 … k − 1. A cell keeps its value from the block above, or goes through the newly allowed vertex. The answer cell is the distance from 0 to ${n - 1}; the last block is the whole answer.`, table: t, answer: [row(n, 0), n - 1], args: [n, edges], check: w => (w[0][n - 1] === null ? INF : w[0][n - 1]) }
+  },
+  'scc-boundaries': ({ values: a = [1, 2, 3, 4, 5, 6], edges = [[0, 1], [1, 2], [2, 0], [2, 3], [3, 4], [4, 3], [1, 5]], s = 0 } = {}) => {
+    const { comps, of } = components(a.length, edges)
+    // Components in reverse topological order: a component's successors come first.
+    const dagEdges = edges.filter(e => of[e[0]] !== of[e[1]]).map(e => [of[e[0]], of[e[1]]])
+    const order = topoOrder(comps.length, dagEdges).reverse()
+    const label = c => set(comps[c])
+    const t = table(['best'], order.map(label), (r, c) => `best(${label(order[c])})`)
+    const col = c => order.indexOf(c)
+    for (const c of order) {
+      const w = sum(comps[c].map(v => a[v])), next = [...new Set(dagEdges.filter(e => e[0] === c).map(e => e[1]))]
+      t.set(0, col(c), w + maxOf([0, ...next.map(d => t.get(0, col(d)))]), next.map(d => [0, col(d)]), `${comps[c].map(v => a[v]).join(' + ')}${next.length ? ` + max(${next.map(d => `best(${label(d)})`).join(', ')}) = ${w} + max(${next.map(d => t.get(0, col(d))).join(', ')})` : ': nothing leads on'}`)
+    }
+    return { title: `Values ${list(a)}, start ${s}`, setup: 'Each column is a strongly connected component, worth the sum of its values, since a walk can visit all of it. Components that come later on a walk are filled first. best(c) = its worth + the best component it leads to.', table: t, answer: [0, col(of[s])], args: [a, edges, s] }
+  },
+  'dag-product': ({ n = 5, edges = [[0, 1, 2], [1, 4, 20], [0, 2, 8], [2, 3, 8], [3, 4, 1], [0, 4, 30]], s = 0, t: goal = 4 } = {}) => {
+    const order = topoOrder(n, edges)
+    const t = table(['held', 'spent'], [...order.map(String), 'answer'], (r, c) => (c === order.length ? 'answer' : `${r ? 'spent' : 'held'}(${order[c]})`))
+    const col = v => order.indexOf(v)
+    t.seed(0, col(s), 0, `held(${s}) = 0: the start, coupon unused`)
+    t.seed(1, col(s), INF, `spent(${s}) = ∞: the coupon hasn’t been used yet`)
+    for (const v of order) {
+      if (v === s) continue
+      const into = edges.filter(e => e[1] === v), held = into.filter(e => t.get(0, col(e[0])) !== INF), spent = into.filter(e => t.get(1, col(e[0])) !== INF)
+      t.set(0, col(v), held.length ? minOf(held.map(e => t.get(0, col(e[0])) + e[2])) : INF, into.map(e => [0, col(e[0])]), held.length ? `min(${held.map(e => `held(${e[0]}) + ${e[2]}`).join(', ')}) = min(${held.map(e => t.get(0, col(e[0])) + e[2]).join(', ')})` : 'not reached with the coupon held: ∞')
+      const opts = [...spent.map(e => ({ text: `spent(${e[0]}) + ${e[2]}`, value: t.get(1, col(e[0])) + e[2] })), ...held.map(e => ({ text: `held(${e[0]}) + ⌊${e[2]}/2⌋`, value: t.get(0, col(e[0])) + Math.floor(e[2] / 2) }))]
+      t.set(1, col(v), opts.length ? minOf(opts.map(o => o.value)) : INF, into.flatMap(e => [[0, col(e[0])], [1, col(e[0])]]), opts.length ? `min(${opts.map(o => o.text).join(', ')}) = min(${opts.map(o => o.value).join(', ')})` : 'not reached: ∞')
+    }
+    const end = col(goal)
+    t.set(0, order.length, Math.min(t.get(0, end), t.get(1, end)), [[0, end], [1, end]], `min(held(${goal}), spent(${goal})) = min(${show(t.get(0, end))}, ${show(t.get(1, end))})`)
+    return { title: `${s} to ${goal}, one half-price coupon`, setup: 'Two rows per vertex, columns in topological order: arriving with the coupon still held, or after spending it. From a held vertex an edge is paid in full (stay held) or at half price (become spent). The last column takes the better way to arrive at the target.', table: t, answer: [0, order.length], args: [n, edges, s, goal], check: w => (w === null ? INF : w) }
+  },
+  // ── Tree DP (Advanced). A tree is n vertices and n − 1 edges, rooted at 0; columns list the vertices
+  // children first, so every cell reads only cells to its left (rerooting passes read to the right). ──
+  'tree-basics': ({ n = 7, edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['size'], post.map(String), (r, c) => `size(${post[c]})`)
+    for (const v of post) t.set(0, col(v), 1 + sum(kids[v].map(c => t.get(0, col(c)))), kids[v].map(c => [0, col(c)]), kids[v].length ? `1 + ${kids[v].map(c => `size(${c})`).join(' + ')} = 1 + ${kids[v].map(c => t.get(0, col(c))).join(' + ')}` : 'a leaf: just itself, 1')
+    return { title: `Tree on ${n} vertices`, setup: 'Rooted at 0. Columns list the vertices children first. size(v) is 1 for v itself plus its children’s sizes; children’s subtrees don’t overlap, so they add. The answer cell is the root, n; the whole row is the challenge’s answer.', table: t, answer: [0, col(0)], args: [n, edges], check: w => w[0] }
+  },
+  'tree-independent': ({ weights: w = [2, 9, 1, 3, 3, 8, 2], edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const n = w.length, { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['take', 'skip'], [...post.map(v => `${v} (${w[v]})`), 'answer'], (r, c) => (c === n ? 'answer' : `${r ? 'skip' : 'take'}(${post[c]})`))
+    for (const v of post) {
+      const k = kids[v]
+      t.set(0, col(v), w[v] + sum(k.map(c => t.get(1, col(c)))), k.map(c => [1, col(c)]), k.length ? `${w[v]} + ${k.map(c => `skip(${c})`).join(' + ')} = ${w[v]} + ${k.map(c => t.get(1, col(c))).join(' + ')}` : `a leaf taken: its weight, ${w[v]}`)
+      t.set(1, col(v), sum(k.map(c => Math.max(t.get(0, col(c)), t.get(1, col(c))))), k.flatMap(c => [[0, col(c)], [1, col(c)]]), k.length ? k.map(c => `max(take(${c}), skip(${c}))`).join(' + ') + ` = ${k.map(c => Math.max(t.get(0, col(c)), t.get(1, col(c)))).join(' + ')}` : 'a leaf skipped: 0')
+    }
+    t.set(0, n, Math.max(t.get(0, col(0)), t.get(1, col(0))), [[0, col(0)], [1, col(0)]], `max(take(0), skip(0)) = max(${t.get(0, col(0))}, ${t.get(1, col(0))})`)
+    return { title: `Weights ${list(w)}`, setup: 'Two rows per vertex: the best for its subtree with it taken, and with it skipped. Taken, every child must be skipped; skipped, each child takes its better state. The last column takes the root’s better state.', table: t, answer: [0, n], args: [w, edges] }
+  },
+  'tree-cover': ({ n = 7, edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['chosen', 'not chosen'], [...post.map(String), 'answer'], (r, c) => (c === n ? 'answer' : `${r ? 'U' : 'S'}(${post[c]})`))
+    for (const v of post) {
+      const k = kids[v]
+      t.set(0, col(v), 1 + sum(k.map(c => Math.min(t.get(0, col(c)), t.get(1, col(c))))), k.flatMap(c => [[0, col(c)], [1, col(c)]]), k.length ? `1 + ${k.map(c => `min(S(${c}), U(${c}))`).join(' + ')} = 1 + ${k.map(c => Math.min(t.get(0, col(c)), t.get(1, col(c)))).join(' + ')}` : 'a leaf chosen: 1')
+      t.set(1, col(v), sum(k.map(c => t.get(0, col(c)))), k.map(c => [0, col(c)]), k.length ? `${k.map(c => `S(${c})`).join(' + ')} = ${k.map(c => t.get(0, col(c))).join(' + ')}` : 'a leaf not chosen: 0')
+    }
+    t.set(0, n, Math.min(t.get(0, col(0)), t.get(1, col(0))), [[0, col(0)], [1, col(0)]], `min(S(0), U(0)) = min(${t.get(0, col(0))}, ${t.get(1, col(0))})`)
+    return { title: `Vertex cover, ${n} vertices`, setup: 'S(v): the smallest cover of v’s subtree with v chosen; U(v): with v not chosen. A chosen vertex lets each child go either way; an unchosen one forces every child to be chosen, so each edge to a child is covered.', table: t, answer: [0, n], args: [n, edges] }
+  },
+  'tree-matching': ({ n = 7, edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['free', 'best'], post.map(String), (r, c) => `${r ? 'best' : 'free'}(${post[c]})`)
+    for (const v of post) {
+      const k = kids[v], f = sum(k.map(c => t.get(1, col(c))))
+      t.set(0, col(v), f, k.map(c => [1, col(c)]), k.length ? `${k.map(c => `best(${c})`).join(' + ')} = ${k.map(c => t.get(1, col(c))).join(' + ')}` : 'a leaf: 0')
+      const opts = k.map(c => ({ c, value: f - t.get(1, col(c)) + t.get(0, col(c)) + 1 }))
+      t.set(1, col(v), Math.max(f, ...opts.map(o => o.value)), [[0, col(v)], ...k.flatMap(c => [[0, col(c)], [1, col(c)]])], k.length ? `max(free(${v}), ${opts.map(o => `match ${o.c}: free(${v}) − best(${o.c}) + free(${o.c}) + 1`).join(', ')}) = max(${f}, ${opts.map(o => o.value).join(', ')})` : 'a leaf: nothing to match, 0')
+    }
+    return { title: `Matching, ${n} vertices`, setup: 'free(v): the best matching in v’s subtree with v unmatched (each child does its best). best(v): also try matching v to one child c, which adds the edge but forces c to be free.', table: t, answer: [1, col(0)], args: [n, edges] }
+  },
+  'tree-diameter': ({ n = 7, edges = [[2, 5, 3], [0, 2, 1], [1, 0, 4], [4, 1, 1], [3, 1, 5], [6, 2, 9]] } = {}) => {
+    const { parent, kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const len = v => { const e = edges.find(x => (x[0] === v && x[1] === parent[v]) || (x[1] === v && x[0] === parent[v])); return e[2] }
+    const t = table(['down', 'through'], post.map(String), (r, c) => `${r ? 'through' : 'down'}(${post[c]})`)
+    for (const v of post) {
+      const br = kids[v].map(c => ({ c, value: t.get(0, col(c)) + len(c) })).sort((a, b) => b.value - a.value)
+      t.set(0, col(v), br.length ? br[0].value : 0, kids[v].map(c => [0, col(c)]), br.length ? `max(${br.map(b => `down(${b.c}) + ${len(b.c)}`).join(', ')}) = max(${br.map(b => b.value).join(', ')})` : 'a leaf: 0')
+      const top = br.slice(0, 2)
+      t.set(1, col(v), sum(top.map(b => b.value)), [[0, col(v)], ...kids[v].map(c => [0, col(c)])], top.length ? `the two longest branches: ${top.map(b => b.value).join(' + ')}` : 'a leaf: 0')
+    }
+    return { title: `Weighted tree, ${n} vertices`, setup: 'down(v): the longest path from v into its subtree. through(v): the longest path whose highest vertex is v, joining its two longest branches. The diameter is the largest through.', table: t, answer: bestInRow(t, 1), args: [n, edges] }
+  },
+  'tree-reroot': ({ n = 7, edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const { parent, kids, post, pre } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['down', 'second', 'up', 'farthest'], post.map(String), (r, c) => `${['down', 'second', 'up', 'far'][r]}(${post[c]})`)
+    const via = Array(n).fill(-1)
+    for (const v of post) {
+      const br = kids[v].map(c => ({ c, value: t.get(0, col(c)) + 1 })).sort((a, b) => b.value - a.value)
+      if (br.length) via[v] = br[0].c
+      t.set(0, col(v), br.length ? br[0].value : 0, kids[v].map(c => [0, col(c)]), br.length ? `1 + max(${br.map(b => `down(${b.c})`).join(', ')}) = 1 + ${br[0].value - 1}` : 'a leaf: 0')
+      t.set(1, col(v), br.length > 1 ? br[1].value : 0, kids[v].map(c => [0, col(c)]), br.length > 1 ? `the second deepest branch: 1 + down(${br[1].c}) = ${br[1].value}` : 'fewer than two branches: 0')
+    }
+    for (const v of pre) {
+      const p = parent[v]
+      if (p < 0) { t.set(2, col(v), 0, [], 'the root has nothing above it: 0'); continue }
+      const other = via[p] === v ? t.get(1, col(p)) : t.get(0, col(p)), name = via[p] === v ? `second(${p})` : `down(${p})`
+      t.set(2, col(v), 1 + Math.max(t.get(2, col(p)), other), [[2, col(p)], [0, col(p)], [1, col(p)]], `1 + max(up(${p}), ${name}) = 1 + max(${t.get(2, col(p))}, ${other})${via[p] === v ? `: ${p}’s deepest branch is ${v}’s own` : ''}`)
+    }
+    for (const v of post) t.set(3, col(v), Math.max(t.get(0, col(v)), t.get(2, col(v))), [[0, col(v)], [2, col(v)]], `max(down(${v}), up(${v})) = max(${t.get(0, col(v))}, ${t.get(2, col(v))})`)
+    return { title: `Farthest distances, ${n} vertices`, setup: 'First pass, children first: each vertex’s deepest and second-deepest branch. Second pass, parents first: up(v) goes to the parent, then up again or down the parent’s best branch that isn’t v’s. The answer cell is the last vertex; the whole bottom row is the challenge’s answer.', table: t, answer: [3, col(n - 1)], args: [n, edges], check: w => w[n - 1] }
+  },
+  'reroot-prefix': ({ n = 7, edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const { parent, kids, post, pre } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['down', 'up', 'through v'], post.map(String), (r, c) => `${['down', 'up', 'sets'][r]}(${post[c]})`)
+    for (const v of post) t.set(0, col(v), product(kids[v].map(c => 1 + t.get(0, col(c)))), kids[v].map(c => [0, col(c)]), kids[v].length ? `${kids[v].map(c => `(1 + down(${c}))`).join(' · ')} = ${kids[v].map(c => 1 + t.get(0, col(c))).join(' · ')}` : 'a leaf: just {v}, 1')
+    for (const v of pre) {
+      const p = parent[v]
+      if (p < 0) { t.set(1, col(v), 0, [], 'the root has nothing above it: 0'); continue }
+      const sibs = kids[p].filter(c => c !== v)
+      t.set(1, col(v), product(sibs.map(c => 1 + t.get(0, col(c)))) * (1 + t.get(1, col(p))), [...sibs.map(c => [0, col(c)]), [1, col(p)]], `${[...sibs.map(c => `(1 + down(${c}))`), `(1 + up(${p}))`].join(' · ')} = ${[...sibs.map(c => 1 + t.get(0, col(c))), 1 + t.get(1, col(p))].join(' · ')}${sibs.length ? `: every sibling of ${v} but not ${v} (prefix · suffix)` : ''}`)
+    }
+    for (const v of post) t.set(2, col(v), t.get(0, col(v)) * (1 + t.get(1, col(v))), [[0, col(v)], [1, col(v)]], `down(${v}) · (1 + up(${v})) = ${t.get(0, col(v))} · ${1 + t.get(1, col(v))}`)
+    return { title: `Connected sets, ${n} vertices`, setup: 'down(v): connected sets in v’s subtree whose top is v. up(v): sets above v that contain its parent but not v, built from its siblings (all but v: a prefix times a suffix, no division) and what is above the parent. The bottom row counts the sets through each vertex; the answer cell is the last vertex.', table: t, answer: [2, col(n - 1)], args: [n, edges], check: w => w[n - 1] }
+  },
+  'tree-distances': ({ n = 6, edges = [[0, 1], [1, 2], [2, 3], [1, 4], [4, 5]] } = {}) => {
+    const { parent, kids, post, pre } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['size', 'sum'], post.map(String), (r, c) => `${r ? 'S' : 'size'}(${post[c]})`)
+    for (const v of post) t.set(0, col(v), 1 + sum(kids[v].map(c => t.get(0, col(c)))), kids[v].map(c => [0, col(c)]), kids[v].length ? `1 + ${kids[v].map(c => `size(${c})`).join(' + ')} = 1 + ${kids[v].map(c => t.get(0, col(c))).join(' + ')}` : 'a leaf: 1')
+    for (const v of pre) {
+      const p = parent[v]
+      if (p < 0) { const rest = post.filter(u => u !== 0); t.set(1, col(0), sum(rest.map(u => t.get(0, col(u)))), rest.map(u => [0, col(u)]), `each edge is crossed by every path from the root into the subtree below it: ${rest.map(u => `size(${u})`).join(' + ')} = ${rest.map(u => t.get(0, col(u))).join(' + ')}`); continue }
+      t.set(1, col(v), t.get(1, col(p)) + n - 2 * t.get(0, col(v)), [[1, col(p)], [0, col(v)]], `S(${p}) + ${n} − 2·size(${v}) = ${t.get(1, col(p))} + ${n} − ${2 * t.get(0, col(v))}`)
+    }
+    return { title: `Distance sums, ${n} vertices`, setup: 'Sizes first, children first. The root’s sum counts each edge once per vertex below it. Then, parents first, moving to a child v brings its size(v) vertices one closer and takes the other n − size(v) one farther. The answer cell is the last vertex; the whole sum row is the challenge’s answer.', table: t, answer: [1, col(n - 1)], args: [n, edges], check: w => w[n - 1] }
+  },
+  'tree-knapsack': ({ values: val = [2, 6, 1, 7, 3], costs: cost = [1, 3, 1, 2, 2], edges = [[3, 0], [1, 3], [2, 0], [4, 2]], budget: B = 5 } = {}) => {
+    const n = val.length, { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(range(0, B).map(b => `b = ${b}`), [...post.map(v => `${v} (${val[v]}, ${cost[v]})`), 'answer'], (r, c) => (c === n ? 'answer' : `D(${post[c]},${r})`))
+    for (const v of post) for (let b = 0; b <= B; b++) {
+      if (cost[v] > b) { t.set(b, col(v), -INF, [], `cost ${cost[v]} doesn’t fit in ${b}: −∞`); continue }
+      // Every way to share the rest of the budget among the children (0 = leave a child out).
+      let best = { value: val[v], parts: [] }
+      const go = (i, left, value, parts) => {
+        if (i === kids[v].length) { if (value > best.value) best = { value, parts }; return }
+        go(i + 1, left, value, parts)
+        for (let x = 0; x <= left; x++) { const d = t.get(x, col(kids[v][i])); if (d > -INF) go(i + 1, left - x, value + d, [...parts, [kids[v][i], x, d]]) }
+      }
+      go(0, b - cost[v], val[v], [])
+      t.set(b, col(v), best.value, kids[v].flatMap(c => range(0, b).map(x => [x, col(c)])), best.parts.length ? `${val[v]}${best.parts.map(([c, x]) => ` + D(${c},${x})`).join('')} = ${[val[v], ...best.parts.map(p => p[2])].join(' + ')}` : `${v} alone: its value ${val[v]}`)
+    }
+    t.set(B, n, Math.max(0, t.get(B, col(0))), [[B, col(0)]], `max(0, D(0,${B})) = max(0, ${show(t.get(B, col(0)))})`)
+    return { title: `Budget ${B}`, setup: 'Each column is a vertex (value, cost); row b is a budget. D(v, b) is the best from v’s subtree with v chosen, spending at most b: v’s value plus the best way to share the rest of the budget among its children. A child can be used only because v is chosen. The answer takes the root, or nothing.', table: t, answer: [B, n], args: [val, cost, edges, B] }
+  },
+  'tree-coloring': ({ edges = [[3, 0], [1, 3], [2, 0], [4, 2]], colours: g = [[1, 0, 0], [1, 1, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]] } = {}) => {
+    const allowed = g.map(row => [1, 2, 3].filter((_, i) => row[i]))
+    const n = allowed.length, { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['colour 1', 'colour 2', 'colour 3'], [...post.map(v => `${v} {${allowed[v].join(',')}}`), 'answer'], (r, c) => (c === n ? 'answer' : `W(${post[c]},${r + 1})`))
+    const total = c => sum([0, 1, 2].map(r => t.get(r, col(c))))
+    for (const v of post) for (let r = 0; r < 3; r++) {
+      if (!allowed[v].includes(r + 1)) { t.set(r, col(v), 0, [], `colour ${r + 1} isn’t allowed at ${v}: 0`); continue }
+      const k = kids[v]
+      t.set(r, col(v), product(k.map(c => total(c) - t.get(r, col(c)))), k.flatMap(c => [0, 1, 2].map(q => [q, col(c)])), k.length ? `${k.map(c => `(all(${c}) − W(${c},${r + 1}))`).join(' · ')} = ${k.map(c => `(${total(c)} − ${t.get(r, col(c))})`).join(' · ')}` : 'a leaf with an allowed colour: 1')
+    }
+    t.set(0, n, total(0), [0, 1, 2].map(q => [q, col(0)]), `W(0,1) + W(0,2) + W(0,3) = ${[0, 1, 2].map(q => t.get(q, col(0))).join(' + ')}`)
+    return { title: `Allowed colours ${allowed.map(a => `{${a.join(',')}}`).join(' ')}`, setup: 'W(v, c): colourings of v’s subtree with v coloured c. Each child may take any colour but c: all(child), its colourings of every colour, minus those where it is c. The children are independent, so they multiply. The last column adds the root’s colours.', table: t, answer: [0, n], args: [edges, allowed], input: { edges, colours: g } }
+  },
+  'tree-path-count': ({ n = 7, edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]], k = 3 } = {}) => {
+    const { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table([...range(0, k).map(d => `depth ${d}`), 'paths here'], [...post.map(String), 'answer'], (r, c) => (c === n ? 'answer' : r > k ? `here(${post[c]})` : `cnt(${post[c]},${r})`))
+    for (const v of post) {
+      for (let d = 0; d <= k; d++) t.set(d, col(v), d === 0 ? 1 : sum(kids[v].map(c => t.get(d - 1, col(c)))), d ? kids[v].map(c => [d - 1, col(c)]) : [], d === 0 ? `${v} itself` : kids[v].length ? sumRule(kids[v].map(c => `cnt(${c},${d - 1})`), kids[v].map(c => t.get(d - 1, col(c))), '0') : 'nothing below a leaf: 0')
+      // Paths whose highest vertex is v: straight down k edges, or through two different children.
+      let cross = 0
+      kids[v].forEach((a, i) => kids[v].slice(i + 1).forEach(b => { for (let d = 0; d <= k - 2; d++) cross += t.get(d, col(a)) * t.get(k - 2 - d, col(b)) }))
+      t.set(k + 1, col(v), t.get(k, col(v)) + cross, [[k, col(v)], ...kids[v].flatMap(c => range(0, k - 1).map(d => [d, col(c)]))], `straight down: cnt(${v},${k}) = ${t.get(k, col(v))}, plus ${cross} through two different children`)
+    }
+    t.set(k + 1, n, sum(post.map(v => t.get(k + 1, col(v)))), post.map(v => [k + 1, col(v)]), `every path has one highest vertex: ${post.map(v => t.get(k + 1, col(v))).join(' + ')}`)
+    return { title: `Pairs at distance ${k}`, setup: `cnt(v, d) counts the vertices d edges below v. The last row counts the paths of length ${k} whose highest vertex is v: straight down from v, or joining depth d in one child to depth ${k} − 2 − d in another. Every path is counted at its highest vertex.`, table: t, answer: [k + 1, n], args: [n, edges, k] }
+  },
+  'tree-connected': ({ n = 7, edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const t = table(['C'], [...post.map(String), 'answer'], (r, c) => (c === n ? 'answer' : `C(${post[c]})`))
+    for (const v of post) t.set(0, col(v), product(kids[v].map(c => 1 + t.get(0, col(c)))), kids[v].map(c => [0, col(c)]), kids[v].length ? `${kids[v].map(c => `(1 + C(${c}))`).join(' · ')} = ${kids[v].map(c => 1 + t.get(0, col(c))).join(' · ')}` : 'a leaf: just {v}, 1')
+    t.set(0, n, sum(post.map(v => t.get(0, col(v)))), post.map(v => [0, col(v)]), `each set has one highest vertex: ${post.map(v => t.get(0, col(v))).join(' + ')}`)
+    return { title: `Connected sets, ${n} vertices`, setup: 'C(v) counts the connected sets whose highest vertex is v: each child adds nothing, or one of its sets. Adding C over every vertex counts each set once.', table: t, answer: [0, n], args: [n, edges] }
+  },
+  'tree-small-large': ({ colors = [4, 4, 1, 2, 1, 3, 2], edges = [[2, 5], [0, 2], [1, 0], [4, 1], [3, 1], [6, 2]] } = {}) => {
+    const n = colors.length, { kids, post } = rootTree(n, edges), col = v => post.indexOf(v)
+    const sets = Array(n)
+    const t = table(['colours'], post.map(v => `${v} (${colors[v]})`), (r, c) => `distinct(${post[c]})`)
+    for (const v of post) {
+      sets[v] = new Set([colors[v], ...kids[v].flatMap(c => [...sets[c]])])
+      t.set(0, col(v), sets[v].size, kids[v].map(c => [0, col(c)]), `${[`{${colors[v]}}`, ...kids[v].map(c => set([...sets[c]].sort((a, b) => a - b)))].join(' ∪ ')} = ${set([...sets[v]].sort((a, b) => a - b))}`)
+    }
+    return { title: `Colours ${list(colors)}`, setup: 'Each vertex’s set of colours is its own colour joined with its children’s sets; the cell shows how many there are. A program pours the smaller set into the larger, so each colour moves only a few times. The answer cell is the root; the whole row is the challenge’s answer.', table: t, answer: [0, col(0)], args: [colors, edges], check: w => w[0] }
+  },
+  // ── Bitmask and subset DP (Advanced). Columns are masks, written in binary with item 0 on the right. ──
+  'bitmask-basics': ({ weights: w = [3, 5, 2], limit = 5 } = {}) => {
+    const n = w.length, N = 1 << n
+    const t = table(['total'], [...range(0, N - 1).map(m => bits(m, n)), 'answer'], (r, c) => (c === N ? 'answer' : `T(${bits(c, n)})`))
+    t.seed(0, 0, 0, 'T(empty) = 0: the empty subset weighs nothing')
+    for (let m = 1; m < N; m++) { const low = m & -m, i = 31 - Math.clz32(low); t.set(0, m, t.get(0, m ^ low) + w[i], [[0, m ^ low]], `T(${bits(m ^ low, n)}) + w${i} = ${t.get(0, m ^ low)} + ${w[i]}`) }
+    const ok = range(0, N - 1).filter(m => t.get(0, m) <= limit)
+    t.set(0, N, ok.length, range(0, N - 1).map(m => [0, m]), `subsets with total ≤ ${limit}: ${ok.map(m => bits(m, n)).join(', ')}`)
+    return { title: `Weights ${list(w)}, limit ${limit}`, setup: 'One column per subset: bit i of the mask means item i is in. Each total is the total of the mask without its lowest item, plus that item’s weight. The last column counts the subsets within the limit.', table: t, answer: [0, N], args: [w, limit] }
+  },
+  'subset-enumeration': ({ values: v = [3, -1, 4, 1, -5, 9, 2, 6] } = {}) => {
+    const N = v.length, n = Math.round(Math.log2(N))
+    const t = table(['value', 'sum of submasks'], range(0, N - 1).map(m => bits(m, n)), (r, c) => `${r ? 'f' : 'v'}(${bits(c, n)})`)
+    for (let m = 0; m < N; m++) t.seed(0, m, v[m], 'the input')
+    for (let m = 0; m < N; m++) {
+      const subs = []
+      for (let s = m; ; s = (s - 1) & m) { subs.push(s); if (s === 0) break }
+      t.set(1, m, sum(subs.map(s => v[s])), subs.map(s => [0, s]), `${subs.map(s => `v(${bits(s, n)})`).join(' + ')} = ${subs.map(s => v[s]).join(' + ')}`)
+    }
+    return { title: `Values ${list(v)}`, setup: 'For each mask, the walk s = mask, (s − 1) & mask, … visits every submask down to 0; the bottom row adds their values. The answer cell is the full mask; the whole row is the challenge’s answer.', table: t, answer: [1, N - 1], args: [v], check: w => w[N - 1] }
+  },
+  'assignment': ({ cost: C = [[4, 2, 8], [4, 3, 7], [3, 1, 6]] } = {}) => {
+    const n = C.length, N = 1 << n
+    const t = table(['D'], range(0, N - 1).map(m => bits(m, n)), (r, c) => `D(${bits(c, n)})`)
+    t.seed(0, 0, 0, 'no jobs given out: 0')
+    for (let m = 1; m < N; m++) {
+      const w = popcount(m) - 1, opts = range(0, n - 1).filter(j => m & (1 << j)).map(j => ({ j, value: t.get(0, m ^ (1 << j)) + C[w][j] }))
+      t.set(0, m, minOf(opts.map(o => o.value)), opts.map(o => [0, m ^ (1 << o.j)]), `worker ${w} takes the last job: min(${opts.map(o => `D(${bits(m ^ (1 << o.j), n)}) + c(${w},${o.j})`).join(', ')}) = min(${opts.map(o => o.value).join(', ')})`)
+    }
+    return { title: `Cost matrix ${rowsOf(C)}`, setup: 'D(mask): the cheapest way to give the jobs in mask to the first popcount(mask) workers. The last of those workers took one of mask’s jobs: try each.', table: t, answer: [0, N - 1], args: [C] }
+  },
+  'held-karp': ({ dist = [[0, 10, 15, 20], [10, 0, 35, 25], [15, 35, 0, 30], [20, 25, 30, 0]] } = {}) => {
+    const n = dist.length, masks = range(0, (1 << n) - 1).filter(m => m & 1), full = (1 << n) - 1
+    const col = m => masks.indexOf(m)
+    const t = table(range(0, n - 1).map(v => `end ${v}`), [...masks.map(m => bits(m, n)), 'tour'], (r, c) => (c === masks.length ? 'tour' : `D(${bits(masks[c], n)},${r})`))
+    for (const m of masks) for (let v = 0; v < n; v++) {
+      if (m === 1) { t.seed(v, col(m), v === 0 ? 0 : INF, v === 0 ? 'at city 0, nothing travelled: 0' : 'only city 0 visited: ∞'); continue }
+      if (!(m & (1 << v)) || v === 0) { t.set(v, col(m), INF, [], v === 0 ? 'only the start may end at 0, and it has moved on: ∞' : `${v} isn’t in this set: ∞`); continue }
+      const prev = m ^ (1 << v), opts = range(0, n - 1).filter(u => prev & (1 << u)).map(u => ({ u, value: t.get(u, col(prev)) + dist[u][v] }))
+      t.set(v, col(m), minOf(opts.map(o => o.value)), opts.map(o => [o.u, col(prev)]), `min(${opts.map(o => `D(${bits(prev, n)},${o.u}) + d(${o.u},${v})`).join(', ')}) = min(${opts.map(o => show(o.value)).join(', ')})`)
+    }
+    const ends = n > 1 ? range(1, n - 1) : [0]
+    const tours = ends.map(v => t.get(v, col(full)) + (n > 1 ? dist[v][0] : 0))
+    t.set(0, masks.length, minOf(tours), ends.map(v => [v, col(full)]), n > 1 ? `min(${ends.map(v => `D(all,${v}) + d(${v},0)`).join(', ')}) = min(${tours.map(show).join(', ')})` : 'one city: 0')
+    return { title: `${n} cities`, setup: 'Columns: the sets of visited cities (always with city 0); rows: the city the path ends at. D(set, v) is the cheapest path from 0 through exactly that set ending at v: the best city u before v, plus the step from u. The last column closes the tour back to 0.', table: t, answer: [0, masks.length], args: [dist] }
+  },
+  'hamiltonian': ({ n = 4, edges = [[0, 1], [1, 2], [2, 3], [0, 2], [1, 3], [3, 1], [2, 1]] } = {}) => {
+    const masks = range(0, (1 << n) - 1).filter(m => m & 1), full = (1 << n) - 1, col = m => masks.indexOf(m)
+    const t = table(range(0, n - 1).map(v => `end ${v}`), [...masks.map(m => bits(m, n)), 'paths'], (r, c) => (c === masks.length ? 'paths' : `C(${bits(masks[c], n)},${r})`))
+    for (const m of masks) for (let v = 0; v < n; v++) {
+      if (m === 1) { t.seed(v, col(m), v === 0 ? 1 : 0, v === 0 ? 'the path that is just vertex 0: 1' : 'only vertex 0 visited: 0'); continue }
+      if (!(m & (1 << v)) || v === 0) { t.set(v, col(m), 0, [], v === 0 ? 'a longer path doesn’t end back at 0: 0' : `${v} isn’t in this set: 0`); continue }
+      const prev = m ^ (1 << v), from = edges.filter(([a, b]) => b === v && prev & (1 << a)).map(e => e[0])
+      t.set(v, col(m), sum(from.map(u => t.get(u, col(prev)))), from.map(u => [u, col(prev)]), sumRule(from.map(u => `C(${bits(prev, n)},${u})`), from.map(u => t.get(u, col(prev))), `no edge into ${v} from this set: 0`))
+    }
+    t.set(0, masks.length, sum(range(0, n - 1).map(v => t.get(v, col(full)))), range(0, n - 1).map(v => [v, col(full)]), `every end: ${range(0, n - 1).map(v => t.get(v, col(full))).join(' + ')}`)
+    return { title: `${n} vertices, ${edges.length} edges`, setup: 'C(set, v): how many paths from 0 visit exactly that set and end at v, split by the vertex u they came from (an edge u → v). The last column adds every end.', table: t, answer: [0, masks.length], args: [n, edges] }
+  },
+  'subset-partition': ({ values: v = [3, 3, 2, 2], cap = 6 } = {}) => {
+    const n = v.length, N = 1 << n
+    const t = table(['total', 'bins'], range(0, N - 1).map(m => bits(m, n)), (r, c) => `${r ? 'B' : 'T'}(${bits(c, n)})`)
+    t.seed(0, 0, 0, 'the empty set weighs 0'); t.seed(1, 0, 0, 'no items, no bins')
+    for (let m = 1; m < N; m++) { const low = m & -m; t.set(0, m, t.get(0, m ^ low) + v[31 - Math.clz32(low)], [[0, m ^ low]], `T(${bits(m ^ low, n)}) + ${v[31 - Math.clz32(low)]}`) }
+    for (let m = 1; m < N; m++) {
+      const low = m & -m, rest = m ^ low, opts = []
+      for (let s = rest; ; s = (s - 1) & rest) { const b = s | low; if (t.get(0, b) <= cap) opts.push({ b, value: t.get(1, m ^ b) + 1 }); if (s === 0) break }
+      t.set(1, m, minOf(opts.map(o => o.value)), opts.flatMap(o => [[0, o.b], [1, m ^ o.b]]), `the bin with item ${31 - Math.clz32(low)}: min(${opts.map(o => `B(${bits(m ^ o.b, n)}) + 1`).join(', ')}) = min(${opts.map(o => o.value).join(', ')})`)
+    }
+    return { title: `Items ${list(v)}, bins of ${cap}`, setup: 'Top row: each subset’s total. Bottom row: the fewest bins for that subset. Some bin holds its lowest item; try every such bin that fits (total ≤ cap), plus the best for what is left.', table: t, answer: [1, N - 1], args: [v, cap] }
+  },
+  'subset-cover': ({ n = 3, options: rows = [[1, 1, 0, 3], [0, 1, 1, 3], [1, 1, 1, 4]] } = {}) => {
+    const N = 1 << n, opts = rows.map(r => ({ mask: r.slice(0, n).reduce((m, x, i) => m | (x ? 1 << i : 0), 0), cost: r[n] }))
+    const t = table(['D'], range(0, N - 1).map(m => bits(m, n)), (r, c) => `D(${bits(c, n)})`)
+    t.seed(0, 0, 0, 'nothing bought: 0')
+    for (let m = 1; m < N; m++) {
+      // Every earlier state p and option o with p | o = m: the last option bought.
+      const cand = []
+      for (const [k, o] of opts.entries()) if ((o.mask | m) === m && o.mask & m) for (let p = 0; p < m; p++) if ((p | o.mask) === m && t.get(0, p) !== INF) cand.push({ k, p, value: t.get(0, p) + o.cost })
+      t.set(0, m, cand.length ? minOf(cand.map(c => c.value)) : INF, cand.map(c => [0, c.p]), cand.length ? `last option bought: min(${cand.map(c => `D(${bits(c.p, n)}) + option ${c.k}`).join(', ')}) = min(${cand.map(c => c.value).join(', ')})` : 'no purchase covers exactly this: ∞')
+    }
+    const items = opts.map(o => range(0, n - 1).filter(i => o.mask & (1 << i)))
+    return { title: `${n} items, ${opts.length} options`, setup: 'D(mask): the cheapest purchase whose items together are exactly mask. Split by the last option bought: it took the covered set from some earlier p to p | option = mask.', table: t, answer: [0, N - 1], args: [n, opts.map((o, k) => [items[k], o.cost])], input: { n, options: rows }, check: w => (w === -1 ? INF : w) }
+  },
+  'steiner-tree': ({ n = 5, edges = [[0, 4, 1], [1, 4, 1], [2, 4, 1], [0, 1, 3], [1, 2, 3], [3, 2, 2]], terminals: T = [0, 1, 3] } = {}) => {
+    const dist = range(0, n - 1).map(i => range(0, n - 1).map(j => (i === j ? 0 : INF)))
+    for (const [a, b, w] of edges) { dist[a][b] = Math.min(dist[a][b], w); dist[b][a] = Math.min(dist[b][a], w) }
+    for (let k = 0; k < n; k++) for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) dist[i][j] = Math.min(dist[i][j], dist[i][k] + dist[k][j])
+    const k = T.length, masks = range(1, (1 << k) - 1)
+    const name = m => set(T.filter((_, i) => m & (1 << i)))
+    const t = table(masks.map(name), range(0, n - 1).map(String), (r, c) => `D(${name(masks[r])},${c})`)
+    for (const [r, m] of masks.entries()) for (let v = 0; v < n; v++) {
+      if (!(m & (m - 1))) { const x = T[31 - Math.clz32(m)]; t.seed(r, v, dist[x][v], `terminal ${x} to ${v}: shortest distance ${show(dist[x][v])}`); continue }
+      let best = { value: INF }
+      for (let u = 0; u < n; u++) for (let s = (m - 1) & m; s; s = (s - 1) & m) { const value = t.get(masks.indexOf(s), u) + t.get(masks.indexOf(m ^ s), u) + dist[u][v]; if (value < best.value) best = { value, u, s } }
+      t.set(r, v, best.value, range(0, n - 1).flatMap(u => masks.filter(s => (s & m) === s && s !== m).map(s => [masks.indexOf(s), u])), `branch at ${best.u}: D(${name(best.s)},${best.u}) + D(${name(m ^ best.s)},${best.u}) + dist(${best.u},${v}) = ${t.get(masks.indexOf(best.s), best.u)} + ${t.get(masks.indexOf(m ^ best.s), best.u)} + ${dist[best.u][v]}`)
+    }
+    return { title: `Terminals ${list(T)}`, setup: 'Rows: sets of terminals; columns: a vertex v. D(set, v) is the lightest tree joining those terminals and v. One terminal: its shortest distance to v. More: the tree branches at some vertex u into two smaller terminal sets, then a shortest path runs from u to v. The answer is the best cell in the bottom row.', table: t, answer: lowestInRow(t, masks.length - 1), args: [n, edges, T] }
+  },
+  'subset-topological': ({ n = 4, edges = [[0, 1], [0, 2], [1, 3]] } = {}) => {
+    const N = 1 << n, need = range(0, n - 1).map(v => edges.filter(e => e[1] === v).reduce((m, e) => m | (1 << e[0]), 0))
+    const t = table(['C'], range(0, N - 1).map(m => bits(m, n)), (r, c) => `C(${bits(c, n)})`)
+    t.seed(0, 0, 1, 'one way to place nothing')
+    for (let m = 1; m < N; m++) {
+      const last = range(0, n - 1).filter(v => m & (1 << v) && (need[v] & (m ^ (1 << v))) === need[v])
+      t.set(0, m, sum(last.map(v => t.get(0, m ^ (1 << v)))), last.map(v => [0, m ^ (1 << v)]), last.length ? `the last placed is ${last.join(' or ')}: ${sumRule(last.map(v => `C(${bits(m ^ (1 << v), n)})`), last.map(v => t.get(0, m ^ (1 << v))), '0')}` : 'no vertex here can come last: 0')
+    }
+    return { title: `${n} vertices, ${edges.length} rules`, setup: 'C(mask): how many valid orders place exactly the vertices in mask first. Split by the vertex placed last: it is in mask and all its prerequisites are in the rest.', table: t, answer: [0, N - 1], args: [n, edges] }
+  },
+  'subset-matching': ({ n = 4, edges = [[0, 1], [1, 2], [2, 3], [3, 0], [0, 2]] } = {}) => {
+    const N = 1 << n, adj = range(0, n - 1).map(v => edges.reduce((m, [a, b]) => (a === v ? m | (1 << b) : b === v ? m | (1 << a) : m), 0))
+    const t = table(['D'], range(0, N - 1).map(m => bits(m, n)), (r, c) => `D(${bits(c, n)})`)
+    t.seed(0, 0, 1, 'the empty set: one matching, no edges')
+    for (let m = 1; m < N; m++) {
+      const low = m & -m, v = 31 - Math.clz32(low), rest = m ^ low
+      const us = range(0, n - 1).filter(u => rest & adj[v] & (1 << u))
+      t.set(0, m, sum(us.map(u => t.get(0, rest ^ (1 << u)))), us.map(u => [0, rest ^ (1 << u)]), us.length ? `vertex ${v} pairs with ${us.join(' or ')}: ${sumRule(us.map(u => `D(${bits(rest ^ (1 << u), n)})`), us.map(u => t.get(0, rest ^ (1 << u))), '0')}` : `vertex ${v} has no partner here: 0`)
+    }
+    return { title: `${n} vertices, ${edges.length} edges`, setup: 'D(mask): the perfect matchings of the vertices in mask. Its lowest vertex must be paired with a neighbour in mask; then match the rest.', table: t, answer: [0, N - 1], args: [n, edges] }
+  },
+  'subset-coloring': ({ n = 4, edges = [[0, 1], [1, 2], [2, 3], [3, 0]] } = {}) => {
+    const N = 1 << n, adj = range(0, n - 1).map(v => edges.reduce((m, [a, b]) => (a === v ? m | (1 << b) : b === v ? m | (1 << a) : m), 0))
+    const t = table(['independent', 'colours'], range(0, N - 1).map(m => bits(m, n)), (r, c) => `${r ? 'χ' : 'I'}(${bits(c, n)})`)
+    t.seed(0, 0, true, 'the empty set has no edge inside'); t.seed(1, 0, 0, 'no vertices, no colours')
+    for (let m = 1; m < N; m++) { const low = m & -m, v = 31 - Math.clz32(low), ok = t.get(0, m ^ low) && !(adj[v] & m); t.set(0, m, ok, [[0, m ^ low]], `I(${bits(m ^ low, n)}) and ${v} has no neighbour in the set`) }
+    for (let m = 1; m < N; m++) {
+      const low = m & -m, rest = m ^ low, opts = []
+      for (let s = rest; ; s = (s - 1) & rest) { if (t.get(0, s | low)) opts.push({ c: s | low, value: t.get(1, rest ^ s) + 1 }); if (s === 0) break }
+      t.set(1, m, minOf(opts.map(o => o.value)), opts.flatMap(o => [[0, o.c], [1, m ^ o.c]]), `a colour class with vertex ${31 - Math.clz32(low)}: min(${opts.map(o => `χ(${bits(m ^ o.c, n)}) + 1`).join(', ')}) = min(${opts.map(o => o.value).join(', ')})`)
+    }
+    return { title: `${n} vertices, ${edges.length} edges`, setup: 'Top row: is the set independent (no edge inside)? Bottom row: the fewest colours for the set. One colour class contains its lowest vertex and must be independent; the rest is coloured as well as possible.', table: t, answer: [1, N - 1], args: [n, edges] }
+  },
+  'mask-language': ({ bits: B = [[1, 1, 0, 0, 0, 0, 0, 0], [0, 1, 1, 0, 0, 0, 0, 1]] } = {}) => {
+    const sets = B.map(row => range(0, row.length - 1).filter(i => row[i])), W = B[0].length
+    const t = table([...B.map((_, i) => `after set ${i}`), 'decimal'], range(0, W - 1).map(i => `bit ${i}`), (r, c) => (r === B.length ? 'decimal' : `x${r}[${c}]`))
+    for (let r = 0; r < B.length; r++) for (let c = 0; c < W; c++) {
+      if (r === 0) { t.set(0, c, B[0][c], [], `set 0 ${B[0][c] ? 'has' : 'doesn’t have'} bit ${c}`); continue }
+      t.set(r, c, t.get(r - 1, c) ^ B[r][c], [[r - 1, c]], `${t.get(r - 1, c)} XOR ${B[r][c]} (set ${r} ${B[r][c] ? 'has' : 'doesn’t have'} bit ${c})`)
+    }
+    const last = B.length - 1, on = range(0, W - 1).filter(c => t.get(last, c))
+    const value = on.reduce((x, c) => x + 2 ** c, 0)
+    t.set(B.length, 0, value, range(0, W - 1).map(c => [last, c]), on.length ? `${on.map(c => `2^${c}`).join(' + ')} = ${value}` : 'no bit set: 0')
+    return { title: `${B.length} sets of bits`, setup: 'Each row is the running XOR after one more set: a bit stays on when an odd number of the sets have it. The last row reads the final bits as a number. (Here masks have at most 8 bits; the challenge’s masks reach bit 99, which is why it uses BigInt and returns a string.)', table: t, answer: [B.length, 0], args: [sets], input: { bits: B }, check: w => Number(w) }
+  },
+  // ── Digit and automaton DP (Advanced). Digit tables: a column per digit position, filled from the end;
+  // each cell counts the ways to finish from there. Automaton tables: a column per length so far. ──
+  'digit-tight': ({ n = 444 } = {}) => {
+    const d = digitsOfNumber(n), L = d.length
+    const t = table(['tight', 'free'], [...d.map((x, i) => `${i}: ${x}`), 'end'], (r, c) => `${r ? 'F' : 'T'}(${c})`)
+    t.seed(0, L, 1, 'every position filled: one number'); t.seed(1, L, 1, 'every position filled: one number')
+    for (let p = L - 1; p >= 0; p--) {
+      const below = range(0, d[p] - 1).filter(x => x !== 4).length
+      digitCell(t, 0, p, [[1, below, `digits below ${d[p]}${d[p] > 4 ? ' except 4' : ''}`], ...(d[p] !== 4 ? [[0, 1, `the digit ${d[p]}`]] : [])])
+      digitCell(t, 1, p, [[1, 9, 'any digit but 4']])
+    }
+    return { title: `0 to ${n}, no digit 4`, setup: 'T(p): ways to finish from position p while still equal to n’s prefix (tight); F(p): once already below n (free). A tight position may use digits up to n’s; below n’s digit it becomes free. 4 is never used.', table: t, answer: [0, 0], args: [n] }
+  },
+  'digit-leading': ({ n = 2023 } = {}) => {
+    const d = digitsOfNumber(n), L = d.length
+    const rows = [[1, 0], [1, 1], [0, 0], [0, 1]], row = (tg, st) => rows.findIndex(x => x[0] === tg && x[1] === st)
+    const t = table(['tight, not started', 'tight, started', 'free, not started', 'free, started'], [...d.map((x, i) => `${i}: ${x}`), 'end'], (r, c) => `${['TN', 'TS', 'FN', 'FS'][r]}(${c})`)
+    for (const [r, [, st]] of rows.entries()) t.seed(r, L, st ? 1 : 0, st ? 'a number that started: 1' : 'never started: the number 0, not counted')
+    for (let p = L - 1; p >= 0; p--) for (const [r, [tg, st]] of rows.entries()) {
+      const top = tg ? d[p] : 9, groups = new Map()
+      for (let x = 0; x <= top; x++) { if (x === 0 && st) continue; const to = row(tg && x === top ? 1 : 0, st || x !== 0 ? 1 : 0); groups.set(to, (groups.get(to) ?? 0) + 1) }
+      digitCell(t, r, p, [...groups].map(([to, k]) => [to, k, '']))
+    }
+    return { title: `1 to ${n}, no digit 0`, setup: 'Four states: tight or free, and whether the number has started. Before it starts, a 0 is padding and allowed; after, 0 is forbidden. Only numbers that started count at the end.', table: t, answer: [row(1, 0), 0], args: [n] }
+  },
+  'digit-range': ({ lo = 123, hi = 4567 } = {}) => {
+    const blocks = [['hi', hi], ...(lo > 0 ? [['lo − 1', lo - 1]] : [])], L = String(hi).length
+    const labels = blocks.flatMap(([b]) => [`${b}: tight, no 7`, `${b}: tight, 7`, `${b}: free, no 7`, `${b}: free, 7`])
+    const t = table(labels, [...range(0, L - 1).map(i => `pos ${i}`), 'end', 'answer'], (r, c) => (c === L + 1 ? 'answer' : `${blocks[Math.floor(r / 4)][0]}·${['TN', 'T7', 'FN', 'F7'][r % 4]}(${c})`))
+    for (const [b, [, x]] of blocks.entries()) {
+      const d = String(x).padStart(L, '0').split('').map(Number), at = (tg, sn) => 4 * b + (tg ? 0 : 2) + (sn ? 1 : 0)
+      for (let k = 0; k < 4; k++) t.seed(4 * b + k, L, k % 2, k % 2 ? 'has a 7: counted' : 'no 7: not counted')
+      for (let p = L - 1; p >= 0; p--) for (const tg of [1, 0]) for (const sn of [0, 1]) {
+        const top = tg ? d[p] : 9, groups = new Map()
+        for (let y = 0; y <= top; y++) { const to = at(tg && y === top, sn || y === 7); groups.set(to, (groups.get(to) ?? 0) + 1) }
+        digitCell(t, at(tg, sn), p, [...groups].map(([to, k]) => [to, k, '']))
+      }
+    }
+    const F = t.get(0, 0), G = blocks.length > 1 ? t.get(4, 0) : 0
+    t.set(0, L + 1, F - G, blocks.length > 1 ? [[0, 0], [4, 0]] : [[0, 0]], blocks.length > 1 ? `F(${hi}) − F(${lo - 1}) = ${F} − ${G}` : `F(${hi}) = ${F}`)
+    return { title: `${lo} to ${hi}, containing a 7`, setup: `The top block counts F(${hi}), the numbers from 0 to ${hi} with a 7${blocks.length > 1 ? `; the bottom block counts F(${lo - 1}), padded to the same length` : ''}. Each block: tight or free, and whether a 7 has appeared. The answer subtracts.`, table: t, answer: [0, L + 1], args: [lo, hi] }
+  },
+  'digit-adjacency': ({ n = 1357 } = {}) => {
+    const d = digitsOfNumber(n), L = d.length, lasts = [-1, ...range(0, 9)]
+    const row = (tg, last) => (tg ? 0 : 11) + lasts.indexOf(last)
+    const t = table([...lasts.map(x => `tight, last ${x < 0 ? '—' : x}`), ...lasts.map(x => `free, last ${x < 0 ? '—' : x}`)], [...d.map((x, i) => `${i}: ${x}`), 'end'], (r, c) => `${r < 11 ? 'T' : 'F'}${lasts[r % 11] < 0 ? '−' : lasts[r % 11]}(${c})`)
+    for (let r = 0; r < 22; r++) t.seed(r, L, lasts[r % 11] >= 0 ? 1 : 0, lasts[r % 11] >= 0 ? 'a number that started: 1' : 'never started: 0, not counted')
+    for (let p = L - 1; p >= 0; p--) for (const tg of [1, 0]) for (const last of lasts) {
+      const top = tg ? d[p] : 9, groups = new Map()
+      for (let x = 0; x <= top; x++) {
+        let next
+        if (last < 0 && x === 0) next = -1
+        else if (last < 0 || Math.abs(x - last) >= 2) next = x
+        else continue
+        const to = row(tg && x === top ? 1 : 0, next); groups.set(to, (groups.get(to) ?? 0) + 1)
+      }
+      digitCell(t, row(tg, last), p, [...groups].map(([to, k]) => [to, k, '']))
+    }
+    return { title: `1 to ${n}, neighbours differ by 2 or more`, setup: 'Rows: tight or free, and the last real digit (— before the number starts). A digit may follow last only if they differ by at least 2; padding zeros keep —. Only numbers that started count.', table: t, answer: [row(1, -1), 0], args: [n] }
+  },
+  'digit-aggregate': ({ n = 82 } = {}) => {
+    const d = digitsOfNumber(n), L = d.length, states = [[1, 0], [1, 1], [0, 0], [0, 1]]
+    const name = ([tg, st]) => `${tg ? 'tight' : 'free'}${st ? '' : ', not started'}`
+    const t = table(states.flatMap(s => [`${name(s)}: count`, `${name(s)}: total`]), [...range(0, L).map(k => `${k} digit${k === 1 ? '' : 's'}`), 'answer'], (r, c) => (c === L + 1 ? 'answer' : `${r % 2 ? 'total' : 'count'}${Math.floor(r / 2)}(${c})`))
+    states.forEach((s, i) => { t.seed(2 * i, 0, i === 0 ? 1 : 0, i === 0 ? 'one empty prefix' : 'nothing yet'); t.seed(2 * i + 1, 0, 0, 'value 0') })
+    for (let k = 1; k <= L; k++) states.forEach(([tg, st], i) => {
+      // Every earlier state and digit that lands here.
+      const from = []
+      states.forEach(([pt, ps], j) => { const top = pt ? d[k - 1] : 9; for (let x = 0; x <= top; x++) { if (x % 2 === 0 && (ps || x !== 0)) continue; if ((pt && x === top ? 1 : 0) === tg && (ps || x !== 0 ? 1 : 0) === st) from.push({ j, x }) } })
+      const c = sum(from.map(f => t.get(2 * f.j, k - 1))), tot = sum(from.map(f => 10 * t.get(2 * f.j + 1, k - 1) + f.x * t.get(2 * f.j, k - 1)))
+      const reads = from.flatMap(f => [[2 * f.j, k - 1], [2 * f.j + 1, k - 1]])
+      t.set(2 * i, k, c, reads, from.length ? `${from.map(f => `count${f.j}(${k - 1})`).join(' + ')} = ${c}` : 'nothing lands here: 0')
+      t.set(2 * i + 1, k, tot, reads, from.length ? `Σ (10 · total + ${'digit'} · count) = ${from.map(f => `(10·${t.get(2 * f.j + 1, k - 1)} + ${f.x}·${t.get(2 * f.j, k - 1)})`).join(' + ')}` : 'nothing lands here: 0')
+    })
+    t.set(0, L + 1, t.get(3, L) + t.get(7, L), [[3, L], [7, L]], `the started totals: ${t.get(3, L)} + ${t.get(7, L)}`)
+    return { title: `All-odd numbers up to ${n}`, setup: 'Forward, one digit at a time: each state carries how many valid prefixes reach it and the sum of their values. Appending digit d turns the sum into 10 · total + d · count. The answer adds the totals of the states that started.', table: t, answer: [0, L + 1], args: [n] }
+  },
+  'kmp-dp': ({ alphabet = 'ab', pattern = 'aba', length = 6 } = {}) => {
+    const step = kmpStep(pattern, alphabet), P = pattern.length
+    const t = table(range(0, P - 1).map(q => `“${pattern.slice(0, q)}” matched`), [...range(0, length).map(l => `length ${l}`), 'answer'], (r, c) => (c === length + 1 ? 'answer' : `W(${r},${c})`))
+    for (let q = 0; q < P; q++) t.seed(q, 0, q === 0 ? 1 : 0, q === 0 ? 'the empty string: nothing matched' : 'the empty string matches nothing')
+    for (let l = 1; l <= length; l++) for (let q = 0; q < P; q++) {
+      const from = []
+      for (let p = 0; p < P; p++) for (const ch of alphabet) if (step[p][ch] === q) from.push({ p, ch })
+      t.set(q, l, sum(from.map(f => t.get(f.p, l - 1))), from.map(f => [f.p, l - 1]), from.length ? `${from.map(f => `W(${f.p},${l - 1}) + ${f.ch}`).join(', ')}: ${from.map(f => t.get(f.p, l - 1)).join(' + ')}` : 'no letter leads here: 0')
+    }
+    t.set(0, length + 1, sum(range(0, P - 1).map(q => t.get(q, length))), range(0, P - 1).map(q => [q, length]), `every state at length ${length}: ${range(0, P - 1).map(q => t.get(q, length)).join(' + ')}`)
+    return { title: `Avoid “${pattern}”, length ${length}`, setup: 'Rows: how much of the pattern the string ends with. Each cell collects the strings one letter shorter whose next letter leads here (the KMP automaton’s step). Reaching the whole pattern is never allowed, so it has no row.', table: t, answer: [0, length + 1], args: [alphabet, pattern, length] }
+  },
+  'aho-dp': ({ alphabet = 'ab', patterns = ['aa', 'bb'], length = 5 } = {}) => {
+    const { go, bad, word } = ahoAutomaton(alphabet, patterns), good = range(0, go.length - 1).filter(u => !bad[u])
+    const t = table(good.map(u => `“${word[u]}”`), [...range(0, length).map(l => `length ${l}`), 'answer'], (r, c) => (c === length + 1 ? 'answer' : `W(${word[good[r]] || 'root'},${c})`))
+    good.forEach((u, r) => t.seed(r, 0, u === 0 ? 1 : 0, u === 0 ? 'the empty string is at the root' : 'the empty string is only at the root'))
+    for (let l = 1; l <= length; l++) good.forEach((v, r) => {
+      const from = []
+      good.forEach((u, q) => { for (const ch of alphabet) if (go[u][ch] === v) from.push({ q, u, ch }) })
+      t.set(r, l, sum(from.map(f => t.get(f.q, l - 1))), from.map(f => [f.q, l - 1]), from.length ? `${from.map(f => `“${word[f.u]}” + ${f.ch}`).join(', ')}: ${from.map(f => t.get(f.q, l - 1)).join(' + ')}` : 'no letter leads here: 0')
+    })
+    t.set(0, length + 1, sum(good.map((_, r) => t.get(r, length))), good.map((_, r) => [r, length]), `every allowed node: ${good.map((_, r) => t.get(r, length)).join(' + ')}`)
+    return { title: `Avoid ${patterns.map(p => `“${p}”`).join(', ')}`, setup: 'Rows: the allowed nodes of the Aho–Corasick automaton (the longest suffix of the string that starts a pattern). Forbidden nodes, where a pattern has just ended, have no row. Each cell collects the shorter strings whose next letter leads here.', table: t, answer: [0, length + 1], args: [alphabet, patterns, length] }
+  },
+  'automaton-product': ({ pattern = '12', m = 3, length = 3 } = {}) => {
+    const step = kmpStep(pattern, '0123456789'), P = pattern.length
+    const rows = range(0, P).flatMap(q => range(0, m - 1).map(r => [q, r])), at = (q, r) => q * m + r
+    const t = table(rows.map(([q, r]) => `${q === P ? 'found' : `“${pattern.slice(0, q)}”`}, r ${r}`), range(0, length).map(l => `length ${l}`), (rr, c) => `W(${rows[rr][0]},${rows[rr][1]},${c})`)
+    rows.forEach(([q, r], i) => t.seed(i, 0, q === 0 && r === 0 ? 1 : 0, q === 0 && r === 0 ? 'the empty string: nothing matched, value 0' : 'the empty string is elsewhere'))
+    for (let l = 1; l <= length; l++) rows.forEach(([q, r], i) => {
+      const from = []
+      rows.forEach(([pq, pr], j) => { for (let x = 0; x <= 9; x++) { const to = pq === P ? P : step[pq][String(x)]; if (to === q && (pr * 10 + x) % m === r) from.push({ j, x }) } })
+      t.set(i, l, sum(from.map(f => t.get(f.j, l - 1))), [...new Set(from.map(f => f.j))].map(j => [j, l - 1]), from.length ? `${from.length} (state, digit) pairs lead here: ${sum(from.map(f => t.get(f.j, l - 1)))}` : 'nothing leads here: 0')
+    })
+    return { title: `Contains “${pattern}”, divisible by ${m}`, setup: 'Rows pair the pattern state (how much is matched, or found) with the value modulo m. A digit advances both: the automaton steps, and r becomes (10r + d) mod m. Once found, always found. The answer is found with remainder 0.', table: t, answer: [at(P, 0), length], args: [pattern, m, length] }
+  },
+  // ── State and transition reduction (Expert). Each table shows every value a program computes; the
+  // setup says which of them it actually keeps at once. ──
+  'rolling-arrays': ({ grid: g = [[0, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [1, 0, 0, 0]] } = {}) => {
+    const R = g.length, C = g[0].length
+    const t = table(range(0, R - 1).map(r => `row after ${r}`), range(0, C - 1).map(String), (r, c) => `row${r}[${c}]`)
+    for (let r = 0; r < R; r++) for (let c = 0; c < C; c++) {
+      if (g[r][c]) { t.set(r, c, 0, [], 'blocked: 0'); continue }
+      if (r === 0 && c === 0) { t.set(0, 0, 1, [], 'the start: 1'); continue }
+      const reads = [...(r > 0 ? [[r - 1, c]] : []), ...(c > 0 ? [[r, c - 1]] : [])]
+      t.set(r, c, sum(reads.map(([a, b]) => t.get(a, b))), reads, sumRule(reads.map(([a, b]) => (a < r ? `old row[${b}]` : `new row[${b}]`)), reads.map(([a, b]) => t.get(a, b)), '0'))
+    }
+    return { title: `Paths in a ${R} × ${C} grid`, setup: 'Each row of this table is the single array row after one more grid row. Updating row[c] in place: its old value is the cell above, and row[c − 1] is already the new cell to the left. Only the latest row is ever kept.', table: t, answer: [R - 1, C - 1], args: [g] }
+  },
+  'in-place': ({ items = [[3, 4, 0], [2, 3, 1]], cap = 7 } = {}) => {
+    const t = table(['start', ...items.map(([w, v, many], i) => `after ${i} (${w}, ${v}${many ? ', many' : ''})`)], range(0, cap).map(String), (r, c) => `B${r}(${c})`)
+    for (let c = 0; c <= cap; c++) t.seed(0, c, 0, 'no items: 0')
+    items.forEach(([w, v, many], i) => {
+      const r = i + 1
+      for (let c = 0; c <= cap; c++) {
+        if (c < w) { t.set(r, c, t.get(r - 1, c), [[r - 1, c]], `doesn’t fit: B${r - 1}(${c}) = ${t.get(r - 1, c)}`); continue }
+        // An unlimited item reads this row (already updated), a once-only item the row before.
+        const from = many ? r : r - 1
+        const take = t.get(from, c - w) + v
+        t.set(r, c, Math.max(t.get(r - 1, c), take), [[r - 1, c], [from, c - w]], `max(skip: B${r - 1}(${c}), take: ${v} + B${from}(${c - w})) = max(${t.get(r - 1, c)}, ${take})`)
+      }
+    })
+    return { title: `Capacity ${cap}`, setup: 'Each row is the single array best after one more item. A once-only item reads the row before (in place, a downward scan keeps those values); an unlimited item reads its own row, already updated (an upward scan), so it can be taken again.', table: t, answer: [items.length, cap], args: [items, cap] }
+  },
+  'prefix-sum-dp': ({ n = 7, k = 3 } = {}) => {
+    const t = table(['ways', 'prefix'], range(0, n).map(String), (r, c) => `${r ? 'P' : 'W'}(${c})`)
+    t.seed(0, 0, 1, 'one way to stand at the bottom'); t.seed(1, 0, 1, 'P(1) = W(0) = 1 (shown under stair 0)')
+    for (let i = 1; i <= n; i++) {
+      const lo = Math.max(0, i - k), viaLo = lo > 0 ? t.get(1, lo - 1) : 0
+      t.set(0, i, t.get(1, i - 1) - viaLo, lo > 0 ? [[1, i - 1], [1, lo - 1]] : [[1, i - 1]], lo > 0 ? `P up to ${i - 1} − P up to ${lo - 1} = ${t.get(1, i - 1)} − ${viaLo}` : `everything below: P up to ${i - 1} = ${t.get(1, i - 1)}`)
+      t.set(1, i, t.get(1, i - 1) + t.get(0, i), [[1, i - 1], [0, i]], `${t.get(1, i - 1)} + ${t.get(0, i)}`)
+    }
+    return { title: `${n} stairs, steps 1 to ${k}`, setup: `Top row: ways to reach each stair. Bottom row: the running total of ways up to and including that stair. ways(i) adds the last ${k} stairs’ ways: one subtraction of running totals instead of ${k} additions.`, table: t, answer: [0, n], args: [n, k] }
+  },
+  'difference-dp': ({ limits = [1, 2, 3], total = 4 } = {}) => {
+    const t = table(['start', ...limits.map((l, i) => `child ${i} (≤ ${l})`)], range(0, total).map(String), (r, c) => `W${r}(${c})`)
+    for (let c = 0; c <= total; c++) t.seed(0, c, c === 0 ? 1 : 0, c === 0 ? 'no children: one way to give 0' : 'no children can’t give candies: 0')
+    limits.forEach((lim, i) => {
+      const r = i + 1
+      for (let c = 0; c <= total; c++) {
+        const from = range(Math.max(0, c - lim), c)
+        t.set(r, c, sum(from.map(x => t.get(r - 1, x))), from.map(x => [r - 1, x]), `child ${i} takes 0 to ${Math.min(lim, c)}: ${from.map(x => t.get(r - 1, x)).join(' + ')}`)
+      }
+    })
+    return { title: `Limits ${list(limits)}, total ${total}`, setup: 'Each row adds one child, who takes 0 to their limit. A cell adds a range of the row above. A program builds each row with a difference array (+ at the start of each range, − just after it) and one prefix sum, instead of adding every range term.', table: t, answer: [limits.length, total], args: [limits, total] }
+  },
+  'monotone-queue': ({ values: a = [1, -1, -2, 4, -7, 3], k = 2 } = {}) => {
+    const t = table(['best'], a.map((v, i) => `${i} (${v})`), (r, c) => `B(${c})`)
+    t.seed(0, 0, a[0], 'the start square')
+    for (let i = 1; i < a.length; i++) {
+      const win = range(Math.max(0, i - k), i - 1), j = win.reduce((b, x) => (t.get(0, x) > t.get(0, b) ? x : b), win[0])
+      t.set(0, i, a[i] + t.get(0, j), win.map(x => [0, x]), `${a[i]} + max(${win.map(x => `B(${x})`).join(', ')}) = ${a[i]} + ${t.get(0, j)}`)
+    }
+    return { title: `Values ${list(a)}, jumps up to ${k}`, setup: `B(i): the best path sum landing on square i: its value plus the best of the last ${k} squares. A monotone queue keeps the window’s best at its front, so each maximum costs O(1).`, table: t, answer: [0, a.length - 1], args: [a, k] }
+  },
+  'fenwick-dp': ({ values: a = [1, 3, 2, 4] } = {}) => {
+    const t = table(['ending here', 'total'], a.map((v, i) => `${i} (${v})`), (r, c) => `${r ? 'T' : 'E'}(${c})`)
+    for (let i = 0; i < a.length; i++) {
+      const from = range(0, i - 1).filter(j => a[j] < a[i])
+      t.set(0, i, 1 + sum(from.map(j => t.get(0, j))), from.map(j => [0, j]), from.length ? `1 + ${from.map(j => `E(${j})`).join(' + ')} = 1 + ${from.map(j => t.get(0, j)).join(' + ')}` : 'nothing smaller before it: just itself, 1')
+      t.set(1, i, (i ? t.get(1, i - 1) : 0) + t.get(0, i), i ? [[1, i - 1], [0, i]] : [[0, i]], i ? `${t.get(1, i - 1)} + ${t.get(0, i)}` : `${t.get(0, i)}`)
+    }
+    return { title: `Values ${list(a)}`, setup: 'E(i): increasing subsequences ending at position i: itself, plus every one ending at a smaller earlier value, extended. A Fenwick tree indexed by value rank gives that sum in O(log n). The bottom row is the running total.', table: t, answer: [1, a.length - 1], args: [a] }
+  },
+  'segment-tree-dp': ({ values: a = [1, 5, 2, 6, 3], d = 1 } = {}) => {
+    const t = table(['longest'], a.map((v, i) => `${i} (${v})`), (r, c) => `L(${c})`)
+    for (let i = 0; i < a.length; i++) {
+      const from = range(0, i - 1).filter(j => Math.abs(a[j] - a[i]) <= d)
+      t.set(0, i, 1 + maxOf([0, ...from.map(j => t.get(0, j))]), from.map(j => [0, j]), from.length ? `1 + max(${from.map(j => `L(${j})`).join(', ')})` : `no earlier value within ${d}: 1`)
+    }
+    return { title: `Values ${list(a)}, d = ${d}`, setup: `L(i): the longest valid subsequence ending at position i: 1 + the best ending at an earlier value within ${d} of a[i]. A segment tree over the values answers that range maximum in O(log n). The answer is the largest cell.`, table: t, answer: bestCell(t), args: [a, d] }
+  },
+  'coordinate-compression': ({ values: a = [5, 1, 6, 2, 7] } = {}) => {
+    const ranks = [...new Set(a)].sort((x, y) => x - y)
+    const t = table(['rank', 'best sum'], a.map((v, i) => `${i} (${v})`), (r, c) => `${r ? 'S' : 'rank'}(${c})`)
+    a.forEach((v, i) => t.seed(0, i, ranks.indexOf(v) + 1, `${v} is number ${ranks.indexOf(v) + 1} among the distinct values`))
+    for (let i = 0; i < a.length; i++) {
+      const from = range(0, i - 1).filter(j => t.get(0, j) < t.get(0, i))
+      t.set(1, i, a[i] + maxOf([0, ...from.map(j => t.get(1, j))]), [[0, i], ...from.flatMap(j => [[0, j], [1, j]])], from.length ? `${a[i]} + max(${from.map(j => `S(${j})`).join(', ')})` : `no smaller rank before it: ${a[i]}`)
+    }
+    return { title: `Values ${list(a)}`, setup: 'Top row: each value’s rank among the distinct values, the index a program stores it under. Bottom row: the best increasing sum ending here: the real value, plus the best sum at a smaller rank.', table: t, answer: bestInRow(t, 1), args: [a] }
+  },
+  'bitset-dp': ({ values: v = [2, 3, 5] } = {}) => {
+    const S = sum(v)
+    const t = table(['start', ...v.map(x => `after ${x}`), 'count'], range(0, S).map(String), (r, c) => (r > v.length ? 'count' : `R${r}(${c})`))
+    for (let c = 0; c <= S; c++) t.seed(0, c, c === 0, c === 0 ? 'the empty choice makes 0' : 'nothing chosen yet')
+    v.forEach((x, i) => {
+      const r = i + 1
+      for (let c = 0; c <= S; c++) {
+        const reads = [[r - 1, c], ...(c >= x ? [[r - 1, c - x]] : [])]
+        t.set(r, c, t.get(r - 1, c) || (c >= x && t.get(r - 1, c - x)), reads, c >= x ? `R${r - 1}(${c}) or R${r - 1}(${c - x})` : `too small for ${x}: R${r - 1}(${c})`)
+      }
+    })
+    const last = v.length
+    t.set(last + 1, 0, range(0, S).filter(c => t.get(last, c)).length, range(0, S).map(c => [last, c]), `the T cells in the last row: ${range(0, S).filter(c => t.get(last, c)).join(', ')}`)
+    return { title: `Values ${list(v)}`, setup: 'Each row is one bitset after adding one value: bit t is T when total t is reachable. B | (B << v) is the whole row at once: the old bits, and every bit moved up by v. The last row counts the reachable totals.', table: t, answer: [last + 1, 0], args: [v] }
+  },
+  'bounded-binary': ({ weights: w = [2, 3], values: val = [3, 5], counts = [3, 1], cap = 8 } = {}) => {
+    const bundles = []
+    w.forEach((x, i) => { let m = Math.min(counts[i], Math.floor(cap / x)); for (let k = 1; m > 0; k *= 2) { const take = Math.min(k, m); bundles.push([i, take]); m -= take } })
+    const t = table(['start', ...bundles.map(([i, k]) => `${k} × item ${i}`)], range(0, cap).map(String), (r, c) => `B${r}(${c})`)
+    for (let c = 0; c <= cap; c++) t.seed(0, c, 0, 'no bundles: 0')
+    bundles.forEach(([i, k], b) => {
+      const r = b + 1, W = k * w[i], V = k * val[i]
+      for (let c = 0; c <= cap; c++) {
+        if (c < W) { t.set(r, c, t.get(r - 1, c), [[r - 1, c]], `bundle doesn’t fit: B${r - 1}(${c})`); continue }
+        t.set(r, c, Math.max(t.get(r - 1, c), t.get(r - 1, c - W) + V), [[r - 1, c], [r - 1, c - W]], `max(B${r - 1}(${c}), ${V} + B${r - 1}(${c - W})) = max(${t.get(r - 1, c)}, ${t.get(r - 1, c - W) + V})`)
+      }
+    })
+    return { title: `Counts ${list(counts)}, capacity ${cap}`, setup: 'Each count is split into bundles of 1, 2, 4, … copies plus a remainder; each row is one bundle, treated as a 0/1 item. Any number of copies up to the count is some set of bundles.', table: t, answer: [bundles.length, cap], args: [w, val, counts, cap] }
+  },
+  'bounded-queue': ({ weights: w = [1, 2, 3], counts = [2, 1, 1], target = 5 } = {}) => {
+    const t = table(['start', ...w.map((x, i) => `item ${i} (w ${x}, ≤ ${counts[i]})`)], range(0, target).map(String), (r, c) => `W${r}(${c})`)
+    for (let c = 0; c <= target; c++) t.seed(0, c, c === 0 ? 1 : 0, c === 0 ? 'one way to reach 0' : 'nothing reaches it yet')
+    w.forEach((x, i) => {
+      const r = i + 1
+      for (let c = 0; c <= target; c++) {
+        const from = range(0, counts[i]).map(q => c - q * x).filter(y => y >= 0)
+        t.set(r, c, sum(from.map(y => t.get(r - 1, y))), from.map(y => [r - 1, y]), `0 to ${counts[i]} copies of weight ${x}: ${from.map(y => t.get(r - 1, y)).join(' + ')}`)
+      }
+    })
+    return { title: `Target ${target}`, setup: 'Each row adds one item, taken 0 to its count times. A cell adds the row above at c, c − w, c − 2w, …: a window along its residue mod w. A program slides that window instead of adding every term.', table: t, answer: [w.length, target], args: [w, counts, target] }
+  },
 }
 
 // The squared error of the least-squares straight line through points [x, y] (0 for two points or fewer).
@@ -1082,6 +1795,55 @@ const text = (key, label, chars, len) => ({ key, label, kind: 'text', chars, len
 const values = (min = 0, max = 99, len = [1, 10]) => [ints('values', 'Values', min, max, len)]
 const sameLength = i => (i.weights.length === i.values.length ? null : 'Give one value for each weight.')
 const distinct = key => i => (new Set(i[key]).size === i[key].length ? null : `Use each ${key === 'coins' ? 'coin' : 'step size'} once.`)
+// A graph typed as a vertex count and an edge list (the DAG lessons). graphRule checks the edges against
+// the count (n, or one per duration or value), and, for a DAG lesson, that they make no cycle.
+const graphFields = (weighted, min, max) => [int('n', 'Vertices', 1, 7), { key: 'edges', label: weighted ? 'Edges (from to weight, …)' : 'Edges (from to, …)', kind: 'edges', weighted, min, max, len: [0, 12] }]
+const graphRule = ({ dag = false, ends = [] }) => i => {
+  const n = i.n ?? (i.durations ?? i.values).length, edges = i.edges ?? i.deps
+  if (edges.some(e => e[0] >= n || e[1] >= n)) return `Vertices are numbered 0 to ${n - 1}.`
+  if (edges.some(e => e[0] === e[1])) return 'An edge must join two different vertices.'
+  if (dag && topoOrder(n, edges).length < n) return 'The edges must not make a cycle.'
+  if (ends.some(k => i[k] >= n)) return `Start${ends.length > 1 ? ' and target' : ''} must be vertices 0 to ${n - 1}.`
+  return null
+}
+// Some walk can get cheaper forever: n rounds of relaxing every edge from every start still improve.
+function negativeCycle(n, edges) {
+  const d = Array(n).fill(0)
+  for (let round = 0; round < n; round++) for (const [a, b, w] of edges) if (d[a] + w < d[b]) { if (round === n - 1) return true; d[b] = d[a] + w }
+  return false
+}
+// Random graphs for "Surprise me" and the tests. A DAG keeps edges forward in a shuffled order, with the
+// start and target at its ends; randomGraph allows cycles. weights: [lo, hi], or null for no weights.
+function randomDag(r, weights = null) {
+  const n = r(3, 6), perm = range(0, n - 1)
+  for (let i = n - 1; i > 0; i--) { const j = r(0, i); [perm[i], perm[j]] = [perm[j], perm[i]] }
+  const edges = []
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (edges.length < 12 && r(0, 9) < 4) edges.push(weights ? [perm[a], perm[b], r(...weights)] : [perm[a], perm[b]])
+  return { n, edges, s: perm[0], t: perm[n - 1] }
+}
+function randomGraph(r, weights, most = 6) {
+  const n = r(2, most), edges = []
+  for (let k = r(1, 8); k > 0; k--) { const a = r(0, n - 1), b = r(0, n - 1); if (a !== b) edges.push(weights ? [a, b, r(...weights)] : [a, b]) }
+  return { n, edges }
+}
+// A tree typed as a vertex count (or one entry per vertex in a list field) and n − 1 edges.
+const treeEdges = (weighted = false) => ({ key: 'edges', label: weighted ? 'Edges (u v length, …)' : 'Edges (u v, …)', kind: 'edges', weighted, min: 1, max: 20, len: [0, 6] })
+const treeFields = () => [int('n', 'Vertices', 1, 7), treeEdges()]
+const treeRule = (perVertex = null) => i => {
+  const n = perVertex ? i[perVertex].length : i.n, edges = i.edges
+  if (edges.length !== n - 1) return `A tree on ${n} vertices has ${n - 1} edge${n === 2 ? '' : 's'}.`
+  if (edges.some(e => e[0] >= n || e[1] >= n)) return `Vertices are numbered 0 to ${n - 1}.`
+  if (edges.some(e => e[0] === e[1])) return 'An edge must join two different vertices.'
+  if (rootTree(n, edges).pre.length < n) return 'The edges must connect every vertex (no cycle, nothing left out).'
+  return null
+}
+// A random tree: each vertex hangs from an earlier one, with the labels (other than the root 0) shuffled.
+function randomTreeInput(r, weights = null, most = 7) {
+  const n = r(2, most), label = [0, ...range(1, n - 1)]
+  for (let i = n - 1; i > 1; i--) { const j = r(1, i); [label[i], label[j]] = [label[j], label[i]] }
+  const edges = range(1, n - 1).map(v => { const e = [label[r(0, v - 1)], label[v]]; return weights ? [...e, r(1, weights)] : e })
+  return { n, edges }
+}
 export const INPUTS = {
   fibonacci: { fields: [int('n', 'n', 2, 15)] },
   stairs: { fields: [int('n', 'Height', 1, 15), ints('steps', 'Step sizes', 1, 6, [1, 4])], rule: distinct('steps') },
@@ -1214,6 +1976,148 @@ export const INPUTS = {
     random: r => ({ groups: Array.from({ length: r(1, 3) }, () => Array.from({ length: r(1, 3) }, () => [r(1, 4), r(1, 9)])), capacity: r(2, 8) }),
   },
   'remove-boxes': { fields: [ints('boxes', 'Box colours', 1, 3, [1, 5])] },
+  'dag-paths': { fields: [...graphFields(false), int('s', 'Start', 0, 6), int('t', 'Target', 0, 6)], rule: graphRule({ dag: true, ends: ['s', 't'] }), random: r => randomDag(r) },
+  'dag-longest': { fields: [...graphFields(true, -9, 9), int('s', 'Start', 0, 6), int('t', 'Target', 0, 6)], rule: graphRule({ dag: true, ends: ['s', 't'] }), random: r => randomDag(r, [-6, 9]) },
+  'increasing-grid': { fields: [{ key: 'grid', label: 'Values', kind: 'matrix', min: 0, max: 20, rows: [1, 4], cols: [1, 4] }] },
+  'critical-path': {
+    fields: [ints('durations', 'Durations', 1, 9, [1, 7]), { key: 'deps', label: 'Prerequisites (before after, …)', kind: 'edges', weighted: false, len: [0, 10] }],
+    rule: graphRule({ dag: true }),
+    random: r => { const g = randomDag(r); return { durations: range(0, g.n - 1).map(() => r(1, 9)), deps: g.edges } },
+  },
+  'bellman-ford-dp': {
+    fields: [...graphFields(true, -5, 9), int('s', 'Start', 0, 6), int('k', 'Edge budget', 0, 5)],
+    rule: graphRule({ ends: ['s'] }),
+    random: r => { const g = randomGraph(r, [-2, 9]); return { ...g, s: r(0, g.n - 1), k: r(1, 4) } },
+  },
+  'floyd-warshall': {
+    fields: [int('n', 'Vertices', 1, 5), { key: 'edges', label: 'Edges (from to weight, …)', kind: 'edges', weighted: true, min: -9, max: 20, len: [0, 12] }],
+    rule: i => graphRule({})(i) ?? (negativeCycle(i.n, i.edges) ? 'These edges make a negative cycle, so some distances have no minimum.' : null),
+    random: r => randomGraph(r, [0, 9], 4),
+  },
+  'scc-boundaries': {
+    fields: [ints('values', 'Values', 0, 9, [1, 7]), { key: 'edges', label: 'Edges (from to, …)', kind: 'edges', weighted: false, len: [0, 12] }, int('s', 'Start', 0, 6)],
+    rule: graphRule({ ends: ['s'] }),
+    random: r => { const g = randomGraph(r, null); return { values: range(0, g.n - 1).map(() => r(0, 9)), edges: g.edges, s: r(0, g.n - 1) } },
+  },
+  'dag-product': { fields: [...graphFields(true, 0, 40), int('s', 'Start', 0, 6), int('t', 'Target', 0, 6)], rule: graphRule({ dag: true, ends: ['s', 't'] }), random: r => randomDag(r, [0, 20]) },
+  'tree-basics': { fields: treeFields(), rule: treeRule(), random: r => randomTreeInput(r) },
+  'tree-independent': { fields: [ints('weights', 'Weights', -9, 20, [1, 7]), treeEdges()], rule: treeRule('weights'), random: r => { const g = randomTreeInput(r); return { weights: range(0, g.n - 1).map(() => r(0, 9)), edges: g.edges } } },
+  'tree-cover': { fields: treeFields(), rule: treeRule(), random: r => randomTreeInput(r) },
+  'tree-matching': { fields: treeFields(), rule: treeRule(), random: r => randomTreeInput(r) },
+  'tree-diameter': { fields: [int('n', 'Vertices', 1, 7), treeEdges(true)], rule: treeRule(), random: r => randomTreeInput(r, 9) },
+  'tree-reroot': { fields: treeFields(), rule: treeRule(), random: r => randomTreeInput(r) },
+  'reroot-prefix': { fields: treeFields(), rule: treeRule(), random: r => randomTreeInput(r) },
+  'tree-distances': { fields: treeFields(), rule: treeRule(), random: r => randomTreeInput(r) },
+  'tree-knapsack': {
+    fields: [ints('values', 'Values', 0, 9, [1, 6]), ints('costs', 'Costs', 0, 4, [1, 6]), treeEdges(), int('budget', 'Budget', 0, 5)],
+    rule: i => (i.costs.length !== i.values.length ? 'Give one cost for each value.' : treeRule('values')(i)),
+    random: r => { const g = randomTreeInput(r, null, 6); return { values: range(0, g.n - 1).map(() => r(0, 9)), costs: range(0, g.n - 1).map(() => r(0, 3)), edges: g.edges, budget: r(2, 5) } },
+  },
+  'tree-coloring': {
+    fields: [treeEdges(), { key: 'colours', label: 'Allowed colours (a row per vertex: 1 for colour 1, 2, 3)', kind: 'grid', rows: [1, 6], cols: [3, 3] }],
+    rule: treeRule('colours'),
+    random: r => { const g = randomTreeInput(r, null, 6); return { edges: g.edges, colours: range(0, g.n - 1).map(() => [0, 1, 2].map(() => (r(0, 9) < 7 ? 1 : 0))) } },
+  },
+  'tree-path-count': { fields: [...treeFields(), int('k', 'Distance k', 1, 3)], rule: treeRule(), random: r => ({ ...randomTreeInput(r), k: r(1, 3) }) },
+  'tree-connected': { fields: treeFields(), rule: treeRule(), random: r => randomTreeInput(r) },
+  'tree-small-large': { fields: [ints('colors', 'Colours', 1, 5, [1, 7]), treeEdges()], rule: treeRule('colors'), random: r => { const g = randomTreeInput(r); return { colors: range(0, g.n - 1).map(() => r(1, 4)), edges: g.edges } } },
+  'bitmask-basics': { fields: [ints('weights', 'Weights', 0, 9, [0, 4]), int('limit', 'Limit', 0, 30)] },
+  'subset-enumeration': {
+    fields: [ints('values', 'Values (1, 2, 4 or 8: one per mask)', -9, 9, [1, 8])],
+    rule: i => ([1, 2, 4, 8].includes(i.values.length) ? null : 'Give 1, 2, 4 or 8 values: one for each mask.'),
+    random: r => ({ values: range(1, 2 ** r(1, 3)).map(() => r(-5, 9)) }),
+  },
+  'assignment': {
+    fields: [{ key: 'cost', label: 'Costs (a row per worker, a column per job)', kind: 'matrix', min: 0, max: 20, rows: [1, 4], cols: [1, 4] }],
+    rule: i => (i.cost.length === i.cost[0].length ? null : 'Give a square table: as many jobs as workers.'),
+    random: r => { const n = r(2, 4); return { cost: range(1, n).map(() => range(1, n).map(() => r(1, 9))) } },
+  },
+  'held-karp': {
+    fields: [{ key: 'dist', label: 'Distances (a row per city)', kind: 'matrix', min: 0, max: 50, rows: [1, 4], cols: [1, 4] }],
+    rule: i => (i.dist.length === i.dist[0].length ? null : 'Give a square table: one row and one column per city.'),
+    random: r => { const n = r(2, 4), d = range(1, n).map(() => Array(n).fill(0)); for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) d[a][b] = d[b][a] = r(1, 20); return { dist: d } },
+  },
+  'hamiltonian': {
+    fields: [int('n', 'Vertices', 1, 4), { key: 'edges', label: 'Edges (from to, …)', kind: 'edges', weighted: false, len: [0, 12] }],
+    rule: graphRule({}),
+    random: r => { const n = r(2, 4), e = []; for (let a = 0; a < n; a++) for (let b = 0; b < n; b++) if (a !== b && r(0, 9) < 5) e.push([a, b]); return { n, edges: e } },
+  },
+  'subset-partition': {
+    fields: [ints('values', 'Items', 1, 9, [0, 4]), int('cap', 'Bin size', 1, 20)],
+    rule: i => (i.values.every(x => x <= i.cap) ? null : 'Every item must fit in a bin on its own.'),
+    random: r => { const cap = r(4, 10); return { values: range(1, r(2, 4)).map(() => r(1, cap)), cap } },
+  },
+  'subset-cover': {
+    fields: [int('n', 'Items', 1, 3), { key: 'options', label: 'Options (a 1 for each item it covers, then its cost; …)', kind: 'matrix', min: 0, max: 20, rows: [1, 5], cols: [2, 4] }],
+    rule: i => (i.options.every(row => row.length === i.n + 1 && row.slice(0, i.n).every(x => x === 0 || x === 1) && row[i.n] >= 1) ? null : `Each option is ${i.n} flags (0 or 1) and then a cost of at least 1.`),
+    random: r => { const n = r(2, 3); return { n, options: range(1, r(2, 4)).map(() => [...range(1, n).map(() => r(0, 1)), r(1, 9)]) } },
+  },
+  'steiner-tree': {
+    fields: [int('n', 'Vertices', 2, 5), { key: 'edges', label: 'Edges (u v weight, …)', kind: 'edges', weighted: true, min: 1, max: 9, len: [1, 10] }, ints('terminals', 'Terminals', 0, 4, [1, 3])],
+    rule: i => graphRule({})(i) ?? (new Set(i.terminals).size !== i.terminals.length ? 'List each terminal once.' : i.terminals.some(x => x >= i.n) ? `Terminals are vertices 0 to ${i.n - 1}.` : components(i.n, [...i.edges, ...i.edges.map(([a, b, w]) => [b, a, w])]).comps.length > 1 ? 'The graph must be connected.' : null),
+    random: r => { const g = randomTreeInput(r, 9, 5); for (let k = r(0, 2); k > 0; k--) { const a = r(0, g.n - 1), b = r(0, g.n - 1); if (a !== b) g.edges.push([a, b, r(1, 9)]) } const ts = range(0, g.n - 1).filter(() => r(0, 1)).slice(0, 3); return { ...g, terminals: ts.length ? ts : [0] } },
+  },
+  'subset-topological': {
+    fields: [int('n', 'Vertices', 1, 4), { key: 'edges', label: 'Rules (before after, …)', kind: 'edges', weighted: false, len: [0, 8] }],
+    rule: graphRule({ dag: true }),
+    random: r => { const g = randomDag(r); const n = Math.min(g.n, 4); return { n, edges: g.edges.filter(e => e[0] < n && e[1] < n) } },
+  },
+  'subset-matching': {
+    fields: [int('n', 'Vertices (even)', 2, 4), { key: 'edges', label: 'Edges (u v, …)', kind: 'edges', weighted: false, len: [0, 8] }],
+    rule: i => (i.n % 2 ? 'Use an even number of vertices.' : graphRule({})(i)),
+    random: r => { const n = 2 * r(1, 2), e = []; for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (r(0, 9) < 6) e.push([a, b]); return { n, edges: e } },
+  },
+  'subset-coloring': {
+    fields: [int('n', 'Vertices', 1, 4), { key: 'edges', label: 'Edges (u v, …)', kind: 'edges', weighted: false, len: [0, 8] }],
+    rule: graphRule({}),
+    random: r => { const n = r(2, 4), e = []; for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) if (r(0, 9) < 5) e.push([a, b]); return { n, edges: e } },
+  },
+  'mask-language': {
+    fields: [{ key: 'bits', label: 'Sets (a row of 0s and 1s per set, bit 0 first)', kind: 'grid', rows: [1, 4], cols: [1, 8] }],
+    random: r => ({ bits: range(1, r(2, 4)).map(() => range(1, 8).map(() => (r(0, 9) < 4 ? 1 : 0))) }),
+  },
+  'digit-tight': { fields: [int('n', 'n', 0, 9999)] },
+  'digit-leading': { fields: [int('n', 'n', 1, 9999)] },
+  'digit-range': { fields: [int('lo', 'From', 0, 9999), int('hi', 'To', 0, 9999)], rule: i => (i.lo <= i.hi ? null : '“From” must not be larger than “To”.'), random: r => { const lo = r(0, 300); return { lo, hi: lo + r(0, 2000) } } },
+  'digit-adjacency': { fields: [int('n', 'n', 1, 9999)] },
+  'digit-aggregate': { fields: [int('n', 'n', 0, 9999)] },
+  'kmp-dp': {
+    fields: [text('alphabet', 'Alphabet', 'a-d', [1, 3]), text('pattern', 'Pattern', 'a-d', [1, 4]), int('length', 'Length', 0, 7)],
+    rule: i => (new Set(i.alphabet).size !== i.alphabet.length ? 'List each letter of the alphabet once.' : [...i.pattern].some(c => !i.alphabet.includes(c)) ? 'The pattern must use letters from the alphabet.' : null),
+    random: r => { const alphabet = 'abc'.slice(0, r(2, 3)); return { alphabet, pattern: range(1, r(2, 3)).map(() => alphabet[r(0, alphabet.length - 1)]).join(''), length: r(3, 6) } },
+  },
+  'aho-dp': {
+    fields: [text('alphabet', 'Alphabet', 'a-d', [1, 3]), { key: 'patterns', label: 'Patterns', kind: 'words', len: [1, 3] }, int('length', 'Length', 0, 6)],
+    rule: i => (new Set(i.alphabet).size !== i.alphabet.length ? 'List each letter of the alphabet once.' : i.patterns.some(p => [...p].some(c => !i.alphabet.includes(c))) ? 'Patterns must use letters from the alphabet.' : null),
+    random: r => { const alphabet = 'ab'; return { alphabet, patterns: [...new Set(range(1, r(1, 2)).map(() => range(1, r(2, 3)).map(() => alphabet[r(0, 1)]).join('')))], length: r(3, 6) } },
+  },
+  'automaton-product': {
+    fields: [text('pattern', 'Pattern (digits)', '0-9', [1, 2]), int('m', 'Divisor m', 1, 4), int('length', 'Length', 0, 4)],
+    random: r => ({ pattern: range(1, r(1, 2)).map(() => String(r(0, 9))).join(''), m: r(1, 4), length: r(1, 4) }),
+  },
+  'rolling-arrays': { fields: [{ key: 'grid', label: 'Grid (1 = blocked)', kind: 'grid', rows: [1, 5], cols: [1, 6] }] },
+  'in-place': {
+    fields: [{ key: 'items', label: 'Items (weight value many; …), many = 1 for unlimited', kind: 'matrix', min: 0, max: 9, rows: [1, 3], cols: [3, 3] }, int('cap', 'Capacity', 0, 10)],
+    rule: i => (i.items.every(([w, , m]) => w >= 1 && (m === 0 || m === 1)) ? null : 'Each item needs a weight of at least 1 and many = 0 or 1.'),
+    random: r => ({ items: range(1, r(1, 3)).map(() => [r(1, 4), r(1, 9), r(0, 1)]), cap: r(4, 10) }),
+  },
+  'prefix-sum-dp': { fields: [int('n', 'Stairs', 1, 10), int('k', 'Largest step', 1, 5)] },
+  'difference-dp': { fields: [ints('limits', 'Limits', 0, 5, [1, 4]), int('total', 'Total', 0, 8)] },
+  'monotone-queue': { fields: [ints('values', 'Values', -9, 9, [1, 8]), int('k', 'Longest jump', 1, 4)] },
+  'fenwick-dp': { fields: values(1, 9, [1, 7]) },
+  'segment-tree-dp': { fields: [ints('values', 'Values', 0, 20, [1, 7]), int('d', 'd', 0, 5)] },
+  'coordinate-compression': { fields: [ints('values', 'Values', 1, 99, [1, 7])] },
+  'bitset-dp': { fields: [ints('values', 'Values', 0, 6, [1, 4])] },
+  'bounded-binary': {
+    fields: [ints('weights', 'Weights', 1, 5, [1, 2]), ints('values', 'Values', 0, 9, [1, 2]), ints('counts', 'Counts', 0, 9, [1, 2]), int('cap', 'Capacity', 0, 10)],
+    rule: i => (i.values.length === i.weights.length && i.counts.length === i.weights.length ? null : 'Give a value and a count for each weight.'),
+    random: r => { const n = r(1, 2); return { weights: range(1, n).map(() => r(1, 4)), values: range(1, n).map(() => r(1, 9)), counts: range(1, n).map(() => r(1, 7)), cap: r(4, 10) } },
+  },
+  'bounded-queue': {
+    fields: [ints('weights', 'Weights', 1, 4, [1, 3]), ints('counts', 'Counts', 0, 4, [1, 3]), int('target', 'Target', 0, 10)],
+    rule: i => (i.counts.length === i.weights.length ? null : 'Give a count for each weight.'),
+    random: r => { const n = r(1, 3); return { weights: range(1, n).map(() => r(1, 3)), counts: range(1, n).map(() => r(0, 3)), target: r(2, 8) } },
+  },
 }
 
 // A trace's default input, read from its own parameter defaults by running it once with nothing.

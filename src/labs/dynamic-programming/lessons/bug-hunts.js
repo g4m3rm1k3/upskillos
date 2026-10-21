@@ -6,9 +6,15 @@
 //
 // Text fields may use {call} (the symptom call, e.g. solve(8)), {got} (what the buggy code returns
 // on it) and {want} (the right answer); Hunt.jsx fills them in.
+import { DAG_HUNTS } from './bug-hunts-dag.js'
+import { TREE_HUNTS } from './bug-hunts-tree.js'
+import { SUBSET_HUNTS } from './bug-hunts-subset.js'
+import { DIGIT_HUNTS } from './bug-hunts-digit.js'
+import { SPACE_HUNTS } from './bug-hunts-space.js'
+
 const pair = (Python, JavaScript) => ({ Python, JavaScript })
 
-export const HUNTS = {
+const CORE_HUNTS = {
   fibonacci: {
     know: 'After k passes of the loop, a holds F(k) and b holds F(k + 1). One pass turns the pair (F(k), F(k + 1)) into (F(k + 1), F(k + 2)): the new a is the old b, and the new b is old a + old b. Both new values are made from the old pair.',
     swap: pair(['        a, b = b, a + b', '        a = b\n        b = a + b'], ['    [a, b] = [b, a + b]', '    a = b\n    b = a + b']),
@@ -761,3 +767,6 @@ export const HUNTS = {
     ],
   },
 }
+
+// The Advanced lessons' hunts live beside their family (bug-hunts-dag.js, …).
+export const HUNTS = { ...CORE_HUNTS, ...DAG_HUNTS, ...TREE_HUNTS, ...SUBSET_HUNTS, ...DIGIT_HUNTS, ...SPACE_HUNTS }
