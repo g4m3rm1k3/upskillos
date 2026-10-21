@@ -4,12 +4,17 @@ import { displayOrder } from './lessons/designs.js'
 import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
 import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
 import { ADVANCED_ORACLES } from './lessons/advanced-oracles.js'
+import { EXPERT_ORACLES } from './lessons/expert-oracles.js'
 import { LESSONS } from './lessons/index.js'
 
-const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES }
+const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES }
 
 // Answers that are not a lesson's challenge answer, computed without DP.
 const EXTRA = {
+  // The length of the LCS that the hirschberg oracle returns.
+  'hirschberg-length': ([a, b]) => EXPERT_ORACLES['hirschberg']([a, b]).length,
+  // The cht-numeric answer, a decimal string, as a number (exact for these small inputs).
+  'cht-numeric-number': ([h, C]) => Number(EXPERT_ORACLES['cht-numeric']([h, C])),
   // The mask-language answer as a number (it fits for small positions).
   'mask-number': ([sets]) => Number(ADVANCED_ORACLES['mask-language']([sets])),
   // The shortest distance from the first vertex to the last.
@@ -106,6 +111,29 @@ const CLAIMS = [
   ['binomial', [30, 15], 155117520],
   ['stock-cooldown', [[1, 5, 3, 6], 0, 2], 3],
   ['stock-states', [[1, 5, 3, 6]], 7],
+  ['in-place', [[[3, 5, 1], [2, 3, 1]], 6], 10],
+  ['hirschberg-length', ['ab', 'xxab'], 2],
+  ['prefix-sum-dp', [6, 3], 24],
+  ['prefix-sum-dp', [5, 4], 15],
+  ['prefix-sum-dp', [4, 4], 8],
+  ['difference-dp', [[1, 2], 1], 2],
+  ['difference-dp', [[1, 2], 2], 2],
+  ['difference-dp', [[1, 2], 3], 1],
+  ['difference-dp', [[1, 2], 4], 0],
+  ['difference-dp', [[1, 1], 2], 1],
+  ['difference-dp', [[1, 1], 3], 0],
+  ['monotone-queue', [[3, -2, -2, -2, 5], 4], 8],
+  ['bounded-binary', [[3], [4], [3], 10], 12],
+  ['bounded-queue', [[1, 3], [4, 1], 4], 2],
+  ['cht', [[4], 5], 21],
+  ['monotone-cht', [[4], -1, 6, -5], 3],
+  ['lagrangian', [[4, -1, 2, -3, 5], 1], 7],
+  ['online-convolution', [[0, 1, 1], 4], 5],
+  ['linear-recurrence', [[2, 1], [1, 1], 5], 41],
+  ['bostan-mori', [[1, 1], [1, -1, -2], 4], 16],
+  ['transfer-matrix', [3, 2], 3],
+  ['transfer-matrix', [3, 3], 0],
+  ['semirings', [3, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [1, 1, 1]], 2], 2],
 ]
 
 const entries = Object.entries(CHECKS).flatMap(([id, checks]) => checks.map((c, k) => [id, c, k]))

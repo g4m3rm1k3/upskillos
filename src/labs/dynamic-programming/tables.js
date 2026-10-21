@@ -1770,6 +1770,219 @@ export const TRACES = {
     })
     return { title: `Target ${target}`, setup: 'Each row adds one item, taken 0 to its count times. A cell adds the row above at c, c − w, c − 2w, …: a window along its residue mod w. A program slides that window instead of adding every term.', table: t, answer: [w.length, target], args: [w, counts, target] }
   },
+  // ── Optimizing split-point searches (Expert) ──
+  'monge': ({ A = [[0, 1, 4], [1, 0, 1], [4, 1, 0]] } = {}) => {
+    const R = A.length, C = A[0].length
+    const t = table([...A.map((_, i) => `row ${i}`), ...range(0, R - 2).map(i => `square ${i}–${i + 1}`), 'Monge?'], range(0, C - 1).map(String), (r, c) => (r < R ? `A(${r},${c})` : r < 2 * R - 1 ? `s(${r - R},${c})` : 'Monge?'))
+    A.forEach((row, i) => row.forEach((v, j) => t.seed(i, j, v, 'an entry of the matrix')))
+    const squares = []
+    for (let i = 0; i + 1 < R; i++) for (let j = 0; j + 1 < C; j++) {
+      const s = A[i][j + 1] + A[i + 1][j] - A[i][j] - A[i + 1][j + 1]
+      t.set(R + i, j, s, [[i, j + 1], [i + 1, j], [i, j], [i + 1, j + 1]], `crossed − diagonal: (${A[i][j + 1]} + ${A[i + 1][j]}) − (${A[i][j]} + ${A[i + 1][j + 1]})`)
+      squares.push([R + i, j])
+    }
+    const bad = squares.filter(([r, c]) => t.get(r, c) < 0)
+    t.set(2 * R - 1, 0, bad.length === 0, squares, squares.length ? (bad.length ? `${bad.length} square${bad.length > 1 ? 's' : ''} below 0: ${bad.map(([r, c]) => t.name(r, c)).join(', ')}` : 'every square is 0 or more') : 'no 2 × 2 squares: Monge')
+    return { title: `${R} × ${C} matrix`, setup: 's(i, j) is the slack of the square of neighbouring cells at rows i, i + 1 and columns j, j + 1: the crossed pair minus the diagonal pair. The matrix is Monge when no slack is negative, because every larger rectangle’s slack is a sum of these.', table: t, answer: [2 * R - 1, 0], args: [A] }
+  },
+  'divide-conquer-opt': ({ values: a = [1, 2, 3, 4, 5, 6], g = 3 } = {}) => {
+    const n = a.length, P = [0]
+    a.forEach(x => P.push(P[P.length - 1] + x))
+    const t = table(range(0, g).map(l => `${l} group${l === 1 ? '' : 's'}`), range(0, n).map(String), (r, c) => `D(${r},${c})`)
+    for (let j = 0; j <= n; j++) t.seed(0, j, j === 0 ? 0 : INF, j === 0 ? 'nothing cut into 0 groups: 0' : 'numbers left over with no groups: impossible')
+    for (let l = 1; l <= g; l++) {
+      t.seed(l, 0, INF, 'no numbers can’t make a non-empty group')
+      const fill = (lo, hi, klo, khi) => {
+        if (lo > hi) return
+        const mid = Math.floor((lo + hi) / 2), ks = range(klo, Math.min(mid - 1, khi))
+        let best = INF, at = klo
+        for (const k of ks) { const v = t.get(l - 1, k) + (P[mid] - P[k]) ** 2; if (v < best) { best = v; at = k } }
+        t.set(l, mid, best, ks.map(k => [l - 1, k]), !ks.length ? `no cut in range ${klo} to ${Math.min(mid - 1, khi)}: impossible` : `cuts ${klo} to ${Math.min(mid - 1, khi)} only: min(${ks.map(k => `D(${l - 1},${k}) + ${P[mid] - P[k]}²`).join('; ')}) = min(${ks.map(k => show(t.get(l - 1, k) + (P[mid] - P[k]) ** 2)).join(', ')}); best cut ${at}`)
+        fill(lo, mid - 1, klo, at)
+        fill(mid + 1, hi, at, khi)
+      }
+      fill(1, n, 0, n - 1)
+    }
+    return { title: `Values ${list(a)}, ${g} groups`, setup: 'D(l, j): the cheapest way to cut the first j numbers into l groups, each costing its sum squared. Each row is filled middle first: the middle end tries the cuts in its range, and its best cut bounds the ends to its left from above and those to its right from below.', table: t, answer: [g, n], args: [a, g] }
+  },
+  'knuth': ({ values: a = [3, 1, 4, 1, 5] } = {}) => {
+    const n = a.length
+    const t = intervals(a.map((v, i) => `${i} (${v})`), 'D')
+    const opt = Array.from({ length: n }, (_, i) => Array(n).fill(i))
+    for (let i = 0; i < n; i++) t.seed(i, i, 0, 'D(i,i) = 0: already one pile')
+    byLength(n, 1, (l, r) => {
+      const s = a.slice(l, r + 1).reduce((x, y) => x + y, 0), ks = range(opt[l][r - 1], Math.min(opt[l + 1][r], r - 1)), sides = ks.map(k => t.get(l, k) + t.get(k + 1, r))
+      const best = minOf(sides)
+      opt[l][r] = ks[sides.indexOf(best)]
+      t.set(l, r, s + best, ks.flatMap(k => [[l, k], [k + 1, r]]), `splits ${ks[0]} to ${ks[ks.length - 1]} only: ${s} + min(${ks.map(k => `D(${l},${k}) + D(${k + 1},${r})`).join('; ')}) = ${s} + min(${sides.join(', ')}); best split ${opt[l][r]}`)
+    })
+    return { title: `Piles ${list(a)}`, setup: 'D(l, r): the cheapest way to merge piles l to r into one. Knuth’s bound: the best split of l … r lies between the best splits of l … r − 1 and l + 1 … r, so each cell tries only the splits in that range.', table: t, answer: [0, n - 1], args: [a] }
+  },
+  'cht': ({ words: w = [3, 1, 2, 2], M = 4 } = {}) => {
+    const P = [0]
+    w.forEach(x => P.push(P[P.length - 1] + x))
+    const t = line(w.length, 'D', t => t.seed(0, 0, 0, 'no words printed: 0'), (t, i) => {
+      const js = range(0, i - 1), costs = js.map(j => t.get(0, j) + (P[i] - P[j]) ** 2 + M)
+      return [minOf(costs), js, `min over the last line’s first word: ${js.map(j => `D(${j}) + ${P[i] - P[j]}² + ${M}`).join('; ')} = min(${costs.join(', ')})`]
+    })
+    return { title: `Words ${list(w)}, M = ${M}`, setup: `D(i): the cheapest way to print the first i words. The last line holds words j to i − 1. Each earlier j is the line y = −2P(j)·x + D(j) + P(j)², read at x = P(i); the hull finds the lowest without trying every j, as this table does.`, table: t, answer: [0, w.length], args: [w, M] }
+  },
+  'monotone-cht': ({ values: x = [2, 2, 3, 4], a = -1, b = 10, c = -20 } = {}) => {
+    const P = [0]
+    x.forEach(v => P.push(P[P.length - 1] + v))
+    const worth = S => a * S * S + b * S + c
+    const t = line(x.length, 'D', t => t.seed(0, 0, 0, 'no soldiers: 0'), (t, i) => {
+      const js = range(0, i - 1), vals = js.map(j => t.get(0, j) + worth(P[i] - P[j]))
+      return [maxOf(vals), js, `max over the last group’s start: ${js.map(j => `D(${j}) + f(${P[i] - P[j]})`).join('; ')} = max(${vals.join(', ')})`]
+    })
+    return { title: `Strengths ${list(x)}, f(S) = ${a}S² ${b < 0 ? '−' : '+'} ${Math.abs(b)}S ${c < 0 ? '−' : '+'} ${Math.abs(c)}`, setup: 'D(i): the best worth of the first i soldiers. The last group runs from j to i − 1, with sum S = P(i) − P(j). Each j is a line in x = P(i) whose slope −2a·P(j) rises, and the queries rise too, so a pointer finds the best line.', table: t, answer: [0, x.length], args: [x, a, b, c] }
+  },
+  'li-chao': ({ heights: h = [5, 1, 9, 2, 8], C = 4 } = {}) => {
+    const t = line(h.length - 1, 'D', t => t.seed(0, 0, 0, 'the frog starts here: 0'), (t, i) => {
+      const js = range(0, i - 1), costs = js.map(j => t.get(0, j) + (h[i] - h[j]) ** 2 + C)
+      return [minOf(costs), js, `min over the stone it jumps from: ${js.map(j => `D(${j}) + (${h[i] - h[j]})² + ${C}`).join('; ')} = min(${costs.join(', ')})`]
+    })
+    return { title: `Heights ${list(h)}, C = ${C}`, setup: 'D(i): the cheapest way to reach stone i. Each earlier stone j is the line y = −2h(j)·x + D(j) + h(j)², read at x = h(i). The heights are in no order, so a Li Chao tree holds the lines; this table tries every j.', table: t, answer: [0, h.length - 1], args: [h, C] }
+  },
+  'slope-trick': ({ values: a = [3, 1, 2, 4, 2] } = {}) => {
+    const vs = [...new Set(a)].sort((p, q) => p - q), n = a.length
+    const t = table([...a.map((v, i) => `${i} (${v})`), 'best'], vs.map(String), (r, c) => (r < n ? `D(${r},${vs[c]})` : 'best'))
+    a.forEach((x, i) => vs.forEach((v, c) => {
+      const from = i ? range(0, c) : [], prev = from.map(u => t.get(i - 1, u))
+      t.set(i, c, Math.abs(x - v) + (i ? minOf(prev) : 0), from.map(u => [i - 1, u]), i ? `|${x} − ${v}| + min(${from.map(u => t.get(i - 1, u)).join(', ')})` : `|${x} − ${v}|`)
+    }))
+    const last = range(0, vs.length - 1).map(c => t.get(n - 1, c))
+    t.set(n, 0, minOf(last), range(0, vs.length - 1).map(c => [n - 1, c]), `min(${last.join(', ')})`)
+    return { title: `Values ${list(a)}`, setup: 'D(i, v): the cheapest way to fix the first i + 1 values so that they never decrease and the last is v. It is |a(i) − v| plus the best of the row above at any value up to v. Each row is a convex function of v; slope trick keeps only its breakpoints.', table: t, answer: [n, 0], args: [a] }
+  },
+  'cdq': ({ x = [1, 3, 2, 4, 3], y = [2, 1, 3, 4, 2] } = {}) => {
+    const t = line(x.length - 1, 'B', () => {}, (t, i) => {
+      const js = range(0, i - 1).filter(j => x[j] < x[i] && y[j] < y[i])
+      return [1 + maxOf([0, ...js.map(j => t.get(0, j))]), js, js.length ? `1 + max(${js.map(j => `B(${j})`).join(', ')}) = 1 + max(${js.map(j => t.get(0, j)).join(', ')})` : 'no earlier point below and left of it: 1']
+    })
+    t.colLabels = x.map((v, i) => `${i} (${v}, ${y[i]})`)
+    return { title: `${x.length} points`, setup: 'B(i): the longest chain ending at point i, among earlier points with smaller x and smaller y. CDQ finds those earlier points half by half: the left half’s finished values are swept across to the right half by x, with a Fenwick tree over y.', table: t, answer: bestCell(t), args: [x, y] }
+  },
+  'online-convolution': ({ b = [0, 1, 1, 1], n = 6 } = {}) => {
+    const t = line(n, 'a', t => t.seed(0, 0, 1, 'a(0) = 1'), (t, m) => {
+      const is = range(0, m - 1).filter(i => m - i < b.length && b[m - i])
+      return [is.reduce((s, i) => s + t.get(0, i) * b[m - i], 0), is, is.length ? `${is.map(i => `a(${i})·b(${m - i})`).join(' + ')} = ${is.map(i => `${t.get(0, i)}·${b[m - i]}`).join(' + ')}` : 'no earlier term reaches it: 0']
+    })
+    return { title: `b = ${list(b)}, n = ${n}`, setup: 'a(m) adds a(i)·b(m − i) over every earlier i: each term needs only finished earlier terms. Divide and conquer sends a finished left half’s terms to the right half in one convolution; the table shows every sum written out.', table: t, answer: [0, n], args: [b, n] }
+  },
+  // ── Algebraic acceleration and transforms (Expert) ──
+  'matrix-power': ({ k = 3, edges = [[0, 1], [1, 2], [2, 0], [0, 2], [2, 2]], n = 4 } = {}) => {
+    const t = table(range(0, n).map(s => `${s} edge${s === 1 ? '' : 's'}`), range(0, k - 1).map(v => `vertex ${v}`), (r, c) => `W(${r},${c})`)
+    for (let v = 0; v < k; v++) t.seed(0, v, v === 0 ? 1 : 0, v === 0 ? 'the empty walk, at vertex 0' : 'no walk of 0 edges ends here')
+    for (let s = 1; s <= n; s++) for (let v = 0; v < k; v++) {
+      const into = edges.filter(([, w]) => w === v).map(([u]) => u)
+      t.set(s, v, sum(into.map(u => t.get(s - 1, u))), [...new Set(into)].map(u => [s - 1, u]), into.length ? `${into.map(u => `W(${s - 1},${u})`).join(' + ')} = ${into.map(u => t.get(s - 1, u)).join(' + ')}` : 'no edge comes into it: 0')
+    }
+    return { title: `${k} vertices, walks of ${n} edges`, setup: 'W(s, v): the walks of s edges from vertex 0 that end at v. Every row is the row above times the adjacency matrix A, so row n is row 0 times Aⁿ, and Aⁿ takes about log₂ n squarings instead of n rows.', table: t, answer: [n, k - 1], args: [k, edges, n] }
+  },
+  'linear-recurrence': ({ c = [1, 1], a = [0, 1], n = 10 } = {}) => {
+    const k = c.length, P = 998244353
+    const t = line(n, 'a', t => a.slice(0, Math.min(k, n + 1)).forEach((x, i) => t.seed(0, i, x % P, 'given')), (t, i) => {
+      const js = range(1, k)
+      return [js.reduce((s, j) => (s + c[j - 1] * t.get(0, i - j)) % P, 0), js.map(j => i - j), js.map(j => `${c[j - 1]}·a(${i - j})`).join(' + ') + ` = ${js.map(j => `${c[j - 1]}·${t.get(0, i - j)}`).join(' + ')}`]
+    })
+    return { title: `a(i) = ${c.map((x, j) => `${x}·a(i − ${j + 1})`).join(' + ')}`, setup: 'Each term is a fixed combination of the k before it. Kitamasa’s method reaches a(n) without the terms in between: it reduces xⁿ modulo the recurrence, in about log₂ n squarings of polynomials of degree below k.', table: t, answer: [0, n], args: [c, a, n] }
+  },
+  'bostan-mori': ({ p = [1], r = [1, 1], n = 10 } = {}) => {
+    const q = [1, ...r.map(x => -x)]
+    const t = line(n, 'f', () => {}, (t, i) => {
+      const js = range(1, r.length).filter(j => j <= i), top = p[i] ?? 0
+      return [top + sum(js.map(j => r[j - 1] * t.get(0, i - j))), js.map(j => i - j), `P(${i}) + ${js.length ? js.map(j => `${r[j - 1]}·f(${i - j})`).join(' + ') : '0'} = ${top} + ${js.length ? js.map(j => `${r[j - 1]}·${t.get(0, i - j)}`).join(' + ') : '0'}`]
+    })
+    return { title: `P = ${list(p)}, Q = 1 − ${r.map((x, j) => `${x}x${j ? `^${j + 1}` : ''}`).join(' − ')}`, setup: 'f(i): the coefficient of xⁱ in P(x)/Q(x). Since Q·f = P, each f(i) is P(i) plus the r-weighted terms before it. Bostan–Mori finds f(n) without the terms in between, halving n at each step.', table: t, answer: [0, n], args: [p, q, n], input: { p, r, n } }
+  },
+  'generating-functions': ({ g = [1, 1, 1], m = 3, n = 4 } = {}) => {
+    const t = line(n, 'f', t => t.seed(0, 0, 1, 'f(0) = 1, since g(0) = 1'), (t, k) => {
+      const is = range(1, g.length - 1).filter(i => i <= k), terms = is.map(i => g[i] * t.get(0, k - i) * (m * i - (k - i)))
+      return [sum(terms) / k, is.map(i => k - i), `(${is.length ? is.map(i => `${g[i]}·f(${k - i})·(${m}·${i} − ${k - i})`).join(' + ') : '0'}) / ${k} = ${sum(terms)} / ${k}`]
+    })
+    return { title: `(${g.map((x, i) => (i ? `${x}x${i > 1 ? `^${i}` : ''}` : x)).join(' + ')})^${m}`, setup: 'f(k): the coefficient of x^k in gᵐ. From g·f′ = m·g′·f, k·f(k) = Σ g(i)·f(k − i)·(m·i − (k − i)): each coefficient from the few before it, never multiplying g in m times.', table: t, answer: [0, n], args: [g, m, n] }
+  },
+  'fft-ntt': ({ a = [1, 2, 2], b = [0, 3] } = {}) => {
+    const A = maxOf(a), B = maxOf(b), S = A + B
+    const t = table(['count in a', 'count in b', 'c'], range(0, S).map(String), (r, c) => `${['A', 'B', 'c'][r]}(${c})`)
+    for (let v = 0; v <= S; v++) { t.seed(0, v, a.filter(x => x === v).length, `values in a equal to ${v}`); t.seed(1, v, b.filter(x => x === v).length, `values in b equal to ${v}`) }
+    for (let s = 0; s <= S; s++) {
+      const is = range(0, s).filter(i => i <= A && s - i <= B)
+      t.set(2, s, sum(is.map(i => t.get(0, i) * t.get(1, s - i))), is.flatMap(i => [[0, i], [1, s - i]]), `${is.map(i => `A(${i})·B(${s - i})`).join(' + ')} = ${is.map(i => `${t.get(0, i)}·${t.get(1, s - i)}`).join(' + ')}`)
+    }
+    return { title: `a = ${list(a)}, b = ${list(b)}`, setup: 'A and B count the values. c(s), the pairs adding up to s, is the coefficient of xˢ in A(x)·B(x): a convolution. An NTT computes the whole row at once in O(V log V); the table writes each sum out.', table: t, answer: [2, S], args: [a, b], check: want => want[want.length - 1] }
+  },
+  'sos': ({ values: a = [1, 2, 3, 4, 0, 1, 2, 3] } = {}) => {
+    const N = a.length, n = Math.log2(N), bits = m => m.toString(2).padStart(Math.max(1, n), '0')
+    const t = table(['a', ...range(0, n - 1).map(i => `after bit ${i}`)], range(0, N - 1).map(bits), (r, c) => `F${r}(${bits(c)})`)
+    a.forEach((x, m) => t.seed(0, m, x, 'the value itself'))
+    for (let i = 0; i < n; i++) for (let m = 0; m < N; m++) {
+      const bit = 1 << i
+      if (m & bit) t.set(i + 1, m, t.get(i, m) + t.get(i, m ^ bit), [[i, m], [i, m ^ bit]], `${t.name(i, m)} + ${t.name(i, m ^ bit)} = ${t.get(i, m)} + ${t.get(i, m ^ bit)}`)
+      else t.set(i + 1, m, t.get(i, m), [[i, m]], `bit ${i} is not in ${bits(m)}: ${t.name(i, m)} = ${t.get(i, m)}`)
+    }
+    return { title: `a = ${list(a)}`, setup: 'One row per bit. After bit i, a mask holds the sum over its submasks that differ from it only in bits 0 … i: a mask with the bit adds in the mask without it. After the last bit, every submask is in: n · 2ⁿ additions instead of 3ⁿ.', table: t, answer: [n, N - 1], args: [a], check: want => want[N - 1] }
+  },
+  'mobius': ({ values: F = [1, 3, 4, 10, 1, 4, 6, 16] } = {}) => {
+    const N = F.length, n = Math.log2(N), bits = m => m.toString(2).padStart(Math.max(1, n), '0')
+    const t = table(['F', ...range(0, n - 1).map(i => `after bit ${i}`)], range(0, N - 1).map(bits), (r, c) => `a${r}(${bits(c)})`)
+    F.forEach((x, m) => t.seed(0, m, x, 'the subset sum, given'))
+    for (let i = 0; i < n; i++) for (let m = 0; m < N; m++) {
+      const bit = 1 << i
+      if (m & bit) t.set(i + 1, m, t.get(i, m) - t.get(i, m ^ bit), [[i, m], [i, m ^ bit]], `${t.name(i, m)} − ${t.name(i, m ^ bit)} = ${t.get(i, m)} − ${t.get(i, m ^ bit)}`)
+      else t.set(i + 1, m, t.get(i, m), [[i, m]], `bit ${i} is not in ${bits(m)}: ${t.name(i, m)} = ${t.get(i, m)}`)
+    }
+    return { title: `F = ${list(F)}`, setup: 'One row per bit, undoing the subset sum: a mask with the bit takes away the mask without it, which removes everything that bit brought in. After the last bit, each value is back.', table: t, answer: [n, N - 1], args: [F], check: want => want[N - 1] }
+  },
+  'subset-convolution': ({ a = [1, 2, 0, 1], b = [3, 0, 1, 2] } = {}) => {
+    const N = a.length, n = Math.log2(N), bits = m => m.toString(2).padStart(Math.max(1, n), '0')
+    const t = table(['a', 'b', 'c'], range(0, N - 1).map(bits), (r, c) => `${['a', 'b', 'c'][r]}(${bits(c)})`)
+    a.forEach((x, m) => { t.seed(0, m, x, 'given'); t.seed(1, m, b[m], 'given') })
+    for (let S = 0; S < N; S++) {
+      const Ts = range(0, N - 1).filter(T => (T & S) === T)
+      t.set(2, S, sum(Ts.map(T => a[T] * b[S ^ T])), Ts.flatMap(T => [[0, T], [1, S ^ T]]), Ts.map(T => `a(${bits(T)})·b(${bits(S ^ T)})`).join(' + ') + ` = ${Ts.map(T => `${a[T]}·${b[S ^ T]}`).join(' + ')}`)
+    }
+    return { title: `a = ${list(a)}, b = ${list(b)}`, setup: 'c(S) adds a(T)·b(S without T) over every way to split S into two disjoint parts. The ranked transform gets every c at once in n² · 2ⁿ steps, by keeping only pairs whose sizes add up to |S|; the table lists every split.', table: t, answer: [2, N - 1], args: [a, b], check: want => want[N - 1] }
+  },
+  'walsh-hadamard': ({ a = [0, 1, 0, 2], b = [3, 0, 1, 0] } = {}) => {
+    const N = a.length, n = Math.log2(N), bits = m => m.toString(2).padStart(Math.max(1, n), '0')
+    const t = table(['a', 'b', 'c'], range(0, N - 1).map(bits), (r, c) => `${['a', 'b', 'c'][r]}(${bits(c)})`)
+    a.forEach((x, m) => { t.seed(0, m, x, 'given'); t.seed(1, m, b[m], 'given') })
+    for (let k = 0; k < N; k++) {
+      const is = range(0, N - 1)
+      t.set(2, k, sum(is.map(i => a[i] * b[i ^ k])), is.flatMap(i => [[0, i], [1, i ^ k]]), is.map(i => `a(${bits(i)})·b(${bits(i ^ k)})`).join(' + ') + ` = ${is.map(i => `${a[i]}·${b[i ^ k]}`).join(' + ')}`)
+    }
+    return { title: `a = ${list(a)}, b = ${list(b)}`, setup: 'c(k) adds a(i)·b(j) over every pair with i XOR j = k. The Walsh–Hadamard transform turns that into a pointwise product, so all of c costs n · 2ⁿ; the table lists every pair.', table: t, answer: [2, N - 1], args: [a, b], check: want => want[N - 1] }
+  },
+  'semirings': ({ k = 3, edges = [[0, 1, 2], [1, 2, 2], [0, 2, 7], [2, 2, 1]], n = 3 } = {}) => {
+    const t = table(range(0, n).map(s => `${s} edge${s === 1 ? '' : 's'}`), range(0, k - 1).map(v => `vertex ${v}`), (r, c) => `C(${r},${c})`)
+    for (let v = 0; v < k; v++) t.seed(0, v, v === 0 ? 0 : INF, v === 0 ? 'the empty walk costs 0' : 'no walk of 0 edges ends here: ∞')
+    for (let s = 1; s <= n; s++) for (let v = 0; v < k; v++) {
+      const into = edges.filter(([, w]) => w === v)
+      const costs = into.map(([u, , w]) => t.get(s - 1, u) + w)
+      t.set(s, v, minOf([INF, ...costs]), [...new Set(into.map(([u]) => u))].map(u => [s - 1, u]), into.length ? `min(${into.map(([u, , w]) => `C(${s - 1},${u}) + ${w}`).join('; ')}) = min(${costs.map(show).join(', ')})` : 'no edge comes into it: ∞')
+    }
+    return { title: `${k} vertices, walks of ${n} edges`, setup: 'C(s, v): the cheapest walk of s edges from vertex 0 to v. It is the walk-counting table with + replaced by min and × by +. That (min, +) product is associative, so the same repeated squaring reaches n edges in log₂ n steps.', table: t, answer: [n, k - 1], args: [k, edges, n], check: want => (want === -1 ? INF : want) }
+  },
+  'transfer-matrix': ({ w = 2, n = 4 } = {}) => {
+    const S = 1 << w, bits = m => m.toString(2).padStart(w, '0')
+    const T = Array.from({ length: S }, () => Array(S).fill(0))
+    const fill = (r, covered, nxt, start) => {
+      if (r === w) { T[start][nxt]++; return }
+      if ((covered >> r) & 1) { fill(r + 1, covered, nxt, start); return }
+      fill(r + 1, covered, nxt | (1 << r), start)
+      if (r + 1 < w && !((covered >> (r + 1)) & 1)) fill(r + 2, covered, nxt, start)
+    }
+    for (let s = 0; s < S; s++) fill(0, s, 0, s)
+    const t = table(range(0, n).map(c => `${c} column${c === 1 ? '' : 's'}`), range(0, S - 1).map(bits), (r, c) => `W(${r},${bits(c)})`)
+    for (let s = 0; s < S; s++) t.seed(0, s, s === 0 ? 1 : 0, s === 0 ? 'nothing placed, nothing sticking out' : 'nothing can stick out before the first column')
+    for (let c = 1; c <= n; c++) for (let s2 = 0; s2 < S; s2++) {
+      const from = range(0, S - 1).filter(s => T[s][s2])
+      t.set(c, s2, sum(from.map(s => T[s][s2] * t.get(c - 1, s))), from.map(s => [c - 1, s]), from.length ? `${from.map(s => `T(${bits(s)},${bits(s2)})·W(${c - 1},${bits(s)})`).join(' + ')} = ${from.map(s => `${T[s][s2]}·${t.get(c - 1, s)}`).join(' + ')}` : 'no column leaves this pattern: 0')
+    }
+    return { title: `A ${w} × ${n} board`, setup: `W(c, s): the ways to fill the first c columns with s the cells sticking into the next (1 = covered by a horizontal domino). T(s, s′) counts the ways to fill one column; each row is the row above times T, so Tⁿ by squaring reaches any n.`, table: t, answer: [n, 0], args: [w, n] }
+  },
 }
 
 // The squared error of the least-squares straight line through points [x, y] (0 for two points or fewer).
@@ -2118,6 +2331,66 @@ export const INPUTS = {
     rule: i => (i.counts.length === i.weights.length ? null : 'Give a count for each weight.'),
     random: r => { const n = r(1, 3); return { weights: range(1, n).map(() => r(1, 3)), counts: range(1, n).map(() => r(0, 3)), target: r(2, 8) } },
   },
+  'monge': { fields: [{ key: 'A', label: 'Matrix (rows separated by ;)', kind: 'matrix', min: 0, max: 9, rows: [1, 4], cols: [1, 4] }] },
+  'divide-conquer-opt': {
+    fields: [ints('values', 'Values', 0, 9, [1, 7]), int('g', 'Groups', 1, 4)],
+    rule: i => (i.g <= i.values.length ? null : 'Groups can’t outnumber the values.'),
+    random: r => { const n = r(2, 7); return { values: range(1, n).map(() => r(0, 9)), g: r(1, Math.min(4, n)) } },
+  },
+  'knuth': { fields: values(1, 9, [1, 6]) },
+  'cht': { fields: [ints('words', 'Word lengths', 1, 5, [1, 7]), int('M', 'M (per line)', 0, 20)] },
+  'monotone-cht': { fields: [ints('values', 'Strengths', 1, 5, [1, 6]), int('a', 'a (negative)', -3, -1), int('b', 'b', -10, 10), int('c', 'c', -20, 20)] },
+  'li-chao': { fields: [ints('heights', 'Heights', 0, 20, [1, 7]), int('C', 'C (per jump)', 0, 20)] },
+  'slope-trick': { fields: values(0, 9, [1, 6]) },
+  'cdq': {
+    fields: [ints('x', 'x', 0, 5, [1, 7]), ints('y', 'y', 0, 5, [1, 7])],
+    rule: i => (i.x.length === i.y.length ? null : 'Give a y for each x.'),
+    random: r => { const n = r(2, 7); return { x: range(1, n).map(() => r(0, 5)), y: range(1, n).map(() => r(0, 5)) } },
+  },
+  'online-convolution': { fields: [ints('b', 'Kernel b (b[0] is not used)', 0, 3, [2, 5]), int('n', 'n', 0, 8)] },
+  'matrix-power': {
+    fields: [int('k', 'Vertices', 1, 4), { key: 'edges', label: 'Edges (from to, …)', kind: 'edges', weighted: false, len: [0, 8] }, int('n', 'Edges per walk', 0, 6)],
+    rule: i => (i.edges.every(([u, v]) => u < i.k && v < i.k) ? null : 'Every edge must join vertices 0 to k − 1.'),
+    random: r => { const k = r(2, 4); return { k, edges: range(1, r(2, 7)).map(() => [r(0, k - 1), r(0, k - 1)]), n: r(2, 5) } },
+  },
+  'linear-recurrence': {
+    fields: [ints('c', 'Weights c', 0, 3, [1, 3]), ints('a', 'First terms a', 0, 5, [1, 3]), int('n', 'n', 0, 12)],
+    rule: i => (i.a.length === i.c.length ? null : 'Give as many first terms as weights.'),
+    random: r => { const k = r(1, 3); return { c: range(1, k).map(() => r(0, 3)), a: range(1, k).map(() => r(0, 5)), n: r(3, 12) } },
+  },
+  'bostan-mori': { fields: [ints('p', 'P (top)', 0, 3, [1, 3]), ints('r', 'r: Q = 1 − r₁x − r₂x² − …', 0, 2, [1, 3]), int('n', 'n', 0, 10)] },
+  'generating-functions': {
+    fields: [ints('g', 'g (g[0] = 1)', 0, 3, [2, 4]), int('m', 'Power m', 0, 6), int('n', 'n', 0, 10)],
+    rule: i => (i.g[0] === 1 ? null : 'g must start with 1.'),
+    random: r => ({ g: [1, ...range(1, r(1, 3)).map(() => r(0, 3))], m: r(1, 6), n: r(2, 10) }),
+  },
+  'fft-ntt': { fields: [ints('a', 'a', 0, 6, [1, 5]), ints('b', 'b', 0, 6, [1, 5])] },
+  'sos': {
+    fields: [ints('values', 'Values (2ⁿ of them)', -5, 9, [1, 8])],
+    rule: i => ([1, 2, 4, 8].includes(i.values.length) ? null : 'Give 1, 2, 4 or 8 values, one per mask.'),
+    random: r => ({ values: range(1, 2 ** r(1, 3)).map(() => r(0, 9)) }),
+  },
+  'mobius': {
+    fields: [ints('values', 'Subset sums F (2ⁿ of them)', -9, 30, [1, 8])],
+    rule: i => ([1, 2, 4, 8].includes(i.values.length) ? null : 'Give 1, 2, 4 or 8 values, one per mask.'),
+    random: r => ({ values: range(1, 2 ** r(1, 3)).map(() => r(0, 20)) }),
+  },
+  'subset-convolution': {
+    fields: [ints('a', 'a (2ⁿ values)', 0, 5, [1, 8]), ints('b', 'b (2ⁿ values)', 0, 5, [1, 8])],
+    rule: i => ([1, 2, 4, 8].includes(i.a.length) && i.b.length === i.a.length ? null : 'Give 1, 2, 4 or 8 values in each, the same number.'),
+    random: r => { const N = 2 ** r(1, 3); return { a: range(1, N).map(() => r(0, 5)), b: range(1, N).map(() => r(0, 5)) } },
+  },
+  'walsh-hadamard': {
+    fields: [ints('a', 'a (2ⁿ values)', 0, 3, [1, 8]), ints('b', 'b (2ⁿ values)', 0, 3, [1, 8])],
+    rule: i => ([1, 2, 4, 8].includes(i.a.length) && i.b.length === i.a.length ? null : 'Give 1, 2, 4 or 8 values in each, the same number.'),
+    random: r => { const N = 2 ** r(1, 3); return { a: range(1, N).map(() => r(0, 3)), b: range(1, N).map(() => r(0, 3)) } },
+  },
+  'semirings': {
+    fields: [int('k', 'Vertices', 1, 4), { key: 'edges', label: 'Edges (from to weight, …)', kind: 'edges', weighted: true, min: 0, max: 9, len: [0, 8] }, int('n', 'Edges per walk', 0, 6)],
+    rule: i => (i.edges.every(([u, v]) => u < i.k && v < i.k) ? null : 'Every edge must join vertices 0 to k − 1.'),
+    random: r => { const k = r(2, 4); return { k, edges: range(1, r(2, 7)).map(() => [r(0, k - 1), r(0, k - 1), r(0, 9)]), n: r(2, 5) } },
+  },
+  'transfer-matrix': { fields: [int('w', 'Height w', 1, 3), int('n', 'Width n', 0, 6)] },
 }
 
 // A trace's default input, read from its own parameter defaults by running it once with nothing.
