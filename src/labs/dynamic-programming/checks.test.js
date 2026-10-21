@@ -5,9 +5,10 @@ import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
 import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
 import { ADVANCED_ORACLES } from './lessons/advanced-oracles.js'
 import { EXPERT_ORACLES } from './lessons/expert-oracles.js'
+import { SPECIALIST_ORACLES } from './lessons/specialist-oracles.js'
 import { LESSONS } from './lessons/index.js'
 
-const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES }
+const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES, ...SPECIALIST_ORACLES }
 
 // Answers that are not a lesson's challenge answer, computed without DP.
 const EXTRA = {
@@ -134,6 +135,9 @@ const CLAIMS = [
   ['transfer-matrix', [3, 2], 3],
   ['transfer-matrix', [3, 3], 0],
   ['semirings', [3, [[0, 1, 1], [1, 2, 1], [0, 2, 5], [1, 1, 1]], 2], 2],
+  ['broken-profile', [2, 4], 5],
+  ['broken-profile', [2, 3], 3],
+  ['pathwidth', [3, [[0, 1], [1, 2], [2, 3], [3, 4]], [[0, 1], [1, 2], [2, 3], [3, 4]]], 48],
 ]
 
 const entries = Object.entries(CHECKS).flatMap(([id, checks]) => checks.map((c, k) => [id, c, k]))

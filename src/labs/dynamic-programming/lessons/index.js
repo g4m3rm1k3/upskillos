@@ -5,11 +5,12 @@ import { CHALLENGES } from './challenges.js'
 import { CORE_CHALLENGES } from './core-challenges.js'
 import { ADVANCED_CHALLENGES } from './advanced-challenges.js'
 import { EXPERT_CHALLENGES } from './expert-challenges.js'
+import { SPECIALIST_CHALLENGES } from './specialist-challenges.js'
 import { PARSED_LESSONS } from './parsed.js'
 
 // Every coding challenge: the Foundations' (challenges.js), the Core patterns' (core-challenges.js) and
-// the Advanced and Expert lessons' (advanced-challenges.js, expert-challenges.js).
-export const ALL_CHALLENGES = { ...CHALLENGES, ...CORE_CHALLENGES, ...ADVANCED_CHALLENGES, ...EXPERT_CHALLENGES }
+// the Advanced, Expert and Specialist lessons' (advanced-challenges.js, expert-challenges.js, specialist-challenges.js).
+export const ALL_CHALLENGES = { ...CHALLENGES, ...CORE_CHALLENGES, ...ADVANCED_CHALLENGES, ...EXPERT_CHALLENGES, ...SPECIALIST_CHALLENGES }
 
 const handcrafted = [...prerequisites, ...stateDesign, ...implementation]
 const handcraftedIds = new Set(handcrafted.map(l => l.id))

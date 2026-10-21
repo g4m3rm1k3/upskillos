@@ -1983,6 +1983,248 @@ export const TRACES = {
     }
     return { title: `A ${w} × ${n} board`, setup: `W(c, s): the ways to fill the first c columns with s the cells sticking into the next (1 = covered by a horizontal domino). T(s, s′) counts the ways to fill one column; each row is the row above times T, so Tⁿ by squaring reaches any n.`, table: t, answer: [n, 0], args: [w, n] }
   },
+  'broken-profile': ({ h = 2, w = 3 } = {}) => {
+    const { t, answer } = brokenProfile(range(0, h - 1).map(() => range(0, w - 1).map(() => 0)))
+    return { title: `A ${h} × ${w} board`, setup: 'Wᵢ(s): the ways to lay dominoes on the first i cells, scanning down each column, leaving frontier s: one digit per row, top first, 1 when that row’s next cell is already covered. A covered cell clears its digit; a free cell lays a domino right (its digit becomes 1) or down (the digit below becomes 1). The answer is the empty frontier after the last cell.', table: t, answer, args: [h, w] }
+  },
+  'domino-tiling': ({ h = 2, w = 3 } = {}) => {
+    const S = 1 << h, lab = m => range(0, h - 1).map(r => (m >> r) & 1).join('')
+    const pieces = [[[0, 0], [1, 0]], [[0, 0], [0, 1]], [[0, 0], [1, 0], [0, 1]], [[0, 0], [1, 0], [1, 1]], [[0, 0], [0, 1], [1, 1]], [[0, 0], [-1, 1], [0, 1]]]
+    const T = range(0, S - 1).map(() => Array(S).fill(0))
+    const fill = (start, r, cur, nxt) => {
+      if (r === h) { T[start][nxt]++; return }
+      if ((cur >> r) & 1) { fill(start, r + 1, cur, nxt); return }
+      for (const piece of pieces) {
+        let c2 = cur, n2 = nxt, ok = true
+        for (const [dr, dc] of piece) {
+          if (r + dr < 0 || r + dr >= h) { ok = false; break }
+          const bit = 1 << (r + dr)
+          if (dc === 0) { ok = ok && !(c2 & bit); c2 |= bit } else { ok = ok && !(n2 & bit); n2 |= bit }
+        }
+        if (ok) fill(start, r + 1, c2, n2)
+      }
+    }
+    for (let s = 0; s < S; s++) fill(s, 0, s, 0)
+    const t = table(range(0, w).map(c => `${c} column${c === 1 ? '' : 's'}`), range(0, S - 1).map(lab), (r, c) => `W(${r},${lab(c)})`)
+    for (let s = 0; s < S; s++) t.seed(0, s, s === 0 ? 1 : 0, s === 0 ? 'nothing placed, nothing sticking out' : 'nothing can stick out before the first column')
+    for (let c = 1; c <= w; c++) for (let s2 = 0; s2 < S; s2++) {
+      const from = range(0, S - 1).filter(s => T[s][s2])
+      t.set(c, s2, sum(from.map(s => T[s][s2] * t.get(c - 1, s))), from.map(s => [c - 1, s]), from.length ? `${from.map(s => `T(${lab(s)},${lab(s2)})·W(${c - 1},${lab(s)})`).join(' + ')} = ${from.map(s => `${T[s][s2]}·${t.get(c - 1, s)}`).join(' + ')}` : 'no way to fill a column leaves this pattern: 0')
+    }
+    return { title: `A ${h} × ${w} board, dominoes and L-trominoes`, setup: 'W(c, s): the ways to fill the first c columns with s the cells of the next column already covered (one digit per row, top first). T(s, s′) counts the ways to fill one column starting from covered cells s: the first free cell is covered by each of the six pieces that fit, again and again, and s′ is what sticks out. Each row is the row above times T.', table: t, answer: [w, 0], args: [h, w] }
+  },
+  'profile-obstacles': ({ grid = [[0, 0, 0], [0, 1, 0], [0, 0, 0]] } = {}) => {
+    const { t, answer } = brokenProfile(grid)
+    return { title: `${grid.length} × ${grid[0].length} board, ${grid.flat().filter(x => x).length} blocked`, setup: 'Wᵢ(s) as on an open board: the ways to lay dominoes on the first i cells, scanning down each column, with frontier s (1 = that row’s next cell already covered). A blocked cell passes the frontier on unchanged, but only if no domino landed on it; no domino is laid onto one.', table: t, answer, args: [grid] }
+  },
+  'plug-dp': ({ grid = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]] } = {}) => {
+    const h = grid.length, w = grid[0].length, S = 1 << (w + 1), lab = m => range(0, w).map(j => (m >> j) & 1).join('')
+    const cells = []
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) cells.push([r, c])
+    const t = table(['start', ...cells.map(([r, c]) => `after (${r},${c})`)], range(0, S - 1).map(lab), (i, m) => `L${i}(${lab(m)})`)
+    for (let m = 0; m < S; m++) t.seed(0, m, m === 0 ? 1 : 0, m === 0 ? 'no line crosses the frontier yet' : 'no line can cross before the first cell')
+    cells.forEach(([r, c], k) => {
+      const i = k + 1, into = range(0, S - 1).map(() => []), end = c === w - 1
+      const downOk = r + 1 < h && !grid[r + 1][c], rightOk = c + 1 < w && !grid[r][c + 1]
+      for (let m = 0; m < S; m++) {
+        const left = (m >> c) & 1, up = (m >> (c + 1)) & 1, rest = m & ~(3 << c), outs = []
+        if (grid[r][c]) { if (!left && !up) outs.push([m, 'blocked']) }
+        else if (left && up) outs.push([rest, 'two in: done'])
+        else if (left || up) { if (downOk) outs.push([rest | (1 << c), 'one in, ↓ out']); if (rightOk) outs.push([rest | (2 << c), 'one in, → out']) }
+        else if (downOk && rightOk) outs.push([rest | (3 << c), 'none in: ↓ and → out'])
+        for (const [m2, why] of outs) into[end ? m2 << 1 : m2].push([m, end ? `${why}, then shift` : why])
+      }
+      for (let m2 = 0; m2 < S; m2++) {
+        const from = into[m2]
+        t.set(i, m2, sum(from.map(([m]) => t.get(i - 1, m))), from.map(([m]) => [i - 1, m]), from.length ? `${from.map(([m, why]) => `${t.name(i - 1, m)} (${why})`).join(' + ')} = ${from.map(([m]) => t.get(i - 1, m)).join(' + ')}` : 'no plug pattern leads here: 0')
+      }
+    })
+    return { title: `${h} × ${w} board, loops through every free cell`, setup: 'Lᵢ(s): the ways to draw lines in the first i cells, row by row, with plugs s crossing the frontier: w + 1 digits, 1 where a line crosses. Before cell (r, c), digit c is the line from the left and digit c + 1 the line from above. Every free cell takes two lines: two in, none out; one in, one out down or right; none in, both out. At the end of a row every digit moves one place right.', table: t, answer: [cells.length, 0], args: [grid] }
+  },
+  'hamiltonian-grid': ({ grid = [[0, 0, 0], [0, 0, 0], [0, 0, 0], [0, 0, 0]] } = {}) => {
+    const h = grid.length, w = grid[0].length, cells = []
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) cells.push([r, c])
+    const last = cells.map(([r, c], k) => (grid[r][c] ? -1 : k)).reduce((a, b) => Math.max(a, b), -1)
+    const canon = labels => { const names = new Map(); return labels.map(x => { if (x && !names.has(x)) names.set(x, names.size + 1); return x ? names.get(x) : 0 }) }
+    const zero = Array(w + 1).fill(0).join('')
+    // Every layer's states and where each came from, then one column per state seen anywhere.
+    const layers = [new Map([[zero, []]])], closes = []
+    cells.forEach(([r, c], k) => {
+      const next = new Map(), end = c === w - 1
+      const downOk = r + 1 < h && !grid[r + 1][c], rightOk = c + 1 < w && !grid[r][c + 1]
+      for (const key of layers[k].keys()) {
+        const st = key.split('').map(Number), left = st[c], up = st[c + 1], outs = []
+        if (grid[r][c]) { if (!left && !up) outs.push([[...st], 'blocked']) }
+        else if (left && up) {
+          if (left === up) { if (k === last && !st.some((x, j) => x && j !== c && j !== c + 1)) closes.push(key) }
+          else { const s = st.map(x => (x === up ? left : x)); s[c] = s[c + 1] = 0; outs.push([s, `paths ${left} and ${up} join`]) }
+        } else if (left || up) {
+          const x = left || up
+          if (downOk) { const s = [...st]; s[c] = x; s[c + 1] = 0; outs.push([s, `path ${x} goes ↓`]) }
+          if (rightOk) { const s = [...st]; s[c] = 0; s[c + 1] = x; outs.push([s, `path ${x} goes →`]) }
+        } else if (downOk && rightOk) { const s = [...st]; s[c] = s[c + 1] = w + 2; outs.push([s, 'a new path starts']) }
+        for (const [s, why] of outs) {
+          const shifted = end ? [0, ...s.slice(0, w)] : s
+          const k2 = canon(shifted).join('')
+          if (!next.has(k2)) next.set(k2, [])
+          next.get(k2).push([key, end ? `${why}, then shift` : why])
+        }
+      }
+      layers.push(next)
+    })
+    const states = [...new Set(layers.flatMap(l => [...l.keys()]))].sort((a, b) => (a === zero ? -1 : b === zero ? 1 : a < b ? -1 : 1))
+    const col = new Map(states.map((s, j) => [s, j]))
+    const t = table(['start', ...cells.map(([r, c]) => `after (${r},${c})`), 'loops'], states, (i, j) => (i > cells.length ? 'loops' : `H${i}(${states[j]})`))
+    states.forEach((s, j) => t.seed(0, j, s === zero ? 1 : 0, s === zero ? 'no path started yet' : 'no path can be open before the first cell'))
+    layers.slice(1).forEach((layer, k) => states.forEach((s, j) => {
+      const from = layer.get(s) ?? []
+      t.set(k + 1, j, sum(from.map(([key]) => t.get(k, col.get(key)))), from.map(([key]) => [k, col.get(key)]), from.length ? `${from.map(([key, why]) => `${t.name(k, col.get(key))} (${why})`).join(' + ')} = ${from.map(([key]) => t.get(k, col.get(key))).join(' + ')}` : 'no state leads here: 0')
+    }))
+    const reads = closes.map(key => [last, col.get(key)])
+    t.set(cells.length + 1, 0, sum(reads.map(rc => t.get(...rc))), reads, closes.length ? `the loop closes at the last free cell: ${reads.map(rc => t.name(...rc)).join(' + ')} = ${reads.map(rc => t.get(...rc)).join(' + ')}` : 'no loop can close at the last free cell: 0')
+    return { title: `${h} × ${w} board, one loop through every free cell`, setup: 'Hᵢ(s): the ways to draw the first i cells leaving plugs s: w + 1 digits, 0 for no line and a label for each open path, so that the two ends of one path share a label. Labels are renamed in order of first appearance. Two equal labels meeting close a loop, which counts only at the last free cell with no other path open.', table: t, answer: [cells.length + 1, 0], args: [grid] }
+  },
+  'connectivity-canonical': ({ grid = [[0, 0, 0], [0, 1, 0], [0, 0, 0]] } = {}) => {
+    const h = grid.length, w = grid[0].length, cells = []
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) cells.push([r, c])
+    const canon = labels => { const names = new Map(); return labels.map(x => { if (x && !names.has(x)) names.set(x, names.size + 1); return x ? names.get(x) : 0 }) }
+    const zero = Array(w).fill(0).join('')
+    const layers = [new Map([[zero, []]])], finish = []
+    cells.forEach(([r, c], k) => {
+      const next = new Map(), ends = []
+      const put = (s, key, why) => { const k2 = canon(s).join(''); if (!next.has(k2)) next.set(k2, []); next.get(k2).push([key, why]) }
+      for (const key of layers[k].keys()) {
+        const st = key.split('').map(Number), up = st[c], left = c > 0 ? st[c - 1] : 0
+        const s = [...st]
+        s[c] = 0
+        if (up && !s.includes(up)) { if (!s.some(x => x)) ends.push(key) }
+        else put(s, key, grid[r][c] ? 'blocked' : 'left out')
+        if (!grid[r][c]) {
+          let s2 = [...st]
+          if (left && up && left !== up) s2 = s2.map(x => (x === up ? left : x))
+          s2[c] = left || up || w + 1
+          put(s2, key, left && up && left !== up ? `taken: joins ${left} and ${up}` : left || up ? 'taken: joins its neighbour' : 'taken: a new piece')
+        }
+      }
+      layers.push(next)
+      finish.push(ends)
+    })
+    const states = [...new Set(layers.flatMap(l => [...l.keys()]))].sort((a, b) => (a === zero ? -1 : b === zero ? 1 : a < b ? -1 : 1))
+    const col = new Map(states.map((s, j) => [s, j])), done = states.length, n = cells.length
+    const t = table(['start', ...cells.map(([r, c]) => `after (${r},${c})`), 'end'], [...states, 'done'], (i, j) => (j === done ? `done${i}` : `C${i}(${states[j]})`))
+    states.forEach((s, j) => t.seed(0, j, s === zero ? 1 : 0, s === zero ? 'nothing chosen yet' : 'nothing can be chosen before the first cell'))
+    t.seed(0, done, 0, 'no set finished yet')
+    layers.slice(1).forEach((layer, k) => {
+      states.forEach((s, j) => {
+        const from = layer.get(s) ?? []
+        t.set(k + 1, j, sum(from.map(([key]) => t.get(k, col.get(key)))), from.map(([key]) => [k, col.get(key)]), from.length ? `${from.map(([key, why]) => `${t.name(k, col.get(key))} (${why})`).join(' + ')} = ${from.map(([key]) => t.get(k, col.get(key))).join(' + ')}` : 'no state leads here: 0')
+      })
+      const reads = [[k, done], ...finish[k].map(key => [k, col.get(key)])]
+      t.set(k + 1, done, sum(reads.map(rc => t.get(...rc))), reads, finish[k].length ? `the only piece leaves the frontier, finished: ${reads.map(rc => t.name(...rc)).join(' + ')} = ${reads.map(rc => t.get(...rc)).join(' + ')}` : `nothing finishes here: ${t.name(k, done)} = ${t.get(k, done)}`)
+    })
+    const one = states.filter(s => new Set(s.split('').filter(x => x !== '0')).size === 1)
+    const reads = [[n, done], ...one.map(s => [n, col.get(s)])]
+    t.set(n + 1, done, sum(reads.map(rc => t.get(...rc))), reads, `finished earlier, plus every final state with one piece: ${reads.map(rc => t.name(...rc)).join(' + ')} = ${reads.map(rc => t.get(...rc)).join(' + ')}`)
+    return { title: `${h} × ${w} board, connected sets`, setup: 'Cᵢ(s): the ways to choose among the first i cells, row by row, leaving frontier s: one digit per column for the last w cells, 0 if left out, else a label naming its piece, renamed in order of first appearance. When a piece’s last frontier cell leaves, the set is finished if that was the only piece (added to done) and impossible otherwise.', table: t, answer: [n + 1, done], args: [grid] }
+  },
+  'treewidth': ({ weights = [3, 2, 4, 1, 5], edges = [[0, 1], [1, 2], [2, 3], [3, 4], [1, 3]] } = {}) => {
+    const { bags, tree } = eliminationDecomposition(weights.length, edges)
+    const adj = new Set(edges.flatMap(([u, v]) => [`${u},${v}`, `${v},${u}`]))
+    const links = bags.map(() => [])
+    for (const [a, b] of tree) { links[a].push(b); links[b].push(a) }
+    const order = [0], children = bags.map(() => []), seen = new Set([0])
+    for (let i = 0; i < order.length; i++) for (const y of links[order[i]]) if (!seen.has(y)) { seen.add(y); children[order[i]].push(y); order.push(y) }
+    const subsets = bag => range(0, 2 ** bag.length - 1).map(m => bag.filter((_, i) => (m >> i) & 1)).filter(S => S.every(u => S.every(v => !adj.has(`${u},${v}`))))
+    const rows = [...order].reverse().flatMap(b => subsets(bags[b]).map(S => [b, S]))
+    const at = new Map(rows.map(([b, S], i) => [`${b}:${S}`, i]))
+    const t = table([...rows.map(([b, S]) => `bag ${b} {${bags[b].join(', ')}}, S = {${S.join(', ')}}`), 'answer'], ['best'], r => (r < rows.length ? `best(${rows[r][0]},{${rows[r][1].join(',')}})` : 'answer'))
+    rows.forEach(([b, S], i) => {
+      const own = sum(S.map(v => weights[v])), reads = [], parts = [], gains = []
+      for (const ch of children[b]) {
+        const opts = subsets(bags[ch]).filter(S2 => bags[ch].every(v => !bags[b].includes(v) || S2.includes(v) === S.includes(v)))
+        const shared = S2 => sum(S2.filter(v => bags[b].includes(v)).map(v => weights[v]))
+        const values = opts.map(S2 => t.get(at.get(`${ch}:${S2}`), 0) - shared(S2))
+        reads.push(...opts.map(S2 => [at.get(`${ch}:${S2}`), 0]))
+        parts.push(`max(${opts.map(S2 => `${t.name(at.get(`${ch}:${S2}`), 0)} − ${shared(S2)}`).join(', ')})`)
+        gains.push(maxOf(values))
+      }
+      if (reads.length) t.set(i, 0, own + sum(gains), reads, `w(S) + ${parts.join(' + ')} = ${own} + ${gains.join(' + ')}`)
+      else t.seed(i, 0, own, `a leaf bag: the weight of S, ${own}`)
+    })
+    const top = rows.map(([b], i) => [b, i]).filter(([b]) => b === 0).map(([, i]) => [i, 0])
+    t.set(rows.length, 0, maxOf(top.map(rc => t.get(...rc))), top, `the best subset of bag 0: max(${top.map(rc => t.name(...rc)).join(', ')}) = max(${top.map(rc => t.get(...rc)).join(', ')})`)
+    return { title: `${weights.length} vertices, ${bags.length} bags`, setup: `The bags come from removing vertices 0, 1, 2, … in turn: bag v is v and its later neighbours. ${bags.map((b, i) => `Bag ${i}: {${b.join(', ')}}`).join('; ')}. Tree edges: ${tree.length ? tree.map(([a, b]) => `${a}–${b}`).join(', ') : 'none'}. best(b, S): the heaviest set below bag b whose part in the bag is exactly S (no edge inside S). A child adds its best agreeing choice, minus the shared vertices S already counts.`, table: t, answer: [rows.length, 0], args: [weights, edges, bags, tree], input: { weights, edges } }
+  },
+  'pathwidth': ({ k = 3, n = 4, edges = [[0, 1], [1, 2], [2, 3], [3, 0]] } = {}) => {
+    // Bag i: vertex i and every earlier vertex with a neighbour at i or later.
+    const bags = range(0, n - 1).map(i => range(0, i).filter(u => u === i || edges.some(([a, b]) => (a === u && b >= i) || (b === u && a >= i))))
+    const colourings = bag => {
+      const out = [], go = (j, cs) => { if (j === bag.length) { out.push(cs); return } for (let c = 0; c < k; c++) go(j + 1, [...cs, c]) }
+      go(0, [])
+      return out.filter(cs => edges.every(([u, v]) => !(bag.includes(u) && bag.includes(v)) || cs[bag.indexOf(u)] !== cs[bag.indexOf(v)]))
+    }
+    const rows = bags.flatMap((bag, i) => colourings(bag).map(cs => [i, cs]))
+    const t = table([...rows.map(([i, cs]) => `bag ${i} {${bags[i].join(', ')}}: ${bags[i].map((v, j) => `${v}→${cs[j]}`).join(' ')}`), 'total'], ['ways'], r => (r < rows.length ? `N(${rows[r][0]},${rows[r][1].join('')})` : 'total'))
+    rows.forEach(([i, cs], r) => {
+      if (i === 0) { t.seed(r, 0, 1, 'the first bag: one way for each proper colouring'); return }
+      const kept = bags[i].filter(v => bags[i - 1].includes(v))
+      const from = rows.map((x, q) => [x, q]).filter(([[i2, cs2]]) => i2 === i - 1 && kept.every(v => cs2[bags[i - 1].indexOf(v)] === cs[bags[i].indexOf(v)])).map(([, q]) => [q, 0])
+      t.set(r, 0, sum(from.map(rc => t.get(...rc))), from, from.length ? `agreeing on ${kept.length ? `{${kept.join(', ')}}` : 'nothing (no vertex is kept)'}: ${from.map(rc => t.name(...rc)).join(' + ')} = ${from.map(rc => t.get(...rc)).join(' + ')}` : 'no colouring of the bag before agrees: 0')
+    })
+    const lastRows = rows.map(([i], r) => [i, r]).filter(([i]) => i === n - 1).map(([, r]) => [r, 0])
+    t.set(rows.length, 0, sum(lastRows.map(rc => t.get(...rc))), lastRows, lastRows.length ? `every colouring of the last bag: ${lastRows.map(rc => t.name(...rc)).join(' + ')} = ${lastRows.map(rc => t.get(...rc)).join(' + ')}` : 'the last bag has no proper colouring: 0')
+    return { title: `${n} vertices, ${k} colour${k === 1 ? '' : 's'}`, setup: `Bag i holds vertex i and every earlier vertex with a neighbour at i or later: ${bags.map((b, i) => `{${b.join(', ')}}`).join(', ')}. N(i, χ): the colourings of vertices 0 … i whose colours on bag i are χ. Each reads the colourings of the bag before that agree on the vertices both bags hold; vertices that leave are forgotten, so their colourings add up.`, table: t, answer: [rows.length, 0], args: [k, edges, bags], input: { k, n, edges } }
+  },
+}
+
+// A domino tiling scanned cell by cell down each column (profile-obstacles; broken-profile on an open
+// board). The frontier has one digit per row, top first: 1 when that row's next cell is already covered.
+function brokenProfile(grid) {
+  const h = grid.length, w = grid[0].length, S = 1 << h
+  const lab = m => range(0, h - 1).map(r => (m >> r) & 1).join('')
+  const cells = []
+  for (let c = 0; c < w; c++) for (let r = 0; r < h; r++) cells.push([r, c])
+  const t = table(['start', ...cells.map(([r, c]) => `after (${r},${c})`)], range(0, S - 1).map(lab), (i, m) => `W${i}(${lab(m)})`)
+  for (let m = 0; m < S; m++) t.seed(0, m, m === 0 ? 1 : 0, m === 0 ? 'nothing placed, nothing covered: 1 way' : 'nothing can be covered before the first cell')
+  cells.forEach(([r, c], k) => {
+    const i = k + 1, bit = 1 << r, into = range(0, S - 1).map(() => [])
+    for (let m = 0; m < S; m++) {
+      if (grid[r][c]) { if (!(m & bit)) into[m].push([m, 'blocked, passes on']); continue }
+      if (m & bit) { into[m ^ bit].push([m, 'already covered']); continue }
+      if (c + 1 < w && !grid[r][c + 1]) into[m | bit].push([m, 'domino →'])
+      if (r + 1 < h && !grid[r + 1][c] && !(m & (bit << 1))) into[m | (bit << 1)].push([m, 'domino ↓'])
+    }
+    for (let m2 = 0; m2 < S; m2++) {
+      const from = into[m2]
+      t.set(i, m2, sum(from.map(([m]) => t.get(i - 1, m))), from.map(([m]) => [i - 1, m]), from.length ? `${from.map(([m, why]) => `${t.name(i - 1, m)} (${why})`).join(' + ')} = ${from.map(([m]) => t.get(i - 1, m)).join(' + ')}` : 'no frontier leads here: 0')
+    }
+  })
+  return { t, answer: [cells.length, 0] }
+}
+
+// A tree decomposition from removing vertices 0, 1, 2, … in turn: bag v is v and its neighbours removed
+// later (which are joined to each other as v goes), hung under the bag of the first of them.
+function eliminationDecomposition(n, edges) {
+  const adj = range(0, n - 1).map(() => new Set())
+  for (const [u, v] of edges) if (u !== v) { adj[u].add(v); adj[v].add(u) }
+  const bags = [], tree = []
+  for (let v = 0; v < n; v++) {
+    const later = [...adj[v]].filter(u => u > v).sort((a, b) => a - b)
+    bags.push([v, ...later])
+    for (const a of later) for (const b of later) if (a !== b) adj[a].add(b)
+    if (later.length) tree.push([later[0], v])
+  }
+  // Separate pieces of the graph hang under the last bag, so the bags form one tree.
+  for (let v = 0; v < n - 1; v++) if (!tree.some(([, c]) => c === v)) tree.push([n - 1, v])
+  return { bags, tree }
+}
+
+// A random tree on n vertices plus, usually, one more edge.
+function randomSparse(r, n) {
+  const edges = range(1, n - 1).map(v => [r(0, v - 1), v])
+  const u = r(0, n - 1), v = r(0, n - 1)
+  if (u !== v && !edges.some(([a, b]) => (a === u && b === v) || (a === v && b === u))) edges.push([u, v])
+  return edges
 }
 
 // The squared error of the least-squares straight line through points [x, y] (0 for two points or fewer).
@@ -2391,6 +2633,22 @@ export const INPUTS = {
     random: r => { const k = r(2, 4); return { k, edges: range(1, r(2, 7)).map(() => [r(0, k - 1), r(0, k - 1), r(0, 9)]), n: r(2, 5) } },
   },
   'transfer-matrix': { fields: [int('w', 'Height w', 1, 3), int('n', 'Width n', 0, 6)] },
+  'broken-profile': { fields: [int('h', 'Height h', 1, 3), int('w', 'Width w', 1, 5)] },
+  'domino-tiling': { fields: [int('h', 'Height h', 1, 3), int('w', 'Width w', 1, 6)] },
+  'profile-obstacles': { fields: [{ key: 'grid', label: 'Board (1 = blocked)', kind: 'grid', rows: [1, 3], cols: [1, 5] }] },
+  'plug-dp': { fields: [{ key: 'grid', label: 'Board (1 = blocked)', kind: 'grid', rows: [1, 4], cols: [1, 3] }] },
+  'hamiltonian-grid': { fields: [{ key: 'grid', label: 'Board (1 = blocked)', kind: 'grid', rows: [1, 4], cols: [1, 3] }] },
+  'connectivity-canonical': { fields: [{ key: 'grid', label: 'Board (1 = blocked)', kind: 'grid', rows: [1, 3], cols: [1, 3] }] },
+  'treewidth': {
+    fields: [ints('weights', 'Weights (one per vertex)', 0, 9, [1, 6]), { key: 'edges', label: 'Edges (u v, …)', kind: 'edges', weighted: false, len: [0, 8] }],
+    rule: i => (i.edges.every(([u, v]) => u < i.weights.length && v < i.weights.length && u !== v) ? null : 'Every edge must join two different vertices, numbered from 0 to one less than the number of weights.'),
+    random: r => { const n = r(3, 6); return { weights: range(1, n).map(() => r(0, 9)), edges: randomSparse(r, n) } },
+  },
+  'pathwidth': {
+    fields: [int('k', 'Colours k', 1, 3), int('n', 'Vertices', 1, 5), { key: 'edges', label: 'Edges (u v, …)', kind: 'edges', weighted: false, len: [0, 7] }],
+    rule: i => (i.edges.every(([u, v]) => u < i.n && v < i.n && u !== v) ? null : 'Every edge must join two different vertices, numbered 0 to n − 1.'),
+    random: r => { const n = r(3, 5); return { k: r(2, 3), n, edges: randomSparse(r, n) } },
+  },
 }
 
 // A trace's default input, read from its own parameter defaults by running it once with nothing.

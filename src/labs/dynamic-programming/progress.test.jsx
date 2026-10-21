@@ -39,19 +39,19 @@ it('merges two devices without ever un-solving a lesson', () => {
 })
 
 it('shows a solve everywhere at once and saves it to the account', () => {
-  const id = 'plug-dp', quiz = LESSONS[id].quiz
+  const id = 'matrix-chain', quiz = LESSONS[id].quiz
   render(<Lab />)
   expect(screen.getByRole('group', { name: 'Your progress' }).textContent).toContain('0 of')
   expect(screen.getByRole('group', { name: 'Your progress' }).textContent).toContain('Saved to your account')
-  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'plug' } })
-  fireEvent.click(screen.getByRole('button', { name: /Plug DP and connectivity labels/ }))
+  fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'matrix-chain' } })
+  fireEvent.click(screen.getByRole('button', { name: /Matrix-chain multiplication/ }))
   fireEvent.click(screen.getByRole('button', { name: '03 · Check understanding' }))
   fireEvent.change(screen.getByRole('textbox'), { target: { value: quiz.answer } })
   fireEvent.click(screen.getByRole('button', { name: 'Check answer' }))
 
   expect(pushNow).toHaveBeenCalledTimes(1)
   expect(screen.getByRole('group', { name: 'Your progress' }).textContent).toContain('1 of')
-  const item = [...document.querySelectorAll('.dp-concept')].find(b => b.textContent.includes('Plug DP and connectivity labels'))
+  const item = [...document.querySelectorAll('.dp-concept')].find(b => b.textContent.includes('Matrix-chain multiplication'))
   expect(item.textContent).toContain('Solved · quiz passed')
   expect(item.className).toContain('is-solved')
   expect(item.querySelector('.dp-node').textContent).toBe('✓')

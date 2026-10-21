@@ -7,7 +7,9 @@ import { ORACLES } from './lessons/core-oracles.js'
 import { ADVANCED_CHALLENGES } from './lessons/advanced-challenges.js'
 import { ADVANCED_ORACLES } from './lessons/advanced-oracles.js'
 import { EXPERT_CHALLENGES } from './lessons/expert-challenges.js'
+import { SPECIALIST_CHALLENGES } from './lessons/specialist-challenges.js'
 import { EXPERT_ORACLES } from './lessons/expert-oracles.js'
+import { SPECIALIST_ORACLES } from './lessons/specialist-oracles.js'
 import { SOLUTIONS } from './lessons/reference-solutions.js'
 import { runJavaScriptCases } from './runtime/checks.js'
 import { readProgress, saveProgress } from './progress.js'
@@ -49,9 +51,9 @@ it('keeps specialist and expert lessons distinct, with explained traces and chec
   }
 })
 
-it('verifies all 151 JavaScript reference solutions pass their challenge suites', () => {
+it('verifies all 160 JavaScript reference solutions pass their challenge suites', () => {
   const challengeIds = Object.keys(CHALLENGES)
-  expect(challengeIds.length).toBe(151)
+  expect(challengeIds.length).toBe(160)
 
   for (const id of challengeIds) {
     const challenge = CHALLENGES[id]
@@ -70,7 +72,7 @@ it('verifies all 151 JavaScript reference solutions pass their challenge suites'
 // The Python references, run in real Python (one process for all of them), compared exactly as the
 // page's worker compares them: JSON with sorted keys and no spaces.
 const PYTHON = ['python', 'python3'].find(cmd => { try { return spawnSync(cmd, ['-c', 'print(1)']).status === 0 } catch { return false } })
-it.skipIf(!PYTHON)('verifies all 151 Python reference solutions pass their challenge suites, in real Python', () => {
+it.skipIf(!PYTHON)('verifies all 160 Python reference solutions pass their challenge suites, in real Python', () => {
   const jobs = Object.fromEntries(Object.entries(CHALLENGES).map(([id, c]) => [id, { code: SOLUTIONS[id]?.Python, cases: c.cases }]))
   for (const [id, job] of Object.entries(jobs)) expect(job.code, `Missing Python reference solution for ${id}`).toBeTruthy()
   const script = [
@@ -96,10 +98,10 @@ it.skipIf(!PYTHON)('verifies all 151 Python reference solutions pass their chall
   for (const [id, rows] of Object.entries(results)) expect(rows.filter(x => x !== true), `Python reference for ${id}`).toEqual([])
 }, 120000)
 
-it('checks every Core, Advanced and Expert challenge’s expected values against an exhaustive answer key, not the DP', () => {
+it('checks every Core, Advanced, Expert and Specialist challenge’s expected values against an exhaustive answer key, not the DP', () => {
   expect(Object.keys(CORE_CHALLENGES).length).toBe(40)
-  const keys = { ...ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES }
-  for (const [id, challenge] of Object.entries({ ...CORE_CHALLENGES, ...ADVANCED_CHALLENGES, ...EXPERT_CHALLENGES })) {
+  const keys = { ...ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES, ...SPECIALIST_ORACLES }
+  for (const [id, challenge] of Object.entries({ ...CORE_CHALLENGES, ...ADVANCED_CHALLENGES, ...EXPERT_CHALLENGES, ...SPECIALIST_CHALLENGES })) {
     const oracle = keys[id]
     expect(oracle, `No oracle for ${id}`).toBeTruthy()
     let checked = 0

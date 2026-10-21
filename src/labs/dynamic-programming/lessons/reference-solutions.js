@@ -2,12 +2,14 @@
 import { CORE_SOLUTIONS } from './core-solutions.js'
 import { ADVANCED_SOLUTIONS } from './advanced-solutions.js'
 import { EXPERT_SOLUTIONS } from './expert-solutions.js'
+import { SPECIALIST_SOLUTIONS } from './specialist-solutions.js'
 
 const pair = (Python, JavaScript) => ({ Python, JavaScript })
 export const SOLUTIONS = {
   ...CORE_SOLUTIONS,
   ...ADVANCED_SOLUTIONS,
   ...EXPERT_SOLUTIONS,
+  ...SPECIALIST_SOLUTIONS,
   recursion: pair(`def solve(n):
     if n == 0:
         return 0

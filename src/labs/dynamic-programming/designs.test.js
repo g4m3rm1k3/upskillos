@@ -4,17 +4,18 @@ import { ORACLES as CORE_ORACLES } from './lessons/core-oracles.js'
 import { STRUCTURED_ORACLES } from './lessons/structured-oracles.js'
 import { ADVANCED_ORACLES } from './lessons/advanced-oracles.js'
 import { EXPERT_ORACLES } from './lessons/expert-oracles.js'
+import { SPECIALIST_ORACLES } from './lessons/specialist-oracles.js'
 import { LESSONS } from './lessons/index.js'
 import { LEVELS } from './curriculum.js'
 import { TRACES } from './tables.js'
 
 // What the hand-solved questions ask for, when it is not the whole challenge answer.
 // Core lessons are checked against their challenges' oracles; Structured ones against enumeration only.
-const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES }
+const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES, ...SPECIALIST_ORACLES }
 const PICK = { 'max-subarray': v => v[0], 'min-grid-path': v => v[0], 'bellman-ford-dp': v => v[v.length - 1], 'floyd-warshall': v => v[0][v.length - 1], ...Object.fromEntries(['tree-basics', 'tree-reroot', 'reroot-prefix', 'tree-distances', 'tree-small-large'].map(id => [id, v => v[1]])), 'subset-enumeration': v => v[v.length - 1], 'mask-language': v => Number(v), 'hirschberg': v => v.length, 'cht-numeric': v => Number(v), ...Object.fromEntries(['fft-ntt', 'sos', 'mobius', 'subset-convolution', 'walsh-hadamard'].map(id => [id, v => v[v.length - 1]])) }
 const oracle = (id, args) => (PICK[id] ?? (v => v))(ORACLES[id](args))
 // The curriculum groups whose every lesson has a design.
-const DESIGNED = ['linear', 'grids', 'knapsack', 'basic-counting', 'sequences', 'strings', 'intervals', 'scheduling', 'dag', 'trees', 'subsets', 'digits-automata', 'space-speed', 'opt-splits', 'algebraic']
+const DESIGNED = ['linear', 'grids', 'knapsack', 'basic-counting', 'sequences', 'strings', 'intervals', 'scheduling', 'dag', 'trees', 'subsets', 'digits-automata', 'space-speed', 'opt-splits', 'algebraic', 'profiles']
 
 // Numbers quoted inside option explanations and answers, checked by brute force: [oracle, args, value].
 const CLAIMS = [
@@ -86,6 +87,7 @@ const CLAIMS = [
   ['bostan-mori', [[1], [1, -2], 3], 8],
   ['generating-functions', [[1, 1], 4, 1], 4],
   ['transfer-matrix', [2, 4], 5],
+  ['broken-profile', [2, 3], 3],
 ]
 
 it('gives every lesson in a designed group a design, and only lessons that exist', () => {

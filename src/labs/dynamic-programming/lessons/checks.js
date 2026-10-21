@@ -23,5 +23,6 @@ import { DIGIT_CHECKS } from './checks-digit.js'
 import { SPACE_CHECKS } from './checks-space.js'
 import { SPLIT_CHECKS } from './checks-split.js'
 import { ALGEBRA_CHECKS } from './checks-algebra.js'
+import { PROFILE_CHECKS } from './checks-profiles.js'
 
-export const CHECKS = { ...LINEAR_CHECKS, ...GRID_CHECKS, ...KNAPSACK_CHECKS, ...COUNTING_CHECKS, ...SEQUENCE_CHECKS, ...STRING_CHECKS, ...INTERVAL_CHECKS, ...DAG_CHECKS, ...TREE_CHECKS, ...SUBSET_CHECKS, ...DIGIT_CHECKS, ...SPACE_CHECKS, ...SPLIT_CHECKS, ...ALGEBRA_CHECKS }
+export const CHECKS = { ...LINEAR_CHECKS, ...GRID_CHECKS, ...KNAPSACK_CHECKS, ...COUNTING_CHECKS, ...SEQUENCE_CHECKS, ...STRING_CHECKS, ...INTERVAL_CHECKS, ...DAG_CHECKS, ...TREE_CHECKS, ...SUBSET_CHECKS, ...DIGIT_CHECKS, ...SPACE_CHECKS, ...SPLIT_CHECKS, ...ALGEBRA_CHECKS, ...PROFILE_CHECKS }
