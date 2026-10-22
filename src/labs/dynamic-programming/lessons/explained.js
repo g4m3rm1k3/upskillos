@@ -13,6 +13,11 @@ import { SPACE_EXPLAINED } from './explained-space.js'
 import { SPLIT_EXPLAINED } from './explained-split.js'
 import { ALGEBRA_EXPLAINED } from './explained-algebra.js'
 import { PROFILE_EXPLAINED } from './explained-profiles.js'
+import { PROB_EXPLAINED } from './explained-prob.js'
+import { GAME_EXPLAINED } from './explained-games.js'
+import { PARSE_EXPLAINED } from './explained-parsing.js'
+import { CONTROL_EXPLAINED } from './explained-control.js'
+import { RESEARCH_EXPLAINED } from './explained-research.js'
 
 const pair = (Python, JavaScript) => ({ Python, JavaScript })
 
@@ -1492,4 +1497,4 @@ const CORE_EXPLAINED = {
 }
 
 // The Advanced lessons' explained code lives beside its family (explained-dag.js, …).
-export const EXPLAINED = { ...CORE_EXPLAINED, ...DAG_EXPLAINED, ...TREE_EXPLAINED, ...SUBSET_EXPLAINED, ...DIGIT_EXPLAINED, ...SPACE_EXPLAINED, ...SPLIT_EXPLAINED, ...ALGEBRA_EXPLAINED, ...PROFILE_EXPLAINED }
+export const EXPLAINED = { ...CORE_EXPLAINED, ...DAG_EXPLAINED, ...TREE_EXPLAINED, ...SUBSET_EXPLAINED, ...DIGIT_EXPLAINED, ...SPACE_EXPLAINED, ...SPLIT_EXPLAINED, ...ALGEBRA_EXPLAINED, ...PROFILE_EXPLAINED, ...PROB_EXPLAINED, ...GAME_EXPLAINED, ...PARSE_EXPLAINED, ...CONTROL_EXPLAINED, ...RESEARCH_EXPLAINED }

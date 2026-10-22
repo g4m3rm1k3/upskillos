@@ -14,6 +14,11 @@ import { SPACE_HUNTS } from './bug-hunts-space.js'
 import { SPLIT_HUNTS } from './bug-hunts-split.js'
 import { ALGEBRA_HUNTS } from './bug-hunts-algebra.js'
 import { PROFILE_HUNTS } from './bug-hunts-profiles.js'
+import { PROB_HUNTS } from './bug-hunts-prob.js'
+import { GAME_HUNTS } from './bug-hunts-games.js'
+import { PARSE_HUNTS } from './bug-hunts-parsing.js'
+import { CONTROL_HUNTS } from './bug-hunts-control.js'
+import { RESEARCH_HUNTS } from './bug-hunts-research.js'
 
 const pair = (Python, JavaScript) => ({ Python, JavaScript })
 
@@ -772,4 +777,4 @@ const CORE_HUNTS = {
 }
 
 // The Advanced lessons' hunts live beside their family (bug-hunts-dag.js, …).
-export const HUNTS = { ...CORE_HUNTS, ...DAG_HUNTS, ...TREE_HUNTS, ...SUBSET_HUNTS, ...DIGIT_HUNTS, ...SPACE_HUNTS, ...SPLIT_HUNTS, ...ALGEBRA_HUNTS, ...PROFILE_HUNTS }
+export const HUNTS = { ...CORE_HUNTS, ...DAG_HUNTS, ...TREE_HUNTS, ...SUBSET_HUNTS, ...DIGIT_HUNTS, ...SPACE_HUNTS, ...SPLIT_HUNTS, ...ALGEBRA_HUNTS, ...PROFILE_HUNTS, ...PROB_HUNTS, ...GAME_HUNTS, ...PARSE_HUNTS, ...CONTROL_HUNTS, ...RESEARCH_HUNTS }

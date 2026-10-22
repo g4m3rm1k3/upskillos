@@ -10,8 +10,15 @@ import { LESSONS } from './lessons/index.js'
 
 const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES, ...SPECIALIST_ORACLES }
 
+// The probabilistic answers (and every other answer that is a chance or an expectation), fractions "p/q", as the numbers a learner types.
+const fraction = v => { const [p, q] = v.split('/').map(Number); return p / q }
+const PROB_IDS = ['probability-distribution', 'poisson-binomial', 'expected-time', 'self-loops', 'cyclic-expectations', 'coupon-collector', 'moments', 'conditional-dp', 'stochastic-control', 'stochastic-games', 'inside-outside', 'forward-backward', 'finite-mdp', 'value-iteration', 'policy-iteration', 'average-reward', 'optimal-stopping', 'resource-control', 'continuous-state', 'lqr', 'pomdp', 'knapsack-fptas']
+
 // Answers that are not a lesson's challenge answer, computed without DP.
 const EXTRA = {
+  ...Object.fromEntries(PROB_IDS.map(id => [id, args => fraction(SPECIALIST_ORACLES[id](args))])),
+  // How many routes are on the multiobjective Pareto front.
+  'pareto-count': args => SPECIALIST_ORACLES['multiobjective'](args).length,
   // The length of the LCS that the hirschberg oracle returns.
   'hirschberg-length': ([a, b]) => EXPERT_ORACLES['hirschberg']([a, b]).length,
   // The cht-numeric answer, a decimal string, as a number (exact for these small inputs).

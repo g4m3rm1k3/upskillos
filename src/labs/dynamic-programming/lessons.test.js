@@ -51,9 +51,9 @@ it('keeps specialist and expert lessons distinct, with explained traces and chec
   }
 })
 
-it('verifies all 160 JavaScript reference solutions pass their challenge suites', () => {
+it('verifies all 206 JavaScript reference solutions pass their challenge suites', () => {
   const challengeIds = Object.keys(CHALLENGES)
-  expect(challengeIds.length).toBe(160)
+  expect(challengeIds.length).toBe(206)
 
   for (const id of challengeIds) {
     const challenge = CHALLENGES[id]
@@ -67,12 +67,12 @@ it('verifies all 160 JavaScript reference solutions pass their challenge suites'
     expect(result.passed, `Challenge '${id}' failed on reference solution: ${result.error}`).toBe(true)
     expect(result.rows.length).toBe(challenge.cases.length)
   }
-})
+}, 60000)
 
 // The Python references, run in real Python (one process for all of them), compared exactly as the
 // page's worker compares them: JSON with sorted keys and no spaces.
 const PYTHON = ['python', 'python3'].find(cmd => { try { return spawnSync(cmd, ['-c', 'print(1)']).status === 0 } catch { return false } })
-it.skipIf(!PYTHON)('verifies all 160 Python reference solutions pass their challenge suites, in real Python', () => {
+it.skipIf(!PYTHON)('verifies all 206 Python reference solutions pass their challenge suites, in real Python', () => {
   const jobs = Object.fromEntries(Object.entries(CHALLENGES).map(([id, c]) => [id, { code: SOLUTIONS[id]?.Python, cases: c.cases }]))
   for (const [id, job] of Object.entries(jobs)) expect(job.code, `Missing Python reference solution for ${id}`).toBeTruthy()
   const script = [

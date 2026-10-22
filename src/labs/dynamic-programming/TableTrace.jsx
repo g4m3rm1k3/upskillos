@@ -33,6 +33,9 @@ export function parseCell(text) {
   if (['∞', 'inf', 'infinity'].includes(s)) return Infinity
   if (['-∞', '−∞', '-inf', '-infinity'].includes(s)) return -Infinity
   if (s !== '' && Number.isFinite(Number(s))) return Number(s)
+  // A fraction such as 7/2, for the probability tables.
+  const frac = s.match(/^(-?\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)$/)
+  if (frac && Number(frac[2]) !== 0) return Number(frac[1]) / Number(frac[2])
   return undefined
 }
 

@@ -87,6 +87,9 @@ function components(n, edges) {
   return { comps, of }
 }
 const sum = xs => xs.reduce((s, x) => s + x, 0)
+// A probability answer "p/q" against a table's real number: the table's value when they agree to 1e-9
+// (so the test compares equal values), otherwise the fraction as a number.
+const near = (want, value) => { const [p, q] = String(want).split('/').map(Number); const x = p / (q ?? 1); return Math.abs(x - value) < 1e-9 ? value : x }
 const plus = w => (w < 0 ? ` − ${-w}` : ` + ${w}`)
 
 // Trees (the tree lessons): rooted at 0. post lists the vertices children first (a breadth-first order
@@ -134,6 +137,19 @@ function ahoAutomaton(alphabet, patterns) {
   for (let i = 0; i < queue.length; i++) { const u = queue[i]; bad[u] = bad[u] || bad[fail[u]]; for (const c of alphabet) { if (c in go[u]) { const v = go[u][c]; fail[v] = go[fail[u]][c]; queue.push(v) } else go[u][c] = go[fail[u]][c] } }
   return { go, bad, word }
 }
+
+// The fixed models of the parsing tables (the input box changes only the string or the observations).
+const CYK_GRAMMAR = [['S', 'AB'], ['S', 'BC'], ['A', 'BA'], ['A', 'a'], ['B', 'CC'], ['B', 'b'], ['C', 'AB'], ['C', 'a']]
+const VITERBI_MODEL = [[0, 2], [[1, 3], [2, 0]], [[0, 4], [3, 0]]]
+const FB_MODEL = [[1, 1], [[2, 1], [1, 2]], [[3, 1], [1, 3]]]
+const BP_PAIR = [[2, 1], [1, 3]]
+// The fixed models of the control tables.
+const FMDP = [[[[0], [1, 2]], [[2], [0, 1]], [[0, 1], [2]]], [[1, 0], [2, -1], [0, 3]]]
+const VI_MODEL = [[[1, 2], [2, 3], [3, 0], [0, 1]], [[1, 0], [0, 4], [2, -1], [-3, 5]]]
+const RC_ACTIONS = [[2, 1, 50, 10], [1, 1, 25, 3]]
+const CS_MODEL = [[0, 5, 9, 12, 14], [5, 4], 4]
+// The fixed tree of the tree-automata table: 0 → (1, 2), 1 → (3, 4).
+const TA_TREE = [[1, 2], [3, 4], [], [], []]
 
 export const TRACES = {
   fibonacci: ({ n = 8 } = {}) => {
@@ -2175,6 +2191,468 @@ export const TRACES = {
     t.set(rows.length, 0, sum(lastRows.map(rc => t.get(...rc))), lastRows, lastRows.length ? `every colouring of the last bag: ${lastRows.map(rc => t.name(...rc)).join(' + ')} = ${lastRows.map(rc => t.get(...rc)).join(' + ')}` : 'the last bag has no proper colouring: 0')
     return { title: `${n} vertices, ${k} colour${k === 1 ? '' : 's'}`, setup: `Bag i holds vertex i and every earlier vertex with a neighbour at i or later: ${bags.map((b, i) => `{${b.join(', ')}}`).join(', ')}. N(i, χ): the colourings of vertices 0 … i whose colours on bag i are χ. Each reads the colourings of the bag before that agree on the vertices both bags hold; vertices that leave are forgotten, so their colourings add up.`, table: t, answer: [rows.length, 0], args: [k, edges, bags], input: { k, n, edges } }
   },
+  'probability-distribution': ({ n = 2, s = 4, t = 5 } = {}) => {
+    const t2 = table([...range(0, n).map(i => `${i} di${i === 1 ? 'e' : 'ce'}`), 'chance'], range(0, n * s).map(String), (r, c) => (r > n ? `P(${c})` : `W(${r},${c})`))
+    range(0, n * s).forEach(x => t2.seed(0, x, x === 0 ? 1 : 0, x === 0 ? 'no dice, sum 0: one way' : 'no dice can’t make this sum'))
+    for (let i = 1; i <= n; i++) for (let x = 0; x <= n * s; x++) {
+      const from = range(1, s).filter(f => x - f >= 0 && x - f <= (i - 1) * s).map(f => x - f)
+      t2.set(i, x, sum(from.map(y => t2.get(i - 1, y))), from.map(y => [i - 1, y]), from.length ? `${from.map(y => `W(${i - 1},${y})`).join(' + ')} = ${from.map(y => t2.get(i - 1, y)).join(' + ')}` : 'no face reaches this sum: 0')
+    }
+    t2.set(n + 1, t, t2.get(n, t) / s ** n, [[n, t]], `W(${n},${t}) / ${s}^${n} = ${t2.get(n, t)} / ${s ** n}`)
+    return { title: `${n} dice with ${s} faces, sum ${t}`, setup: `W(i, x): the outcomes of the first i dice that add up to x. Each die adds a face 1 to ${s}, so W(i, x) adds W(i − 1, x − f) over the faces. All ${s}^${n} outcomes are equally likely, so the chance is W(n, t) / ${s}^${n}.`, table: t2, answer: [n + 1, t], args: [n, s, t], check: want => near(want, t2.get(n + 1, t)) }
+  },
+  'poisson-binomial': ({ p = [20, 70, 50], k = 1 } = {}) => {
+    const n = p.length
+    const t = table(range(0, n).map(i => (i === 0 ? 'no trials' : `trial ${i} (${p[i - 1]}%)`)), range(0, n).map(j => `${j}`), (r, c) => `P(${r},${c})`)
+    range(0, n).forEach(j => t.seed(0, j, j === 0 ? 1 : 0, j === 0 ? 'no trials: 0 successes for sure' : 'no trials can’t succeed'))
+    for (let i = 1; i <= n; i++) for (let j = 0; j <= n; j++) {
+      const q = p[i - 1] / 100, reads = [[i - 1, j], ...(j > 0 ? [[i - 1, j - 1]] : [])]
+      const v = t.get(i - 1, j) * (1 - q) + (j > 0 ? t.get(i - 1, j - 1) * q : 0)
+      t.set(i, j, v, reads, j > 0 ? `P(${i - 1},${j})·${show(1 - q)} + P(${i - 1},${j - 1})·${show(q)} = ${show(t.get(i - 1, j))}·${show(1 - q)} + ${show(t.get(i - 1, j - 1))}·${show(q)}` : `P(${i - 1},0)·${show(1 - q)} = ${show(t.get(i - 1, 0))}·${show(1 - q)}`)
+    }
+    return { title: `Chances ${p.map(x => `${x}%`).join(', ')}, exactly ${k}`, setup: 'P(i, j): the chance of exactly j successes among the first i trials. Trial i fails (chance 1 − q) and keeps j, or succeeds (chance q) and adds one, so P(i, j) = P(i − 1, j)·(1 − q) + P(i − 1, j − 1)·q. Each trial has its own q.', table: t, answer: [n, k], args: [p, k], check: want => near(want, t.get(n, k)) }
+  },
+  'expected-time': ({ faces = [1, 2], n = 4 } = {}) => {
+    const k = faces.length
+    const t = line(n, 'E', t => t.seed(0, 0, 0, 'at the end: no more rolls'), (t, d) => {
+      const to = faces.map(f => Math.max(0, d - f))
+      return [1 + sum(to.map(j => t.get(0, j))) / k, [...new Set(to)], `1 + (${to.map(j => `E(${j})`).join(' + ')}) / ${k} = 1 + (${to.map(j => show(t.get(0, j))).join(' + ')}) / ${k}`]
+    })
+    return { title: `Faces ${list(faces)}, ${n} squares to go`, setup: `E(d): the expected number of rolls with d squares still to go. One roll, then each face f (all equally likely) leaves d − f to go, or 0 if it reaches or passes the end: E(d) = 1 + the average of E(d − f).`, table: t, answer: [0, n], args: [faces, n], check: want => near(want, t.get(0, n)) }
+  },
+  'self-loops': ({ n = 4, s = 3 } = {}) => {
+    const t = line(n, 'E', t => t.seed(0, 0, 0, 'on the last square: no more rolls'), (t, d) => {
+      const fits = Math.min(s, d), from = range(1, fits).map(f => d - f)
+      return [(s + sum(from.map(j => t.get(0, j)))) / fits, from, `${s - fits ? `${s - fits} of ${s} faces overshoot and waste the roll: ` : ''}(${s} + ${from.map(j => `E(${j})`).join(' + ')}) / ${fits} = (${s} + ${from.map(j => show(t.get(0, j))).join(' + ')}) / ${fits}`]
+    })
+    return { title: `A ${s}-sided die, ${n} squares to go, exact landing`, setup: `E(d): the expected rolls with d squares to go, landing exactly on the last. A face larger than d wastes the roll, so E(d) = 1 + (Σ E(d − f) over the faces that fit + (faces that don’t)·E(d)) / ${s}. E(d) is on both sides: solving gives E(d) = (${s} + Σ E(d − f)) / (faces that fit).`, table: t, answer: [0, n], args: [n, s], check: want => near(want, t.get(0, n)) }
+  },
+  'coupon-collector': ({ w = [1, 2, 3] } = {}) => {
+    const n = w.length, W = sum(w), full = (1 << n) - 1, name = m => `{${range(0, n - 1).filter(i => (m >> i) & 1).join(',')}}`
+    const order = range(0, full).reverse(), col = new Map(order.map((m, j) => [m, j]))
+    const t = table([''], order.map(name), (r, c) => `E${name(order[c])}`)
+    t.seed(0, col.get(full), 0, 'every type collected: no more draws')
+    for (const S of order.slice(1)) {
+      const have = sum(range(0, n - 1).filter(i => (S >> i) & 1).map(i => w[i])), missing = range(0, n - 1).filter(i => !((S >> i) & 1))
+      const v = (W + sum(missing.map(i => w[i] * t.get(0, col.get(S | (1 << i)))))) / (W - have)
+      t.set(0, col.get(S), v, missing.map(i => [0, col.get(S | (1 << i))]), `(${W} + ${missing.map(i => `${w[i]}·E${name(S | (1 << i))}`).join(' + ')}) / (${W} − ${have}) = (${W} + ${missing.map(i => `${w[i]}·${show(t.get(0, col.get(S | (1 << i))))}`).join(' + ')}) / ${W - have}`)
+    }
+    return { title: `Weights ${list(w)}`, setup: `E(S): the expected draws still needed when the types in S are collected. Type i comes up with chance w(i)/${W}. A draw from S changes nothing (a self-loop); solving for E(S) gives E(S) = (${W} + Σ w(i)·E(S ∪ {i}) over the missing i) / (${W} − w(S)). Bigger sets first.`, table: t, answer: [0, col.get(0)], args: [w], check: want => near(want, t.get(0, col.get(0))) }
+  },
+  'moments': ({ faces = [1, 2], n = 4 } = {}) => {
+    const k = faces.length
+    const t = table(['E (mean)', 'S (mean of T²)', 'variance'], range(0, n).map(String), (r, c) => (r === 2 ? 'Var' : `${r ? 'S' : 'E'}(${c})`))
+    t.seed(0, 0, 0, 'at the end: no more rolls')
+    t.seed(1, 0, 0, 'at the end: T = 0, so T² = 0')
+    for (let d = 1; d <= n; d++) {
+      const to = faces.map(f => Math.max(0, d - f)), e = sum(to.map(j => t.get(0, j))) / k, s2 = sum(to.map(j => t.get(1, j))) / k
+      t.set(0, d, 1 + e, [...new Set(to)].map(j => [0, j]), `1 + the average of ${to.map(j => `E(${j})`).join(', ')} = 1 + ${show(e)}`)
+      t.set(1, d, 1 + 2 * e + s2, [...new Set(to)].flatMap(j => [[0, j], [1, j]]), `T = 1 + T′, so T² = 1 + 2T′ + T′²: 1 + 2·${show(e)} + ${show(s2)}`)
+    }
+    t.set(2, n, t.get(1, n) - t.get(0, n) ** 2, [[1, n], [0, n]], `S(${n}) − E(${n})² = ${show(t.get(1, n))} − ${show(t.get(0, n))}²`)
+    return { title: `Faces ${list(faces)}, ${n} squares to go`, setup: 'T: the number of rolls still needed. E(d) is its mean and S(d) the mean of T². One roll, then T′ more, so T² = 1 + 2T′ + T′², averaged over the faces. The variance is S − E², worked out only at the end.', table: t, answer: [2, n], args: [faces, n], check: want => near(want, t.get(2, n)) }
+  },
+  'conditional-dp': ({ n = 4, p = 50 } = {}) => {
+    const q = p / 100
+    const t = table(['ends T (chance)', 'ends H (chance)', 'heads, ends T', 'heads, ends H', 'mean'], range(0, n).map(String), (r, c) => [`T(${c})`, `H(${c})`, `hT(${c})`, `hH(${c})`, 'mean'][r])
+    t.seed(0, 0, 1, 'no flips: the empty sequence, which counts as ending in T')
+    t.seed(1, 0, 0, 'no flips can’t end in a head')
+    t.seed(2, 0, 0, 'no heads yet')
+    t.seed(3, 0, 0, 'no heads yet')
+    for (let i = 1; i <= n; i++) {
+      const [T, H, hT, hH] = [0, 1, 2, 3].map(r => t.get(r, i - 1))
+      t.set(0, i, (T + H) * (1 - q), [[0, i - 1], [1, i - 1]], `a tail after anything: (T(${i - 1}) + H(${i - 1}))·${show(1 - q)} = (${show(T)} + ${show(H)})·${show(1 - q)}`)
+      t.set(1, i, T * q, [[0, i - 1]], `a head only after a tail: T(${i - 1})·${show(q)} = ${show(T)}·${show(q)}`)
+      t.set(2, i, (hT + hH) * (1 - q), [[2, i - 1], [3, i - 1]], `(hT(${i - 1}) + hH(${i - 1}))·${show(1 - q)} = (${show(hT)} + ${show(hH)})·${show(1 - q)}`)
+      t.set(3, i, (hT + T) * q, [[2, i - 1], [0, i - 1]], `the new head adds 1 on every path: (hT(${i - 1}) + T(${i - 1}))·${show(q)} = (${show(hT)} + ${show(T)})·${show(q)}`)
+    }
+    const reads = [[2, n], [3, n], [0, n], [1, n]]
+    t.set(4, n, (t.get(2, n) + t.get(3, n)) / (t.get(0, n) + t.get(1, n)), reads, `(hT + hH) / (T + H) = (${show(t.get(2, n))} + ${show(t.get(3, n))}) / (${show(t.get(0, n))} + ${show(t.get(1, n))})`)
+    return { title: `${n} flips, heads ${p}%, no two heads together`, setup: 'T(i), H(i): the chance that the first i flips have no two heads together and end in a tail or a head. hT(i), hH(i): the same paths’ chance times their number of heads. Nothing is divided until the end: the mean given the event is (hT + hH) / (T + H).', table: t, answer: [4, n], args: [n, p], check: want => near(want, t.get(4, n)) }
+  },
+  'stochastic-control': ({ a = [3, 1, 4, 2], b = [1, 2, 1, 3], p = [50, 25, 50, 100] } = {}) => {
+    const n = a.length
+    const t = table([''], range(0, n + 1).map(String), (r, c) => `V(${c})`)
+    t.seed(0, n + 1, 0, 'past the end: nothing more to pay')
+    t.seed(0, n, 0, 'at the end: nothing more to pay')
+    for (let i = n - 1; i >= 0; i--) {
+      const safe = a[i] + t.get(0, i + 1), risky = (100 * b[i]) / p[i] + t.get(0, i + 2)
+      t.set(0, i, Math.min(safe, risky), [[0, i + 1], [0, i + 2]], `min(safe ${a[i]} + V(${i + 1}), risky ${b[i]} · 100/${p[i]} + V(${i + 2})) = min(${show(safe)}, ${show(risky)})`)
+    }
+    return { title: `${n} stages`, setup: 'V(i): the least expected cost to finish from stage i. Safe pays a(i) and moves on one stage. Risky pays b(i) a try and jumps two stages with chance p(i)%, else stays: V = b + p·V(i + 2) + (1 − p)·V, so V = b/p + V(i + 2). Filled from the end.', table: t, answer: [0, 0], args: [a, b, p], check: want => near(want, t.get(0, 0)) }
+  },
+  'win-lose': ({ grid = [[0, 0, 0], [0, 1, 0], [0, 0, 0]] } = {}) => {
+    const h = grid.length, w = grid[0].length
+    const t = table([...range(0, h - 1).map(r => `row ${r}`), 'winning squares'], range(0, w - 1).map(String), (r, c) => (r === h ? 'count' : `W(${r},${c})`))
+    const moves = (r, c) => [[r - 1, c], [r, c - 1], [r - 1, c - 1]].filter(([y, x]) => y >= 0 && x >= 0 && !grid[y][x])
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+      if (grid[r][c]) continue
+      const to = moves(r, c)
+      if (!to.length) { t.seed(r, c, false, 'no move: the player to move here loses'); continue }
+      const losing = to.find(([y, x]) => !t.get(y, x))
+      t.set(r, c, !!losing, to, losing ? `W(${losing[0]},${losing[1]}) = F: move there and the opponent loses` : `every move reaches a winning square: ${to.map(([y, x]) => `W(${y},${x})`).join(', ')} ${to.length === 1 ? 'is' : 'are all'} T`)
+    }
+    const free = []
+    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) if (!grid[r][c]) free.push([r, c])
+    const wins = free.filter(([r, c]) => t.get(r, c))
+    t.set(h, 0, wins.length, free, `the T squares: ${wins.length ? wins.map(([r, c]) => `(${r},${c})`).join(', ') : 'none'}`)
+    return { title: `A ${h} × ${w} board`, setup: 'W(r, c) is T when the player to move from (r, c) can force a win. Moves go up, left or diagonally up-left onto a free square. A square with no move is F; a square is T when some move reaches an F square, and F when every move reaches a T one.', table: t, answer: [h, 0], args: [grid] }
+  },
+  'subtraction-games': ({ moves = [1, 3], N = 8 } = {}) => {
+    const t = table(['W (player to move wins)', 'losing piles'], range(0, N).map(String), (r, c) => (r ? 'count' : `W(${c})`))
+    for (let i = 0; i <= N; i++) {
+      const fits = moves.filter(s => s <= i)
+      if (!fits.length) { t.seed(0, i, false, 'no move fits: the player to move loses'); continue }
+      const losing = fits.find(s => !t.get(0, i - s))
+      t.set(0, i, !!losing, fits.map(s => [0, i - s]), losing ? `remove ${losing}: W(${i - losing}) = F, so the opponent loses` : `every move leaves a winning pile: ${fits.map(s => `W(${i - s})`).join(', ')} ${fits.length === 1 ? 'is' : 'are all'} T`)
+    }
+    const lost = range(0, N).filter(i => !t.get(0, i))
+    t.set(1, N, lost.length, range(0, N).map(i => [0, i]), `the F piles: ${lost.join(', ')}`)
+    return { title: `Moves ${list(moves)}, piles 0 to ${N}`, setup: 'W(i) is T when the player to move with i stones can force a win. A pile loses when every move that fits leaves a winning pile (or no move fits), and wins when some move leaves a losing one.', table: t, answer: [1, N], args: [moves, N] }
+  },
+  'score-difference': ({ a = [1, 2, 3, 7] } = {}) => {
+    const n = a.length
+    const t = table(['D'], range(0, n).map(String), (r, c) => `D(${c})`)
+    t.seed(0, n, 0, 'no stones left: no lead')
+    for (let i = n - 1; i >= 0; i--) {
+      const opts = [1, 2, 3].filter(k => i + k <= n).map(k => [k, sum(a.slice(i, i + k)), t.get(0, i + k)])
+      const best = maxOf(opts.map(([, take, d]) => take - d))
+      t.set(0, i, best, opts.map(([k]) => [0, i + k]), `max(${opts.map(([k, take]) => `${take} − D(${i + k})`).join(', ')}) = max(${opts.map(([, take, d]) => take - d).join(', ')})`)
+    }
+    return { title: `Stones ${list(a)}`, setup: 'D(i): the lead of the player to move over the other, with stones i, i + 1, … left. Taking t stones scores their sum, and then the other player leads by D(i + t), so D(i) = max over t of (sum − D(i + t)). Filled from the back.', table: t, answer: [0, 0], args: [a] }
+  },
+  'interval-games': ({ a = [1, 5, 2] } = {}) => {
+    const n = a.length
+    const t = table(range(0, n).map(l => `l = ${l}`), range(0, n).map(r => `r = ${r}`), (l, r) => `D(${l},${r})`)
+    for (let l = 0; l <= n; l++) t.seed(l, l, 0, 'an empty piece: no lead')
+    for (let len = 1; len <= n; len++) for (let l = 0; l + len <= n; l++) {
+      const r = l + len, left = a[l] - t.get(l + 1, r), right = a[r - 1] - t.get(l, r - 1)
+      t.set(l, r, Math.max(left, right), [[l + 1, r], [l, r - 1]], `max(${a[l]} − D(${l + 1},${r}), ${a[r - 1]} − D(${l},${r - 1})) = max(${left}, ${right})`)
+    }
+    return { title: `Row ${list(a)}`, setup: 'D(l, r): the lead of the player to move on the piece a[l], …, a[r − 1]. Take the left end and the other player leads by D(l + 1, r), or the right end and they lead by D(l, r − 1). Shorter pieces first.', table: t, answer: [0, n], args: [a] }
+  },
+  'grundy': ({ n = 6 } = {}) => {
+    const t = line(n, 'g', t => t.seed(0, 0, 0, 'no pins: no move, value 0'), (t, size) => {
+      const reached = new Set(), parts = new Set()
+      for (const take of [1, 2]) for (let left = 0; left + take <= size; left++) {
+        const right = size - take - left
+        reached.add(t.get(0, left) ^ t.get(0, right))
+        parts.add(left).add(right)
+      }
+      let mex = 0
+      while (reached.has(mex)) mex++
+      const vals = [...reached].sort((x, y) => x - y)
+      return [mex, [...parts].sort((x, y) => x - y), `moves reach the values {${vals.join(', ')}} (each g(left) ⊕ g(right)); the smallest missing is ${mex}`]
+    })
+    return { title: `Kayles, ${n} pins`, setup: 'g(n): the Grundy value of a row of n pins. A move knocks down one pin or two neighbours, leaving rows of left and right pins, worth g(left) ⊕ g(right). g(n) is the mex: the smallest value no move reaches.', table: t, answer: [0, n], args: [n] }
+  },
+  'game-sums': ({ moves = [1, 2], piles = [3, 4, 2] } = {}) => {
+    const top = maxOf(piles)
+    const t = table(['g', 'XOR of the piles', 'winning moves'], range(0, top).map(String), (r, c) => (r === 0 ? `g(${c})` : r === 1 ? 'XOR' : 'count'))
+    t.seed(0, 0, 0, 'an empty pile: no move, value 0')
+    for (let x = 1; x <= top; x++) {
+      const fits = moves.filter(s => s <= x), reached = new Set(fits.map(s => t.get(0, x - s)))
+      let mex = 0
+      while (reached.has(mex)) mex++
+      t.set(0, x, mex, fits.map(s => [0, x - s]), fits.length ? `mex{${[...reached].sort((p, q) => p - q).join(', ')}} = ${mex}` : 'no move fits: value 0')
+    }
+    const total = piles.reduce((acc, p) => acc ^ t.get(0, p), 0)
+    t.set(1, 0, total, [...new Set(piles)].map(p => [0, p]), `${piles.map(p => `g(${p})`).join(' ⊕ ')} = ${piles.map(p => t.get(0, p)).join(' ⊕ ')}`)
+    const wins = []
+    for (const p of piles) for (const s of moves) if (s <= p && t.get(0, p - s) === (total ^ t.get(0, p))) wins.push(`${p} → ${p - s}`)
+    const reads = [[1, 0], ...[...new Set(piles.flatMap(p => [p, ...moves.filter(s => s <= p).map(s => p - s)]))].map(x => [0, x])]
+    t.set(2, 0, wins.length, reads, wins.length ? `moves that make the XOR 0: ${wins.join(', ')}` : 'the XOR is 0, so no move makes it 0 again: none win')
+    return { title: `Moves ${list(moves)}, piles ${list(piles)}`, setup: 'g(x): the Grundy value of one pile of x, the mex of the values its moves reach. The whole position is lost for the player to move exactly when the XOR of the piles’ values is 0. A winning move changes one pile p to a size worth XOR ⊕ g(p).', table: t, answer: [2, 0], args: [moves, piles] }
+  },
+  'stochastic-games': ({ n = 3, s = 2 } = {}) => {
+    const t = table(range(0, n - 1).map(a => `mover on ${a}`), range(0, n - 1).map(b => `other on ${b}`), (a, b) => `V(${a},${b})`)
+    const after = (b, x) => (x >= n ? 1 : 1 - t.get(b, x))
+    const name = (b, x) => (x >= n ? 'reach the end: 1' : `1 − V(${b},${x})`)
+    for (let total = 2 * n - 2; total >= 0; total--) for (let a = Math.max(0, total - n + 1); a <= Math.min(n - 1, total); a++) {
+      const b = total - a, step = after(b, a + 1), roll = sum(range(1, s).map(f => after(b, a + f))) / s
+      const reads = [...new Set(range(1, s).map(f => a + f).filter(x => x < n))].map(x => [b, x])
+      t.set(a, b, Math.max(step, roll), reads, `max(step ${name(b, a + 1)} = ${show(step)}, roll the average of ${range(1, s).map(f => (a + f >= n ? '1' : `1 − V(${b},${a + f})`)).join(', ')} = ${show(roll)})`)
+    }
+    return { title: `Race to ${n}, a ${s}-sided die`, setup: 'V(a, b): the chance that the player to move, on square a, wins against the other on b. After a move the roles swap, so a move to a′ is worth 1 − V(b, a′), or 1 on reaching n. Step is a choice; a roll is averaged over the faces. V is the better of the two.', table: t, answer: [0, 0], args: [n, s], check: want => near(want, t.get(0, 0)) }
+  },
+  'cyk': ({ s = 'baaba' } = {}) => {
+    const rules = CYK_GRAMMAR, n = s.length, nts = [...new Set(rules.map(([l]) => l))]
+    // One block of rows per nonterminal: row (X, i), column j, cell "X derives s[i:j]".
+    const at = (X, i) => nts.indexOf(X) * n + i
+    const t = table(nts.flatMap(X => range(0, n - 1).map(i => `${X}, from ${i}`)), range(1, n).map(j => `to ${j}`), (r, c) => `${nts[Math.floor(r / n)]}(${r % n},${c + 1})`)
+    for (let i = 0; i < n; i++) for (const X of nts) {
+      const r = rules.find(([l, rhs]) => l === X && rhs === s[i])
+      t.seed(at(X, i), i, !!r, r ? `rule ${X} → ${s[i]}` : `no rule ${X} → ${s[i]}`)
+    }
+    for (let len = 2; len <= n; len++) for (let i = 0; i + len <= n; i++) {
+      const j = i + len
+      for (const X of nts) {
+        const reads = [], ways = []
+        for (const [l, rhs] of rules) {
+          if (l !== X || rhs.length !== 2) continue
+          for (let k = i + 1; k < j; k++) {
+            reads.push([at(rhs[0], i), k - 1], [at(rhs[1], k), j - 1])
+            if (t.get(at(rhs[0], i), k - 1) && t.get(at(rhs[1], k), j - 1)) ways.push(`${X} → ${rhs} with ${rhs[0]}(${i},${k}) and ${rhs[1]}(${k},${j})`)
+          }
+        }
+        const uniq = [...new Map(reads.map(rc => [rc.join(), rc])).values()]
+        t.set(at(X, i), j - 1, ways.length > 0, uniq, ways.length ? ways[0] : uniq.length ? `no rule ${X} → YZ has Y and Z on both parts of any split` : `${X} has no rule with two nonterminals`)
+      }
+    }
+    return { title: `“${s}”`, setup: 'Grammar: S → AB | BC, A → BA | a, B → CC | b, C → AB | a. X(i, j) is T when X derives s[i:j]. One letter: a rule X → that letter. Longer: a rule X → YZ and a split k with Y(i, k) and Z(k, j) both T. Shorter pieces first; the answer is S(0, n).', table: t, answer: [at('S', 0), n - 1], args: [rules, s], input: { s } }
+  },
+  'weighted-parsing': ({ s = 'aaaa' } = {}) => {
+    const rules = [['S', 'SS'], ['S', 'a'], ['S', 'b']], n = s.length
+    const t = table(range(0, n - 1).map(i => `from ${i}`), range(1, n).map(j => `to ${j}`), (r, c) => `N(${r},${c + 1})`)
+    for (let i = 0; i < n; i++) t.seed(i, i, 1, `one tree: S → ${s[i]}`)
+    for (let len = 2; len <= n; len++) for (let i = 0; i + len <= n; i++) {
+      const j = i + len, ks = range(i + 1, j - 1)
+      t.set(i, j - 1, sum(ks.map(k => t.get(i, k - 1) * t.get(k, j - 1))), ks.flatMap(k => [[i, k - 1], [k, j - 1]]), `${ks.map(k => `N(${i},${k})·N(${k},${j})`).join(' + ')} = ${ks.map(k => `${t.get(i, k - 1)}·${t.get(k, j - 1)}`).join(' + ')}`)
+    }
+    return { title: `“${s}” under S → SS | a | b`, setup: 'N(i, j): the number of parse trees of s[i:j]. One letter has one tree. A longer piece has S → SS at the top, split at some k: every tree of the left part with every tree of the right part, so the counts multiply, and the splits add.', table: t, answer: [0, n - 1], args: [rules, s], input: { s } }
+  },
+  'viterbi': ({ obs = [0, 1, 1, 0] } = {}) => {
+    const [start, trans, emit] = VITERBI_MODEL, k = start.length, T = obs.length
+    const t = table([...range(0, k - 1).map(x => `state ${x}`), 'cheapest'], range(0, T - 1).map(u => `t = ${u} (sees ${obs[u]})`), (r, c) => (r === k ? 'best' : `V(${c},${r})`))
+    for (let x = 0; x < k; x++) t.seed(x, 0, start[x] + emit[x][obs[0]], `start ${start[x]} + emit ${emit[x][obs[0]]}`)
+    for (let u = 1; u < T; u++) for (let x = 0; x < k; x++) {
+      const opts = range(0, k - 1).map(r => t.get(r, u - 1) + trans[r][x]), best = minOf(opts)
+      t.set(x, u, best + emit[x][obs[u]], range(0, k - 1).map(r => [r, u - 1]), `min(${range(0, k - 1).map(r => `V(${u - 1},${r}) + ${trans[r][x]}`).join(', ')}) + emit ${emit[x][obs[u]]} = ${best} + ${emit[x][obs[u]]}`)
+    }
+    t.set(k, T - 1, minOf(range(0, k - 1).map(x => t.get(x, T - 1))), range(0, k - 1).map(x => [x, T - 1]), `the cheapest of ${range(0, k - 1).map(x => `V(${T - 1},${x})`).join(', ')}`)
+    return { title: `Observations ${list(obs)}`, setup: 'Two states. Costs (−log probabilities): start [0, 2]; moving 0→0 1, 0→1 3, 1→0 2, 1→1 0; state 0 sees 0 for 0 and 1 for 4, state 1 sees 0 for 3 and 1 for 0. V(t, s): the least cost of a path through time t ending in s: the cheapest V(t − 1, r) plus moving r → s, plus what s sees.', table: t, answer: [k, T - 1], args: [start, trans, emit, obs], input: { obs } }
+  },
+  'forward-backward': ({ obs = [0, 0, 1], t: when = 1, s: state = 0 } = {}) => {
+    const [start, trans, emit] = FB_MODEL, k = start.length, T = obs.length
+    const t = table([...range(0, k - 1).map(x => `α, state ${x}`), ...range(0, k - 1).map(x => `β, state ${x}`), 'share'], range(0, T - 1).map(u => `t = ${u} (sees ${obs[u]})`), (r, c) => (r < k ? `α(${c},${r})` : r < 2 * k ? `β(${c},${r - k})` : 'share'))
+    for (let x = 0; x < k; x++) t.seed(x, 0, start[x] * emit[x][obs[0]], `start ${start[x]} · emit ${emit[x][obs[0]]}`)
+    for (let x = 0; x < k; x++) t.seed(k + x, T - 1, 1, 'nothing follows the last time: 1')
+    for (let u = 1; u < T; u++) for (let x = 0; x < k; x++) {
+      t.set(x, u, sum(range(0, k - 1).map(y => t.get(y, u - 1) * trans[y][x])) * emit[x][obs[u]], range(0, k - 1).map(y => [y, u - 1]), `(${range(0, k - 1).map(y => `α(${u - 1},${y})·${trans[y][x]}`).join(' + ')}) · emit ${emit[x][obs[u]]}`)
+    }
+    for (let u = T - 2; u >= 0; u--) for (let x = 0; x < k; x++) {
+      t.set(k + x, u, sum(range(0, k - 1).map(y => trans[x][y] * emit[y][obs[u + 1]] * t.get(k + y, u + 1))), range(0, k - 1).map(y => [k + y, u + 1]), range(0, k - 1).map(y => `${trans[x][y]}·${emit[y][obs[u + 1]]}·β(${u + 1},${y})`).join(' + '))
+    }
+    const total = sum(range(0, k - 1).map(x => t.get(x, T - 1)))
+    t.set(2 * k, when, (t.get(state, when) * t.get(k + state, when)) / total, [[state, when], [k + state, when], ...range(0, k - 1).filter(x => x !== state || when !== T - 1).map(x => [x, T - 1])], `α(${when},${state})·β(${when},${state}) / (${range(0, k - 1).map(x => `α(${T - 1},${x})`).join(' + ')}) = ${t.get(state, when)}·${t.get(k + state, when)} / ${total}`)
+    return { title: `Observations ${list(obs)}, state ${state} at time ${when}`, setup: 'Two states with whole-number weights: start [1, 1]; moving 0→0 2, 0→1 1, 1→0 1, 1→1 2; state 0 sees 0 with weight 3 and 1 with weight 1, state 1 the other way round. α(t, x): the weight of the paths up to t ending in x. β(t, x): the weight of what follows x at t. The share is α · β over the total weight.', table: t, answer: [2 * k, when], args: [start, trans, emit, obs, when, state], input: { obs, t: when, s: state }, check: want => near(want, t.get(2 * k, when)) }
+  },
+  'belief-propagation': ({ n = 4, edges = [[0, 1], [1, 2], [1, 3]] } = {}) => {
+    const k = 2, pair = BP_PAIR, unary = range(0, n - 1).map(v => [1, (v % 3) + 1])
+    const adj = range(0, n - 1).map(() => [])
+    for (const [u, v] of edges) { adj[u].push(v); adj[v].push(u) }
+    const order = [0], parent = range(0, n - 1).map(() => -1), seen = new Set([0])
+    for (let i = 0; i < order.length; i++) for (const v of adj[order[i]]) if (!seen.has(v)) { seen.add(v); parent[v] = order[i]; order.push(v) }
+    const senders = order.slice(1).reverse(), row = new Map(senders.map((v, i) => [v, i]))
+    const children = v => order.filter(c => parent[c] === v)
+    const t = table([...senders.map(v => `message ${v} → ${parent[v]}`), 'root 0', 'Z'], range(0, k - 1).map(x => `value ${x}`), (r, c) => (r < senders.length ? `m${senders[r]}(${c})` : r === senders.length ? `b0(${c})` : 'Z'))
+    const own = (v, y) => unary[v][y] * children(v).reduce((acc, c) => acc * t.get(row.get(c), y), 1)
+    const ownText = (v, y) => [`${unary[v][y]}`, ...children(v).map(c => `m${c}(${y})`)].join('·')
+    for (const v of senders) for (let x = 0; x < k; x++) {
+      const reads = children(v).flatMap(c => range(0, k - 1).map(y => [row.get(c), y]))
+      const v2 = sum(range(0, k - 1).map(y => pair[x][y] * own(v, y)))
+      const rule = range(0, k - 1).map(y => `${pair[x][y]}·${ownText(v, y)}`).join(' + ')
+      if (reads.length) t.set(row.get(v), x, v2, reads, rule)
+      else t.set(row.get(v), x, v2, [], `a leaf: ${rule}`)
+    }
+    for (let x = 0; x < k; x++) t.set(senders.length, x, own(0, x), children(0).map(c => [row.get(c), x]), ownText(0, x))
+    t.set(senders.length + 1, 0, sum(range(0, k - 1).map(x => t.get(senders.length, x))), range(0, k - 1).map(x => [senders.length, x]), range(0, k - 1).map(x => `b0(${x})`).join(' + '))
+    return { title: `A tree on ${n} nodes`, setup: `Values 0 and 1. Node v weighs 1 for value 0 and (v mod 3) + 1 for value 1; an edge weighs 2 when both ends are 0, 3 when both are 1, and 1 otherwise. m_v(x): for parent value x, the weight of v’s subtree: Σ over v’s values y of pair(x, y) · v’s weight · its children’s messages at y. Leaves first; Z sums the root’s weights times its messages.`, table: t, answer: [senders.length + 1, 0], args: [k, unary, edges, pair], input: { n, edges } }
+  },
+  'rna-folding': ({ s = 'GGAAACC' } = {}) => {
+    const n = s.length, ok = new Set(['AU', 'UA', 'GC', 'CG', 'GU', 'UG'])
+    const t = table(range(0, n).map(i => `from ${i}`), range(0, n).map(j => `to ${j}`), (i, j) => `D(${i},${j})`)
+    for (let i = 0; i <= n; i++) for (let j = i; j <= Math.min(n, i + 4); j++) t.seed(i, j, 0, 'fewer than 5 letters: no pair fits')
+    for (let len = 5; len <= n; len++) for (let i = 0; i + len <= n; i++) {
+      const j = i + len, ks = range(i, j - 5).filter(k => ok.has(s[k] + s[j - 1]))
+      const opts = [[t.get(i, j - 1), `D(${i},${j - 1})`], ...ks.map(k => [t.get(i, k) + 1 + t.get(k + 1, j - 1), `D(${i},${k}) + 1 + D(${k + 1},${j - 1}) (pair ${k}–${j - 1}, ${s[k]}–${s[j - 1]})`])]
+      const best = maxOf(opts.map(([v]) => v))
+      t.set(i, j, best, [[i, j - 1], ...ks.flatMap(k => [[i, k], [k + 1, j - 1]])], `max(${opts.map(([, txt]) => txt).join(', ')}) = max(${opts.map(([v]) => v).join(', ')})`)
+    }
+    return { title: `“${s}”`, setup: 'D(i, j): the most pairs in s[i:j]. The last letter is unpaired, or paired with a k at least four places before it whose letter may pair with it (A–U, G–C, G–U); the pair splits the piece into s[i:k] and s[k + 1:j − 1]. Pieces shorter than 5 have no pair.', table: t, answer: [0, n], args: [s] }
+  },
+  'finite-mdp': ({ H = 3 } = {}) => {
+    const [trans, reward] = FMDP, n = trans.length
+    const t = table(range(0, H).map(k => `${k} left`), range(0, n - 1).map(s => `state ${s}`), (k, s) => `V(${k},${s})`)
+    for (let s = 0; s < n; s++) t.seed(0, s, 0, 'no decisions left: 0')
+    for (let k = 1; k <= H; k++) for (let s = 0; s < n; s++) {
+      const opts = trans[s].map((next, a) => reward[s][a] + sum(next.map(x => t.get(k - 1, x))) / next.length)
+      const reads = [...new Set(trans[s].flat())].map(x => [k - 1, x])
+      t.set(k, s, maxOf(opts), reads, `max(${trans[s].map((next, a) => `${reward[s][a]} + avg(${next.map(x => `V(${k - 1},${x})`).join(', ')})`).join(', ')}) = max(${opts.map(show).join(', ')})`)
+    }
+    return { title: `${H} decision${H === 1 ? '' : 's'}`, setup: 'Three states. State 0: action 0 earns 1 and stays; action 1 earns 0 and goes to 1 or 2. State 1: action 0 earns 2 and goes to 2; action 1 earns −1 and goes to 0 or 1. State 2: action 0 earns 0 and goes to 0 or 1; action 1 earns 3 and stays. Next states listed together are equally likely. V(k, s): the best expected total with k decisions left.', table: t, answer: [H, 0], args: [trans, reward, H], input: { H }, check: want => near(want, t.get(H, 0)) }
+  },
+  'value-iteration': ({ K = 4, p = 1, q = 2 } = {}) => {
+    const [nxt, reward] = VI_MODEL, n = nxt.length, g = p / q
+    const t = table(range(0, K).map(k => `after ${k}`), range(0, n - 1).map(s => `state ${s}`), (k, s) => `V${k}(${s})`)
+    for (let s = 0; s < n; s++) t.seed(0, s, 0, 'start from V = 0')
+    for (let k = 1; k <= K; k++) for (let s = 0; s < n; s++) {
+      const opts = nxt[s].map((to, a) => reward[s][a] + g * t.get(k - 1, to))
+      t.set(k, s, maxOf(opts), [...new Set(nxt[s])].map(to => [k - 1, to]), `max(${nxt[s].map((to, a) => `${reward[s][a]} + ${p}/${q}·V${k - 1}(${to})`).join(', ')}) = max(${opts.map(show).join(', ')})`)
+    }
+    return { title: `${K} updates, discount ${p}/${q}`, setup: 'Four states in a ring. State 0: action 0 earns 1 → 1, action 1 earns 0 → 2. State 1: 0 → 2 or 4 → 3. State 2: 2 → 3 or −1 → 0. State 3: −3 → 0 or 5 → 1. Each update: V(s) = max over actions of the reward plus the discount times the old value of where it leads.', table: t, answer: [K, 0], args: [nxt, reward, [p, q], K], input: { K, p, q }, check: want => near(want, t.get(K, 0)) }
+  },
+  'average-reward': ({ n = 3, edges = [[0, 1, 5], [1, 1, 1], [1, 2, 0], [2, 0, 4]] } = {}) => {
+    const t = table([...range(0, n).map(k => `${k} edges`), 'smallest ratio', 'best'], range(0, n - 1).map(v => `to ${v}`), (k, v) => (k <= n ? `D(${k},${v})` : k === n + 1 ? `λ(${v})` : 'best'))
+    for (let v = 0; v < n; v++) t.seed(0, v, v === 0 ? 0 : -INF, v === 0 ? 'no edges: at 0, weight 0' : 'no edges: only 0 is reached')
+    for (let k = 1; k <= n; k++) for (let v = 0; v < n; v++) {
+      const ins = edges.filter(([, b]) => b === v)
+      const opts = ins.map(([u, , w]) => t.get(k - 1, u) + w)
+      const best = ins.length ? maxOf(opts) : -INF
+      t.set(k, v, best, [...new Set(ins.map(([u]) => u))].map(u => [k - 1, u]), ins.length ? `max(${ins.map(([u, , w]) => `D(${k - 1},${u}) + ${w}`).join(', ')})` : 'no edge into this vertex: −∞')
+    }
+    const lam = []
+    for (let v = 0; v < n; v++) {
+      const ks = range(0, n - 1).filter(k => t.get(k, v) > -INF)
+      if (t.get(n, v) === -INF || !ks.length) { t.set(n + 1, v, -INF, [[n, v]], `no walk of ${n} edges ends here`); lam.push(-INF); continue }
+      const ratios = ks.map(k => (t.get(n, v) - t.get(k, v)) / (n - k))
+      t.set(n + 1, v, minOf(ratios), [[n, v], ...ks.map(k => [k, v])], `min(${ks.map(k => `(D(${n},${v}) − D(${k},${v}))/${n - k}`).join(', ')}) = min(${ratios.map(show).join(', ')})`)
+      lam.push(minOf(ratios))
+    }
+    t.set(n + 2, 0, maxOf(lam), range(0, n - 1).map(v => [n + 1, v]), `the largest of ${range(0, n - 1).map(v => `λ(${v})`).join(', ')}`)
+    return { title: `${n} vertices, ${edges.length} edges`, setup: 'D(k, v): the heaviest walk of exactly k edges from 0 to v (−∞ if there is none). Karp: for each v, the smallest (D(n, v) − D(k, v)) / (n − k) over k < n; the best mean cycle is the largest of those.', table: t, answer: [n + 2, 0], args: [n, edges], check: want => near(want, t.get(n + 2, 0)) }
+  },
+  'inventory': ({ d = [5, 0, 3, 4], K = 8, h = 1 } = {}) => {
+    const T = d.length
+    const t = table(['C'], range(0, T).map(j => `${j} met`), (r, j) => `C(${j})`)
+    t.seed(0, 0, 0, 'nothing to meet yet: 0')
+    for (let j = 1; j <= T; j++) {
+      const opts = range(0, j - 1).map(i => { const seg = range(i, j - 1), need = sum(seg.map(x => d[x])), hold = sum(seg.map(x => h * (x - i) * d[x])); return [i, t.get(0, i) + (need > 0 ? K : 0) + hold, need > 0 ? K : 0, hold] })
+      t.set(0, j, minOf(opts.map(([, c]) => c)), opts.map(([i]) => [0, i]), `min(${opts.map(([i, , k, hold]) => `C(${i}) + ${k} + ${hold}`).join(', ')}) = min(${opts.map(([, c]) => c).join(', ')})`)
+    }
+    return { title: `Demand ${list(d)}, order ${K}, hold ${h}`, setup: 'C(j): the least cost of meeting periods 0 … j − 1 with nothing left over. The last order is placed in some period i < j and covers periods i … j − 1: it costs the order (if anything is needed) and h per unit per period held.', table: t, answer: [0, T], args: [d, K, h] }
+  },
+  'optimal-stopping': ({ n = 4, m = 6, c = 0 } = {}) => {
+    const t = table(['V'], range(1, n).map(k => `${k} to come`), (r, k) => `V(${k + 1})`)
+    t.seed(0, 0, (m + 1) / 2, `the last offer must be taken: its average, ${m + 1}/2`)
+    for (let k = 2; k <= n; k++) {
+      const wait = t.get(0, k - 2) - c, v = sum(range(1, m).map(x => Math.max(x, wait))) / m
+      t.set(0, k - 1, v, [[0, k - 2]], `the average of max(x, V(${k - 1})${c ? ` − ${c}` : ''}) over x = 1 … ${m}: take any offer of at least ${show(wait)}`)
+    }
+    return { title: `${n} offers from 1 to ${m}${c ? `, ${c} a look` : ''}`, setup: 'V(k): the expected payoff with k offers still to come. The last must be taken. Seeing an offer x, take it or pay c and continue, worth V(k − 1) − c: take the larger.', table: t, answer: [0, n - 1], args: [n, m, c], check: want => near(want, t.get(0, n - 1)) }
+  },
+  'resource-control': ({ B = 6 } = {}) => {
+    const actions = RC_ACTIONS
+    const t = table(['V'], range(0, B).map(String), (r, b) => `V(${b})`)
+    t.seed(0, 0, 0, 'no tokens: nothing more')
+    for (let b = 1; b <= B; b++) {
+      const ok = actions.filter(([w, l]) => w <= b && l <= b)
+      const opts = ok.map(([w, l, p, r]) => (p / 100) * (r + t.get(0, b - w)) + (1 - p / 100) * t.get(0, b - l))
+      const reads = [...new Set(ok.flatMap(([w, l]) => [b - w, b - l]))].map(x => [0, x])
+      t.set(0, b, maxOf([0, ...opts]), reads, `max(stop 0${ok.map(([w, l, p, r], i) => `, ${p}%·(${r} + V(${b - w})) + ${100 - p}%·V(${b - l}) = ${show(opts[i])}`).join('')})`)
+    }
+    return { title: `${B} tokens`, setup: 'Two kinds of attempt. A: works half the time, paying 10 and using 2 tokens, or fails using 1. B: works a quarter of the time, paying 3, and uses 1 token either way. V(b): the best expected total with b tokens; stopping is worth 0.', table: t, answer: [0, B], args: [B, actions], input: { B }, check: want => near(want, t.get(0, B)) }
+  },
+  'continuous-state': ({ T = 3, x0 = 4 } = {}) => {
+    const [u, g, G] = CS_MODEL, growth = g[0] / g[1]
+    const t = table(range(0, T).map(k => `${k} left`), range(0, G).map(x => `stock ${x}`), (k, x) => `V(${k},${x})`)
+    for (let x = 0; x <= G; x++) t.seed(0, x, 0, 'no periods left: 0')
+    const at = (k, y) => { if (y >= G) return [t.get(k, G), [G], `V(${k},${G})`]; const lo = Math.floor(y + 1e-12), w = y - lo; return w < 1e-12 ? [t.get(k, lo), [lo], `V(${k},${lo})`] : [(1 - w) * t.get(k, lo) + w * t.get(k, lo + 1), [lo, lo + 1], `${show(1 - w)}·V(${k},${lo}) + ${show(w)}·V(${k},${lo + 1})`] }
+    for (let k = 1; k <= T; k++) for (let x = 0; x <= G; x++) {
+      const opts = range(0, x).map(c => { const [v, pts, txt] = at(k - 1, (x - c) * growth); return [u[c] + v, pts, `${u[c]} + ${txt}`] })
+      t.set(k, x, maxOf(opts.map(([v]) => v)), [...new Set(opts.flatMap(([, pts]) => pts))].map(p => [k - 1, p]), `max(${opts.map(([, , txt]) => txt).join(', ')}) = max(${opts.map(([v]) => show(v)).join(', ')})`)
+    }
+    return { title: `${T} period${T === 1 ? '' : 's'} from stock ${x0}`, setup: `Stock on the grid 0 … ${G}. Consuming c earns ${list(u)}[c]; the rest grows by ${g[0]}/${g[1]} and is read between grid points by linear interpolation (above ${G}, the value at ${G}). V(k, x): the best total with k periods left.`, table: t, answer: [T, x0], args: [u, g, G, T, x0], input: { T, x0 }, check: want => near(want, t.get(T, x0)) }
+  },
+  'lqr': ({ a = 1, b = 1, q = 1, r = 1, qf = 0, N = 4 } = {}) => {
+    const t = table(['P'], range(0, N).map(k => (k ? `${k} back` : 'end')), (row, k) => `P(${k})`)
+    t.seed(0, 0, qf, `at the end the cost is ${qf}·x²`)
+    for (let k = 1; k <= N; k++) {
+      const P = t.get(0, k - 1), v = q + a * a * P - (a * b * P) ** 2 / (r + b * b * P)
+      t.set(0, k, v, [[0, k - 1]], `${q} + ${a * a}·P(${k - 1}) − (${a * b}·P(${k - 1}))² / (${r} + ${b * b}·P(${k - 1})) with P(${k - 1}) = ${show(P)}`)
+    }
+    return { title: `x′ = ${a}x + ${b}u, cost ${q}x² + ${r}u², final ${qf}x², ${N} steps`, setup: 'The cost-to-go is P·x². One step back, minimising q x² + r u² + P (a x + b u)² over u gives the Riccati recursion P ← q + a²P − (abP)² / (r + b²P). From x = 1 the answer is P after N steps.', table: t, answer: [0, N], args: [a, b, q, r, qf, N], check: want => near(want, t.get(0, N)) }
+  },
+  'pseudo-polynomial': ({ weights = [3, 4, 5], values = [4, 5, 6], W = 7 } = {}) => {
+    const n = weights.length, total = sum(values)
+    const t = table(['start', ...range(1, n).map(i => `item ${i} (w ${weights[i - 1]}, v ${values[i - 1]})`), 'best'], range(0, total).map(String), (r, c) => (r <= n ? `L(${r},${c})` : 'best'))
+    for (let c = 0; c <= total; c++) t.seed(0, c, c === 0 ? 0 : INF, c === 0 ? 'nothing chosen: worth 0, weight 0' : 'no items yet: this value can’t be reached')
+    for (let i = 1; i <= n; i++) for (let c = 0; c <= total; c++) {
+      const w = weights[i - 1], v = values[i - 1], skip = t.get(i - 1, c), take = c >= v ? t.get(i - 1, c - v) + w : INF
+      t.set(i, c, Math.min(skip, take), c >= v && v > 0 ? [[i - 1, c], [i - 1, c - v]] : [[i - 1, c]], c >= v ? `min(L(${i - 1},${c}), L(${i - 1},${c - v}) + ${w}) = min(${show(skip)}, ${show(take)})` : `the item is worth more than ${c}: L(${i - 1},${c}) = ${show(skip)}`)
+    }
+    const fits = range(0, total).filter(c => t.get(n, c) <= W)
+    t.set(n + 1, 0, maxOf(fits), range(0, total).map(c => [n, c]), `the largest value whose lightest set weighs at most ${W}: ${maxOf(fits)}`)
+    return { title: `Weights ${list(weights)}, values ${list(values)}, W = ${W}`, setup: 'L(i, t): the lightest set of the first i items worth exactly t (∞ if none). Skip item i, or take it on top of the lightest set worth t − v. The columns run over values, not weights, so the table stays small when the weights are huge.', table: t, answer: [n + 1, 0], args: [weights, values, W] }
+  },
+  'knapsack-fptas': ({ weights = [4, 3, 2, 1], values = [100, 61, 39, 5], W = 6, p = 1, q = 2 } = {}) => {
+    const items = weights.map((w, i) => [w, values[i]]).filter(([w]) => w <= W), n = items.length, vmax = n ? maxOf(items.map(([, v]) => v)) : 0
+    if (!n || vmax === 0) {
+      const t = table(['K · best'], ['value'], () => 'answer')
+      t.set(0, 0, 0, [], n ? 'every value is 0' : 'no item fits')
+      return { title: 'Nothing to round', setup: 'No item fits, or every value is 0: the scheme returns 0.', table: t, answer: [0, 0], args: [weights, values, W, [p, q]], check: want => near(want, 0) }
+    }
+    const scaled = items.map(([, v]) => Math.floor((v * q * n) / (p * vmax))), total = sum(scaled), K = (p * vmax) / (q * n)
+    const t = table(['start', ...items.map(([w, v], i) => `item ${i + 1} (w ${w}, ⌊${v}/K⌋ = ${scaled[i]})`), 'K · best'], range(0, total).map(String), (r, c) => (r <= n ? `L(${r},${c})` : 'answer'))
+    for (let c = 0; c <= total; c++) t.seed(0, c, c === 0 ? 0 : INF, c === 0 ? 'nothing chosen' : 'no items yet')
+    for (let i = 1; i <= n; i++) for (let c = 0; c <= total; c++) {
+      const w = items[i - 1][0], s = scaled[i - 1], skip = t.get(i - 1, c), take = c >= s ? t.get(i - 1, c - s) + w : INF
+      t.set(i, c, Math.min(skip, take), c >= s && s > 0 ? [[i - 1, c], [i - 1, c - s]] : [[i - 1, c]], c >= s ? `min(L(${i - 1},${c}), L(${i - 1},${c - s}) + ${w}) = min(${show(skip)}, ${show(take)})` : `worth more than ${c} after rounding: L(${i - 1},${c})`)
+    }
+    const best = maxOf(range(0, total).filter(c => t.get(n, c) <= W))
+    t.set(n + 1, 0, K * best, range(0, total).map(c => [n, c]), `K = ${p}/${q} · ${vmax} / ${n} = ${show(K)}; the best rounded total that fits is ${best}: ${show(K)} · ${best}`)
+    return { title: `ε = ${p}/${q}, W = ${W}`, setup: 'Drop items heavier than W. K = ε · vmax / n; each value becomes ⌊v / K⌋, at most n/ε. L(i, t): the lightest set of the first i items with rounded total t. The answer is K times the best rounded total that fits.', table: t, answer: [n + 1, 0], args: [weights, values, W, [p, q]], input: { weights, values, W, p, q }, check: want => near(want, K * best) }
+  },
+  'parameterized-dp': ({ grid = [[3, 1, 4], [1, 5, 9], [2, 6, 5]] } = {}) => {
+    const h = grid.length, w = grid[0].length, masks = range(0, (1 << h) - 1).filter(m => !(m & (m >> 1)))
+    const lab = m => range(0, h - 1).map(r => (m >> r) & 1).join('')
+    const t = table([...range(0, w - 1).map(c => `column ${c}`), 'best'], masks.map(lab), (r, k) => (r < w ? `B${r}(${lab(masks[k])})` : 'best'))
+    for (let c = 0; c < w; c++) masks.forEach((m, k) => {
+      const gain = sum(range(0, h - 1).filter(r => (m >> r) & 1).map(r => grid[r][c]))
+      if (c === 0) { t.set(0, k, gain, [], `first column: the chosen cells add ${gain}`); return }
+      const ok = masks.map((p, j) => [p, j]).filter(([p]) => !(p & m))
+      const prev = maxOf(ok.map(([, j]) => t.get(c - 1, j)))
+      t.set(c, k, gain + prev, ok.map(([, j]) => [c - 1, j]), `${gain} + the best previous column sharing no row: max(${ok.map(([p]) => `B${c - 1}(${lab(p)})`).join(', ')}) = ${gain} + ${prev}`)
+    })
+    t.set(w, 0, maxOf(masks.map((_, k) => t.get(w - 1, k))), masks.map((_, k) => [w - 1, k]), 'any mask may end the grid: the largest in the last column')
+    return { title: `A ${h} × ${w} grid`, setup: 'Column by column. A mask (top row first) says which rows are chosen; no two neighbours, so only masks without two adjacent 1s. B_c(m): the best total of columns 0 … c with mask m in column c. The previous column’s mask must share no row with m.', table: t, answer: [w, 0], args: [grid] }
+  },
+  'min-plus-convolution': ({ costs = [[0, 1, 5], [0, 2, 3]], R = 3 } = {}) => {
+    const k = costs.length
+    const t = table(['no tasks', ...range(1, k).map(i => `task ${i} ${list(costs[i - 1])}`)], range(0, R).map(String), (i, r) => `best(${i},${r})`)
+    for (let r = 0; r <= R; r++) t.seed(0, r, r === 0 ? 0 : INF, r === 0 ? 'nothing to give: cost 0' : 'no tasks can take these units: ∞')
+    for (let i = 1; i <= k; i++) for (let r = 0; r <= R; r++) {
+      const c = costs[i - 1], xs = range(0, Math.min(c.length - 1, r))
+      t.set(i, r, minOf(xs.map(x => t.get(i - 1, r - x) + c[x])), xs.map(x => [i - 1, r - x]), `min(${xs.map(x => `best(${i - 1},${r - x}) + ${c[x]}`).join(', ')}) = min(${xs.map(x => show(t.get(i - 1, r - x) + c[x])).join(', ')})`)
+    }
+    return { title: `${k} task${k === 1 ? '' : 's'}, ${R} units`, setup: 'best(i, r): the least cost of giving exactly r units to the first i tasks. Task i takes x units for c[x]: best(i, r) = min over x of best(i − 1, r − x) + c[x], a min-plus convolution.', table: t, answer: [k, R], args: [costs, R], check: want => (want === -1 ? INF : want) }
+  },
+  'tree-automata': ({ ops = ['and', 'or'] } = {}) => {
+    const kids = TA_TREE, f = { and: (x, y) => x & y, or: (x, y) => x | y, xor: (x, y) => x ^ y }
+    const order = [0]
+    for (let i = 0; i < order.length; i++) order.push(...kids[order[i]])
+    const post = [...order].reverse(), row = new Map(post.map((v, i) => [v, i]))
+    const t = table(post.map(v => (kids[v].length ? `node ${v} (${kids[v].join(', ')})` : `leaf ${v}`)), ['value 0', 'value 1'], (r, s) => `N${post[r]}(${s})`)
+    for (const v of post) {
+      if (!kids[v].length) { t.seed(row.get(v), 0, 1, 'a leaf labelled 0'); t.seed(row.get(v), 1, 1, 'a leaf labelled 1'); continue }
+      const [a, b] = kids[v]
+      for (const s of [0, 1]) {
+        const terms = []
+        for (const op of ops) for (const x of [0, 1]) for (const y of [0, 1]) if (f[op](x, y) === s) terms.push([op, x, y])
+        t.set(row.get(v), s, sum(terms.map(([, x, y]) => t.get(row.get(a), x) * t.get(row.get(b), y))), [[row.get(a), 0], [row.get(a), 1], [row.get(b), 0], [row.get(b), 1]], terms.length ? terms.map(([op, x, y]) => `${op}: N${a}(${x})·N${b}(${y})`).join(' + ') : 'no operation gives this value: 0')
+      }
+    }
+    return { title: `Operations ${ops.join(', ')}`, setup: 'The tree 0 → (1, 2), 1 → (3, 4). Leaves are labelled 0 or 1, inner nodes with an operation. N_v(s): the labellings of v’s subtree that make v evaluate to s. Children before parents; the answer is N_0(1).', table: t, answer: [row.get(0), 1], args: [kids, ops], input: { ops } }
+  },
+  'proof-checklist': ({ weights = [2, 3], values = [3, 5], W = 6 } = {}) => {
+    const n = weights.length
+    const t = table([...range(0, n).map(i => (i ? `0/1, item ${i}` : '0/1, start')), ...range(0, n).map(i => (i ? `unbounded, item ${i}` : 'unbounded, start'))], range(0, W).map(String), (r, c) => (r <= n ? `A(${r},${c})` : `U(${r - n - 1},${c})`))
+    for (let c = 0; c <= W; c++) { t.seed(0, c, 0, 'no items: 0'); t.seed(n + 1, c, 0, 'no items: 0') }
+    for (let i = 1; i <= n; i++) {
+      const w = weights[i - 1], v = values[i - 1]
+      for (let c = 0; c <= W; c++) {
+        const keep = t.get(i - 1, c)
+        if (c < w) t.set(i, c, keep, [[i - 1, c]], `too heavy: A(${i - 1},${c})`)
+        else t.set(i, c, Math.max(keep, t.get(i - 1, c - w) + v), [[i - 1, c], [i - 1, c - w]], `max(A(${i - 1},${c}), A(${i - 1},${c - w}) + ${v}): the row above, so item ${i} is used once`)
+      }
+      for (let c = 0; c <= W; c++) {
+        const r = n + 1 + i, keep = t.get(r - 1, c)
+        if (c < w) t.set(r, c, keep, [[r - 1, c]], `too heavy: U(${i - 1},${c})`)
+        else t.set(r, c, Math.max(keep, t.get(r, c - w) + v), [[r - 1, c], [r, c - w]], `max(U(${i - 1},${c}), U(${i},${c - w}) + ${v}): the same row, so item ${i} can be used again`)
+      }
+    }
+    return { title: `Weights ${list(weights)}, values ${list(values)}, W = ${W}`, setup: 'A: the 0/1 table, U: the unbounded one, one row per item. The only difference is where taking the item reads from: the row above (each item once) or its own row (again and again). In one array that is the direction of the capacity loop.', table: t, answer: [n, W], args: [weights, values, W], check: want => want[0] }
+  },
 }
 
 // A domino tiling scanned cell by cell down each column (profile-obstacles; broken-profile on an open
@@ -2299,6 +2777,29 @@ function randomTreeInput(r, weights = null, most = 7) {
   const edges = range(1, n - 1).map(v => { const e = [label[r(0, v - 1)], label[v]]; return weights ? [...e, r(1, weights)] : e })
   return { n, edges }
 }
+// Whether some cycle can be reached from vertex 0.
+function reachableCycle(n, edges) {
+  const seen = new Set([0]), stack = [0]
+  while (stack.length) { const u = stack.pop(); for (const [a, b] of edges) if (a === u && !seen.has(b)) { seen.add(b); stack.push(b) } }
+  // A cycle among the reached vertices: repeatedly remove reached vertices with no edge to another remaining one.
+  const left = new Set(seen)
+  for (let changed = true; changed;) {
+    changed = false
+    for (const v of [...left]) if (!edges.some(([a, b]) => a === v && left.has(b))) { left.delete(v); changed = true }
+  }
+  return left.size > 0
+}
+
+// Whether edges join nodes 0 … n − 1 into one tree.
+function isTree(n, edges) {
+  if (edges.length !== n - 1 || edges.some(([u, v]) => u >= n || v >= n || u === v)) return false
+  const seen = new Set([0]), adj = range(0, n - 1).map(() => [])
+  for (const [u, v] of edges) { adj[u].push(v); adj[v].push(u) }
+  const stack = [0]
+  while (stack.length) for (const v of adj[stack.pop()]) if (!seen.has(v)) { seen.add(v); stack.push(v) }
+  return seen.size === n
+}
+
 export const INPUTS = {
   fibonacci: { fields: [int('n', 'n', 2, 15)] },
   stairs: { fields: [int('n', 'Height', 1, 15), ints('steps', 'Step sizes', 1, 6, [1, 4])], rule: distinct('steps') },
@@ -2648,6 +3149,84 @@ export const INPUTS = {
     fields: [int('k', 'Colours k', 1, 3), int('n', 'Vertices', 1, 5), { key: 'edges', label: 'Edges (u v, …)', kind: 'edges', weighted: false, len: [0, 7] }],
     rule: i => (i.edges.every(([u, v]) => u < i.n && v < i.n && u !== v) ? null : 'Every edge must join two different vertices, numbered 0 to n − 1.'),
     random: r => { const n = r(3, 5); return { k: r(2, 3), n, edges: randomSparse(r, n) } },
+  },
+  'probability-distribution': {
+    fields: [int('n', 'Dice n', 1, 3), int('s', 'Faces s', 1, 6), int('t', 'Sum t', 0, 18)],
+    rule: i => (i.t <= i.n * i.s ? null : 'The sum can be at most n · s.'),
+    random: r => { const n = r(1, 3), s = r(2, 6); return { n, s, t: r(n, n * s) } },
+  },
+  'poisson-binomial': {
+    fields: [ints('p', 'Chances (percent)', 0, 100, [1, 4]), int('k', 'Successes k', 0, 4)],
+    rule: i => (i.k <= i.p.length ? null : 'k can be at most the number of trials.'),
+    random: r => { const n = r(1, 4); return { p: range(1, n).map(() => r(0, 10) * 10), k: r(0, n) } },
+  },
+  'expected-time': { fields: [ints('faces', 'Faces', 1, 6, [1, 3]), int('n', 'Squares to go', 1, 8)] },
+  'self-loops': { fields: [int('n', 'Squares to go', 1, 8), int('s', 'Faces s', 1, 6)] },
+  'coupon-collector': { fields: [ints('w', 'Weights (one per type)', 1, 9, [1, 3])] },
+  'moments': { fields: [ints('faces', 'Faces', 1, 6, [1, 3]), int('n', 'Squares to go', 1, 6)] },
+  'conditional-dp': { fields: [int('n', 'Flips n', 1, 6), int('p', 'Heads chance (percent)', 1, 99)] },
+  'stochastic-control': {
+    fields: [ints('a', 'Safe costs a', 1, 9, [1, 5]), ints('b', 'Risky costs b (per try)', 1, 9, [1, 5]), ints('p', 'Risky chances (percent)', 1, 100, [1, 5])],
+    rule: i => (i.b.length === i.a.length && i.p.length === i.a.length ? null : 'Give a, b and p for every stage.'),
+    random: r => { const n = r(1, 5); return { a: range(1, n).map(() => r(1, 9)), b: range(1, n).map(() => r(1, 9)), p: range(1, n).map(() => r(1, 4) * 25) } },
+  },
+  'win-lose': { fields: [{ key: 'grid', label: 'Board (1 = blocked)', kind: 'grid', rows: [1, 4], cols: [1, 5] }] },
+  'subtraction-games': { fields: [ints('moves', 'Moves (stones removed)', 1, 5, [1, 3]), int('N', 'Largest pile N', 0, 14)] },
+  'score-difference': { fields: [ints('a', 'Stone values', -9, 9, [1, 7])] },
+  'interval-games': { fields: [ints('a', 'Numbers', 0, 9, [1, 6])] },
+  'grundy': { fields: [int('n', 'Pins n', 0, 10)] },
+  'game-sums': { fields: [ints('moves', 'Moves (stones removed)', 1, 4, [1, 3]), ints('piles', 'Piles', 0, 8, [1, 4])] },
+  'stochastic-games': { fields: [int('n', 'Race to square n', 1, 5), int('s', 'Faces s', 1, 4)] },
+  'cyk': { fields: [text('s', 'String (letters a and b)', 'ab', [1, 6])], random: r => ({ s: range(1, r(2, 6)).map(() => 'ab'[r(0, 1)]).join('') }) },
+  'weighted-parsing': { fields: [text('s', 'String (letters a and b)', 'ab', [1, 6])], random: r => ({ s: range(1, r(2, 6)).map(() => 'ab'[r(0, 1)]).join('') }) },
+  'viterbi': { fields: [ints('obs', 'Observations (0 or 1)', 0, 1, [1, 6])] },
+  'forward-backward': {
+    fields: [ints('obs', 'Observations (0 or 1)', 0, 1, [1, 5]), int('t', 'Time t', 0, 4), int('s', 'State s', 0, 1)],
+    rule: i => (i.t < i.obs.length ? null : 'The time must be one of the observations: 0 to their number − 1.'),
+    random: r => { const T = r(1, 5); return { obs: range(1, T).map(() => r(0, 1)), t: r(0, T - 1), s: r(0, 1) } },
+  },
+  'belief-propagation': {
+    fields: [int('n', 'Nodes n', 1, 6), { key: 'edges', label: 'Edges (u v, …)', kind: 'edges', weighted: false, len: [0, 5] }],
+    rule: i => (isTree(i.n, i.edges) ? null : 'The edges must join nodes 0 to n − 1 into one tree: n − 1 edges and no cycle.'),
+    random: r => { const n = r(2, 6); return { n, edges: range(1, n - 1).map(v => [r(0, v - 1), v]) } },
+  },
+  'rna-folding': { fields: [text('s', 'RNA (A, C, G, U)', 'ACGU', [1, 9])], random: r => ({ s: range(1, r(5, 9)).map(() => 'ACGU'[r(0, 3)]).join('') }) },
+  'finite-mdp': { fields: [int('H', 'Decisions H', 0, 6)] },
+  'value-iteration': {
+    fields: [int('K', 'Updates K', 0, 6), int('p', 'Discount p', 0, 9), int('q', 'over q', 1, 10)],
+    rule: i => (i.p < i.q ? null : 'The discount p/q must be less than 1.'),
+    random: r => ({ K: r(1, 6), p: r(0, 4), q: r(5, 10) }),
+  },
+  'average-reward': {
+    fields: [int('n', 'Vertices n', 1, 4), { key: 'edges', label: 'Edges (from to weight, …)', kind: 'edges', weighted: true, min: -5, max: 9, len: [1, 8] }],
+    rule: i => (i.edges.every(([u, v]) => u < i.n && v < i.n) && reachableCycle(i.n, i.edges) ? null : 'Every edge must join vertices 0 to n − 1, and some cycle must be reachable from 0.'),
+    random: r => { const n = r(2, 4); return { n, edges: [...range(0, n - 2).map(v => [v, v + 1, r(-5, 9)]), [n - 1, r(0, n - 1), r(-5, 9)], [r(0, n - 1), r(0, n - 1), r(-5, 9)]] } },
+  },
+  'inventory': { fields: [ints('d', 'Demand per period', 0, 9, [1, 6]), int('K', 'Order cost K', 0, 20), int('h', 'Holding cost h', 0, 5)] },
+  'optimal-stopping': { fields: [int('n', 'Offers n', 1, 6), int('m', 'Largest offer m', 1, 10), int('c', 'Cost c of a look', 0, 3)] },
+  'resource-control': { fields: [int('B', 'Tokens B', 0, 10)] },
+  'continuous-state': { fields: [int('T', 'Periods T', 0, 4), int('x0', 'Starting stock', 0, 4)] },
+  'lqr': { fields: [int('a', 'a', -3, 3), int('b', 'b', -3, 3), int('q', 'q', 0, 9), int('r', 'r', 1, 9), int('qf', 'Final qf', 0, 9), int('N', 'Steps N', 0, 8)] },
+  'pseudo-polynomial': {
+    fields: [ints('weights', 'Weights', 1, 20, [1, 4]), ints('values', 'Values', 0, 9, [1, 4]), int('W', 'Capacity W', 0, 40)],
+    rule: i => (i.values.length === i.weights.length ? null : 'Give a value for each weight.'),
+    random: r => { const n = r(1, 4); return { weights: range(1, n).map(() => r(1, 20)), values: range(1, n).map(() => r(0, 5)), W: r(0, 40) } },
+  },
+  'knapsack-fptas': {
+    fields: [ints('weights', 'Weights', 1, 9, [1, 4]), ints('values', 'Values', 0, 200, [1, 4]), int('W', 'Capacity W', 0, 20), int('p', 'ε = p', 1, 4), int('q', 'over q', 1, 10)],
+    rule: i => (i.values.length !== i.weights.length ? 'Give a value for each weight.' : i.p > i.q ? 'ε = p/q must be at most 1.' : null),
+    random: r => { const n = r(2, 4); return { weights: range(1, n).map(() => r(1, 9)), values: range(1, n).map(() => r(0, 99)), W: r(3, 20), p: 1, q: r(2, 6) } },
+  },
+  'parameterized-dp': { fields: [{ key: 'grid', label: 'Weights (rows separated by ;)', kind: 'matrix', min: 0, max: 9, rows: [1, 3], cols: [1, 4] }] },
+  'min-plus-convolution': { fields: [{ key: 'costs', label: 'Cost tables (one task per row)', kind: 'matrix', min: 0, max: 9, rows: [1, 3], cols: [1, 4] }, int('R', 'Units R', 0, 8)] },
+  'tree-automata': {
+    fields: [{ key: 'ops', label: 'Operations (and, or, xor)', kind: 'words', len: [1, 3] }],
+    rule: i => (i.ops.every(o => ['and', 'or', 'xor'].includes(o)) ? null : 'Use only and, or, xor.'),
+  },
+  'proof-checklist': {
+    fields: [ints('weights', 'Weights', 1, 6, [1, 3]), ints('values', 'Values', 0, 9, [1, 3]), int('W', 'Capacity W', 0, 10)],
+    rule: i => (i.values.length === i.weights.length ? null : 'Give a value for each weight.'),
+    random: r => { const n = r(1, 3); return { weights: range(1, n).map(() => r(1, 6)), values: range(1, n).map(() => r(0, 9)), W: r(2, 10) } },
   },
 }
 

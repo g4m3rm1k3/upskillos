@@ -12,10 +12,13 @@ import { TRACES } from './tables.js'
 // What the hand-solved questions ask for, when it is not the whole challenge answer.
 // Core lessons are checked against their challenges' oracles; Structured ones against enumeration only.
 const ORACLES = { ...CORE_ORACLES, ...STRUCTURED_ORACLES, ...ADVANCED_ORACLES, ...EXPERT_ORACLES, ...SPECIALIST_ORACLES }
-const PICK = { 'max-subarray': v => v[0], 'min-grid-path': v => v[0], 'bellman-ford-dp': v => v[v.length - 1], 'floyd-warshall': v => v[0][v.length - 1], ...Object.fromEntries(['tree-basics', 'tree-reroot', 'reroot-prefix', 'tree-distances', 'tree-small-large'].map(id => [id, v => v[1]])), 'subset-enumeration': v => v[v.length - 1], 'mask-language': v => Number(v), 'hirschberg': v => v.length, 'cht-numeric': v => Number(v), ...Object.fromEntries(['fft-ntt', 'sos', 'mobius', 'subset-convolution', 'walsh-hadamard'].map(id => [id, v => v[v.length - 1]])) }
+// The probabilistic answers (and every other answer that is a chance or an expectation) are fractions "p/q"; designs type them as numbers.
+const PROB_IDS = ['probability-distribution', 'poisson-binomial', 'expected-time', 'self-loops', 'cyclic-expectations', 'coupon-collector', 'moments', 'conditional-dp', 'stochastic-control', 'stochastic-games', 'inside-outside', 'forward-backward', 'finite-mdp', 'value-iteration', 'policy-iteration', 'average-reward', 'optimal-stopping', 'resource-control', 'continuous-state', 'lqr', 'pomdp', 'knapsack-fptas']
+const fraction = v => { const [p, q] = v.split('/').map(Number); return p / q }
+const PICK = { 'max-subarray': v => v[0], 'min-grid-path': v => v[0], 'bellman-ford-dp': v => v[v.length - 1], 'floyd-warshall': v => v[0][v.length - 1], ...Object.fromEntries(['tree-basics', 'tree-reroot', 'reroot-prefix', 'tree-distances', 'tree-small-large'].map(id => [id, v => v[1]])), 'subset-enumeration': v => v[v.length - 1], 'mask-language': v => Number(v), 'hirschberg': v => v.length, 'cht-numeric': v => Number(v), ...Object.fromEntries(['fft-ntt', 'sos', 'mobius', 'subset-convolution', 'walsh-hadamard'].map(id => [id, v => v[v.length - 1]])), ...Object.fromEntries(PROB_IDS.map(id => [id, fraction])), 'multiobjective': v => v.length, 'proof-checklist': v => v[0] }
 const oracle = (id, args) => (PICK[id] ?? (v => v))(ORACLES[id](args))
 // The curriculum groups whose every lesson has a design.
-const DESIGNED = ['linear', 'grids', 'knapsack', 'basic-counting', 'sequences', 'strings', 'intervals', 'scheduling', 'dag', 'trees', 'subsets', 'digits-automata', 'space-speed', 'opt-splits', 'algebraic', 'profiles']
+const DESIGNED = ['linear', 'grids', 'knapsack', 'basic-counting', 'sequences', 'strings', 'intervals', 'scheduling', 'dag', 'trees', 'subsets', 'digits-automata', 'space-speed', 'opt-splits', 'algebraic', 'profiles', 'probabilistic', 'games', 'parsing', 'control', 'research-tools']
 
 // Numbers quoted inside option explanations and answers, checked by brute force: [oracle, args, value].
 const CLAIMS = [

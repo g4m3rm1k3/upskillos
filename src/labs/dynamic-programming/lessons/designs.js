@@ -27,6 +27,11 @@ import { SPACE_DESIGNS } from './design-space.js'
 import { SPLIT_DESIGNS } from './design-split.js'
 import { ALGEBRA_DESIGNS } from './design-algebra.js'
 import { PROFILE_DESIGNS } from './design-profiles.js'
+import { PROB_DESIGNS } from './design-prob.js'
+import { GAME_DESIGNS } from './design-games.js'
+import { PARSE_DESIGNS } from './design-parsing.js'
+import { CONTROL_DESIGNS } from './design-control.js'
+import { RESEARCH_DESIGNS } from './design-research.js'
 
 export const KINDS = [
   ['state', 'What a cell means'],
@@ -37,7 +42,7 @@ export const KINDS = [
   ['answer', 'Where the answer is'],
 ]
 
-export const DESIGNS = { ...LINEAR_DESIGNS, ...GRID_DESIGNS, ...KNAPSACK_DESIGNS, ...COUNTING_DESIGNS, ...SEQUENCE_DESIGNS, ...STRING_DESIGNS, ...INTERVAL_DESIGNS, ...SCHEDULING_DESIGNS, ...DAG_DESIGNS, ...TREE_DESIGNS, ...SUBSET_DESIGNS, ...DIGIT_DESIGNS, ...SPACE_DESIGNS, ...SPLIT_DESIGNS, ...ALGEBRA_DESIGNS, ...PROFILE_DESIGNS }
+export const DESIGNS = { ...LINEAR_DESIGNS, ...GRID_DESIGNS, ...KNAPSACK_DESIGNS, ...COUNTING_DESIGNS, ...SEQUENCE_DESIGNS, ...STRING_DESIGNS, ...INTERVAL_DESIGNS, ...SCHEDULING_DESIGNS, ...DAG_DESIGNS, ...TREE_DESIGNS, ...SUBSET_DESIGNS, ...DIGIT_DESIGNS, ...SPACE_DESIGNS, ...SPLIT_DESIGNS, ...ALGEBRA_DESIGNS, ...PROFILE_DESIGNS, ...PROB_DESIGNS, ...GAME_DESIGNS, ...PARSE_DESIGNS, ...CONTROL_DESIGNS, ...RESEARCH_DESIGNS }
 
 // The apply step on a live trace: the trace, the step that writes the cell, and every value known before it.
 export function applyCell(id, apply) {
