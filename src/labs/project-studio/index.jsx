@@ -278,7 +278,9 @@ export default function ProjectStudio() {
       busy = true;
       const identity = projectIdentityRef.current;
       try {
-        fs.refresh();
+        // Awaited so `busy` covers the folder walk too: on a large folder a walk can take longer
+        // than the 2-second interval, and unawaited walks piled up on the disk.
+        await fs.refresh();
         for (const rel of openFilesRef.current) {
           const buf = buffersRef.current[rel];
           // Edited here and not yet written (or written and diverged): leave it alone.

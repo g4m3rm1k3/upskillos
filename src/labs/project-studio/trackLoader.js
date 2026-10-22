@@ -6,7 +6,8 @@ import { parseLesson } from './parseTrack.js';
 
 // Markdown under a track's support/ folder is a file supplied to the learner (a brief, a README), not a lesson.
 const FILES = import.meta.glob(['./tracks/**/*.md', '!./tracks/*/support/**'], { query: '?raw', import: 'default', eager: true });
-const SUPPORT_FILES = import.meta.glob('./tracks/*/support/**/*', { query: '?raw', import: 'default', eager: true });
+// .NET build output (obj/, bin/) appears when a support project is built in place; it is never supplied.
+const SUPPORT_FILES = import.meta.glob(['./tracks/*/support/**/*', '!./tracks/*/support/**/obj/**', '!./tracks/*/support/**/bin/**'], { query: '?raw', import: 'default', eager: true });
 
 // Opt-in supplied infrastructure stays out of the lesson's teaching code blocks. A name may
 // include folders (`support: tests/test_grid.py`); the file lands at that path in the project.

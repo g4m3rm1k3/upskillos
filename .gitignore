@@ -49,3 +49,7 @@ src/labs/game-studio/runtime/dist/
 # Python bytecode caches: Python rebuilds them whenever it runs a file.
 __pycache__/
 *.pyc
+
+# .NET build output from building support projects in place
+src/labs/project-studio/tracks/**/support/**/obj/
+src/labs/project-studio/tracks/**/support/**/bin/
