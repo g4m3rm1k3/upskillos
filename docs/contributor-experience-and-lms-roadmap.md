@@ -96,6 +96,9 @@ Status markers:
 
 ### Project Studio learning quality (2026-10-06)
 
+- [x] **WinForms to React entry path (2026-10-21, authored):** standalone FormDesk for basic Python scripters with no C# experience. C# foundations lead through native controls/layout/events, shared validation, defensive JSON save/open, and a separate React/WebView2 interface using the same rules. No Mastercam API knowledge is assumed or included. See the [scope, assessment and review status](winforms-react-project-studio.md).
+- [ ] **WinForms to React learner and native-interface review:** complete real keyboard, DPI, file-dialog and WebView2 round-trip review; authored tests and compilation do not establish these observations.
+
 - [ ] **Database Engineering — SQL to Reliable Applications (2026-10-15, opening implemented):** standalone Issue Desk project selected by the user. The first chapter teaches queries, stored records, filtering/ordering and constraints through small SQL files, experiments and independent tasks. Relational design, PostgreSQL, application integration, permissions, concurrency, migrations, performance and recovery are mapped but not yet authored. See [curriculum, scope and verification](curricula/database-engineering.md).
 
 - [ ] **MEAN Stack and database design (expanded 2026-10-15, in development):** the authored first-app milestone includes language practice, object identity/closures, async cancellation, relational dependencies and model invariants, MongoDB, Express, Angular and integration tests. The [required mastery scope](mean-stack-mastery-scope.md) now makes full TypeScript, advanced Angular/RxJS, secure collaboration, transactions, reliable workflows, deployment and operations mandatory later stages, with explicit coverage gaps and independent evidence. Those advanced lessons remain unauthored. Learner, editorial and Desktop review remain open; see [curriculum and verification](mean-stack-curriculum.md).

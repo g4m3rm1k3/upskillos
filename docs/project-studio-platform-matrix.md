@@ -25,6 +25,7 @@ What each Project Studio track needs on the learner's computer, and what has act
 | cpp-game | C++ compiler and the Studio's C++ runtime, graphics display | `cppPong.desktop.test.js` | not recorded |
 | java-engineering | JDK, Maven, Node.js and npm, Git | `javaEngineering.desktop.test.js` | not recorded |
 | circuit-clash | .NET 10 SDK, Raylib-cs 8.1.0, graphics display | none | macOS on Apple silicon (stated in lesson 01); Windows and Linux untested |
+| winforms-start, winforms-forms, winforms-workflow, winforms-react | Windows, .NET 10 SDK; Node/npm and WebView2 Runtime for the final chapter | `winforms.desktop.test.js` | Windows, .NET SDK 10.0.301, Node 24.12.0 (2026-10-21): full executable walkthrough and wrong-answer checks pass; actual native dialog/DPI/keyboard behavior and WebView2 window round trip await manual review |
 
 ## Recording a verification
 

@@ -8,6 +8,19 @@ import { learningProfile } from './learningProfile.js';
 
 const SERIES = [
   {
+    key: 'winforms',
+    label: 'WinForms to React — Practical Forms from Zero C#',
+    prefix: 'winforms-',
+    sharedProject: true,
+    chapters: [
+      ['winforms-start', '01 · C# for Python Scripters'],
+      ['winforms-forms', '02 · Build and Validate Windows Forms'],
+      ['winforms-workflow', '03 · Save, Open and Recover'],
+      ['winforms-react', '04 · React and a C# Host'],
+    ],
+    planned: 'Build FormDesk in one folder: C# explained through Python, Windows Forms controls and events, shared validation, defensive JSON files, and a React interface hosted by WebView2. Windows and the .NET 10 SDK are required; Node and WebView2 are introduced in the final chapter. No Mastercam SDK or add-in integration is assumed or taught. Editorial, learner and rendered native-interface review remain open. See docs/winforms-react-project-studio.md.',
+  },
+  {
     key: 'data',
     label: 'Database Engineering — SQL to Reliable Applications',
     prefix: 'data-',

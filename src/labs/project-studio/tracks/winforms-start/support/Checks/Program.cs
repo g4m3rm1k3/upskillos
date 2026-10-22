@@ -1,0 +1,20 @@
+using FormDesk.Core;
+
+void Expect(string actual, string expected, string label)
+{
+    if (actual != expected)
+    {
+        throw new Exception($"{label}: expected [{expected}], got [{actual}]");
+    }
+}
+
+Expect(RequestRules.NameError(""), "Enter a name.", "empty-name");
+Expect(RequestRules.NameError("   "), "Enter a name.", "blank-name");
+Expect(RequestRules.NameError("  Fixture  "), "", "trimmed-name");
+Expect(RequestRules.QuantityError(0), "Use a quantity from 1 to 100.", "quantity-zero");
+Expect(RequestRules.QuantityError(1), "", "quantity-one");
+Expect(RequestRules.QuantityError(100), "", "quantity-hundred");
+Expect(RequestRules.QuantityError(101), "Use a quantity from 1 to 100.", "quantity-over");
+Expect(RequestRules.Validate("", 0), "Enter a name.", "first-error");
+Expect(RequestRules.Validate("Fixture", 3), "", "valid-request");
+Console.WriteLine("rules: passed");

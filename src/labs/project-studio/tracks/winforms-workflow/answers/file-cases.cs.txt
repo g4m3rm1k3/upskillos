@@ -1,0 +1,59 @@
+using FormDesk.Core;
+using System.Text.Json;
+
+string folder = Path.Combine(Path.GetTempPath(), "formdesk-files-" + Guid.NewGuid().ToString("N"));
+Directory.CreateDirectory(folder);
+string path = Path.Combine(folder, "request.json");
+
+void Expect(bool condition, string label)
+{
+    if (!condition) throw new Exception(label);
+}
+
+void Reject(string json, string label)
+{
+    File.WriteAllText(path, json);
+    try
+    {
+        DraftFiles.Load(path);
+    }
+    catch (InvalidDataException) { return; }
+    catch (JsonException) { return; }
+    throw new Exception("Accepted invalid file: " + label);
+}
+
+try
+{
+    RequestDraft draft = new RequestDraft();
+    draft.Name = "  Fixture  ";
+    draft.Quantity = 3;
+    DraftFiles.Save(path, draft);
+    RequestDraft loaded = DraftFiles.Load(path);
+    Expect(loaded.Name == "Fixture" && loaded.Quantity == 3, "round-trip");
+    Expect(draft.Name == "  Fixture  ", "save-does-not-mutate-input");
+    string good = File.ReadAllText(path);
+    draft.Quantity = 0;
+    bool rejectedSave = false;
+    try { DraftFiles.Save(path, draft); }
+    catch (InvalidDataException) { rejectedSave = true; }
+    Expect(rejectedSave && File.ReadAllText(path) == good, "invalid-save-preserves-file");
+    Reject("not JSON", "malformed");
+    Reject("null", "null-root");
+    Reject("[]", "array-root");
+    Reject("{}", "missing-fields");
+    Reject("{\"Name\":\"Fixture\"}", "missing-quantity");
+    Reject("{\"Name\":null,\"Quantity\":3}", "null-name");
+    Reject("{\"Name\":\"Fixture\",\"Quantity\":\"3\"}", "text-quantity");
+    Reject("{\"Name\":\"Fixture\",\"Quantity\":2.5}", "fractional-quantity");
+    Reject("{\"Name\":\"Fixture\",\"Quantity\":101}", "outside-range");
+    Reject("{\"Name\":\"   \",\"Quantity\":3}", "blank-file-name");
+    File.WriteAllText(path, "{\"Name\":\"  Padded  \",\"Quantity\":3}");
+    Expect(DraftFiles.Load(path).Name == "Padded", "padded-file-name");
+    Console.WriteLine("files: passed");
+}
+finally
+{
+    Directory.Delete(folder, true);
+}
+
+

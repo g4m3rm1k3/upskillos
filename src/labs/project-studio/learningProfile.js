@@ -15,6 +15,13 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (['winforms', 'winforms-start', 'winforms-forms', 'winforms-workflow', 'winforms-react'].includes(key)) return {
+    level: ['winforms', 'winforms-start'].includes(key) ? 'beginner' : 'bridge',
+    maturity: 'in-development',
+    audience: key === 'winforms' || key === 'winforms-start'
+      ? 'For basic Python scripters with no C# experience and only introductory React state knowledge. Start in an empty FormDesk folder on Windows with the .NET 10 SDK. C# types, functions, objects and tools are taught before forms; no CAD or add-in SDK knowledge is required. Node and WebView2 setup come later.'
+      : 'Continue the preceding WinForms to React chapters in the same FormDesk folder on Windows. Earlier lessons supply the C# syntax, data model and rules used here. Native forms and Desktop checks require the .NET 10 SDK; the final chapter introduces Node, React and WebView2. Host-specific add-in integration is outside this series.',
+  };
   if (key.startsWith('data-') && key !== 'data-foundations') return {
     level: 'beginner',
     maturity: 'in-development',
