@@ -82,8 +82,8 @@ describe('parseChecks', () => {
 
 describe('every bundled track', () => {
   it('parses, and every step changes at most one file', async () => {
-    const { TRACKS } = await import('./trackLoader.js');
-    const problems = [];
+    const { TRACKS, LOAD_ERRORS } = await import('./trackLoader.js');
+    const problems = [...LOAD_ERRORS];
     for (const [track, lessons] of Object.entries(TRACKS)) {
       for (const lesson of lessons) {
         for (const step of lesson.steps) {

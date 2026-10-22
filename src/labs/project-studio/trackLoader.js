@@ -24,10 +24,23 @@ function parsePath(p) {
   return { track: parts[0], id: parts[parts.length - 1].replace(/\.md$/, '') };
 }
 
+// A lesson that fails to parse is left out and recorded here rather than thrown: every track is
+// parsed when this module loads, so one throw would stop the whole of Project Studio opening.
+// checks.test.js fails while this list is non-empty, so a broken lesson still fails loudly.
+export const LOAD_ERRORS = [];
+
 const byTrack = {};
 for (const [path, raw] of Object.entries(FILES)) {
   const { track, id } = parsePath(path);
-  (byTrack[track] ||= []).push({ sortKey: id, lesson: parseLesson(raw, `${track}/${id}`) });
+  let lesson;
+  try {
+    lesson = parseLesson(raw, `${track}/${id}`);
+  } catch (err) {
+    LOAD_ERRORS.push(`${track}/${id}: ${err.message}`);
+    console.error(`Project Studio skipped lesson ${track}/${id}:`, err);
+    continue;
+  }
+  (byTrack[track] ||= []).push({ sortKey: id, lesson });
 }
 
 export const TRACKS = Object.fromEntries(
