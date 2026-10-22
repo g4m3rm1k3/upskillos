@@ -15,6 +15,7 @@ const REVIEWED_CHAPTERS = new Set([
 const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-production']);
 
 export function learningProfile(key) {
+  if (key === 'pyinternals' || key.startsWith('pyinternals-')) return { level: 'advanced', maturity: 'review-required', audience: 'For Python programmers who want to see underneath Python. Needs a C/C++ compiler (gcc/g++) and Python. Follow the chapters in order; C basics come first. Lesson quality review is pending.' };
   if (['winforms', 'winforms-start', 'winforms-forms', 'winforms-workflow', 'winforms-react'].includes(key)) return {
     level: ['winforms', 'winforms-start'].includes(key) ? 'beginner' : 'bridge',
     maturity: 'in-development',

@@ -21,6 +21,19 @@ const SERIES = [
     planned: 'Build FormDesk in one folder: C# explained through Python, Windows Forms controls and events, shared validation, defensive JSON files, and a React interface hosted by WebView2. Windows and the .NET 10 SDK are required; Node and WebView2 are introduced in the final chapter. No Mastercam SDK or add-in integration is assumed or taught. Editorial, learner and rendered native-interface review remain open. See docs/winforms-react-project-studio.md.',
   },
   {
+    key: 'pyinternals',
+    label: 'Python Internals — C, CPython and Speed',
+    prefix: 'pyinternals-',
+    chapters: [
+      ['pyinternals-c-bridge', '01 · C for Python Programmers'],
+      ['pyinternals-cpython', '02 · Inside CPython'],
+      ['pyinternals-extensions', '03 · C and C++ Extensions'],
+      ['pyinternals-cpp-ds', '04 · C++ Data Structures for Python Programmers'],
+      ['pyinternals-performance', '05 · Profiling, NumPy, Cython and Numba'],
+    ],
+    planned: 'C from a Python point of view, how CPython runs code, writing C and C++ extensions, and making Python fast. Needs a C/C++ compiler and Python. Authored by Sonnet; its checks were repaired to the check format and the extensions chapter has no file checks yet. Editorial and learner review remain open.',
+  },
+  {
     key: 'data',
     label: 'Database Engineering — SQL to Reliable Applications',
     prefix: 'data-',
