@@ -22,7 +22,8 @@ export function buildPrivateLessons(listing) {
     if (!built.series) continue;
     Object.assign(out.tracks, built.tracks);
     Object.assign(out.support, built.support);
-    out.series.push({ ...built.series, privateId: lib.id });
+    // A private course builds one project (its own repository, usually), so its chapters share one folder.
+    out.series.push({ ...built.series, privateId: lib.id, sharedProject: true });
     for (const chapter of built.series.chapters) out.folders[chapter.key] = lib.folder;
   }
   return out;
