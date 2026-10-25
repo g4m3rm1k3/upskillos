@@ -287,7 +287,11 @@ export default function ProjectStudio() {
           if (buf === undefined || buf !== loadedRef.current[rel]) continue;
           const onDisk = await fs.readFile(rel);
           if (identity !== projectIdentityRef.current) return;
-          if (onDisk !== loadedRef.current[rel] && buffersRef.current[rel] === loadedRef.current[rel]) {
+          // An autosave that finished during the read moved loadedRef on, so this read may hold the
+          // text from before that save. Loading it would put old text in the editor (and the cursor
+          // at the end of the file) while the learner types; the next pass reads the saved file.
+          if (loadedRef.current[rel] !== buf || buffersRef.current[rel] !== buf) continue;
+          if (onDisk !== buf) {
             loadedRef.current[rel] = onDisk;
             setBuffers((prev) => ({ ...prev, [rel]: onDisk }));
           }

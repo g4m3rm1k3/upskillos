@@ -11,7 +11,7 @@
 // The editor itself is the learner's choice (`editorKind`): Monaco, or Neovim in a terminal
 // (NeovimPane.jsx). Both edit the same files on disk, so switching loses nothing.
 import Editor from '@monaco-editor/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import NeovimPane from './NeovimPane.jsx';
 import NeovimKeyReference from './NeovimKeyReference.jsx';
 import { setupOpenCalcMonaco } from '../../utils/monacoThemes.js';
@@ -36,6 +36,33 @@ export default function EditorPane({
   const canChoose = !!onEditorKind && typeof window !== 'undefined' && !!window.openCalcDesktop?.terminal;
   const nvim = canChoose && editorKind === 'nvim';
   const [showKeys, setShowKeys] = useState(false);
+
+  // Monaco owns the text while the learner types; `content` is pushed in only when it changed
+  // from outside (a reload from disk, a step writing the file). Passing it as `value` instead let
+  // @monaco-editor/react apply a render that was a keystroke behind, after the next keystroke had
+  // reached the editor: it replaced the whole text, and the cursor jumped to the end of the file.
+  // `emitted` holds the texts the editor itself sent up, so a late echo of one is not mistaken
+  // for an outside change.
+  const editorRef = useRef(null);
+  const emitted = useRef(new Set());
+  const applying = useRef(false);
+  const lastFile = useRef(activeFile);
+  useEffect(() => {
+    if (lastFile.current !== activeFile) { lastFile.current = activeFile; emitted.current.clear(); }
+    const model = editorRef.current?.getModel();
+    if (!model || content == null) return;
+    if (model.getValue() === content) { emitted.current.clear(); return; }
+    if (emitted.current.has(content)) return;
+    emitted.current.clear();
+    // Not reported back through onChange: this text came from the parent, so it needs no save.
+    applying.current = true;
+    try {
+      editorRef.current.executeEdits('outside-change', [{ range: model.getFullModelRange(), text: content }]);
+      editorRef.current.pushUndoStop();
+    } finally {
+      applying.current = false;
+    }
+  }, [content, activeFile]);
   const tracked = targetContent != null;
   const missing = tracked ? addedLineNumbers(content, targetContent).length : 0;
   const done = tracked && matchesTarget(content, targetContent);
@@ -124,9 +151,10 @@ export default function EditorPane({
           path={activeFile || 'untitled'}
           language={languageFor(activeFile)}
           theme={monacoTheme || (C.dark ? 'open-calc-dark' : 'open-calc-light')}
-          value={content}
+          defaultValue={content}
           beforeMount={setupOpenCalcMonaco}
-          onChange={(val) => onChange(val ?? '')}
+          onMount={(editor) => { editorRef.current = editor; }}
+          onChange={(val) => { if (applying.current) return; emitted.current.add(val ?? ''); onChange(val ?? ''); }}
           options={{
             minimap: { enabled: false },
             fontSize: 13,

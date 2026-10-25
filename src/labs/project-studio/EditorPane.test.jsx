@@ -2,7 +2,7 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
-vi.mock('@monaco-editor/react', () => ({ default: ({value, language}) => <textarea readOnly value={value} data-language={language} /> }));
+vi.mock('@monaco-editor/react', () => ({ default: ({defaultValue, language}) => <textarea readOnly value={defaultValue} data-language={language} /> }));
 vi.mock('../../utils/monacoThemes.js', () => ({ setupOpenCalcMonaco: vi.fn() }));
 import EditorPane from './EditorPane.jsx';
 it('keeps learner content separate from the reference and detects extra lines as a mismatch', async () => {
