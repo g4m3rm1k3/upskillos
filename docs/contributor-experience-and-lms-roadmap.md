@@ -8,6 +8,11 @@ Last reconciled: 2026-09-26
 
 ## Current status and prioritized backlog
 
+### Computing Foundry apprenticeship (2026-11-05)
+
+- [x] Drafted the [master BRD](computing-foundry-master-brd.md): desktop-first, active learning for advanced computer users with tutorial-level coding experience, connected computing/engineering/maths curriculum, reusable learner artifacts, lab handoffs, assessment and delivery gates.
+- [ ] Validate the capability graph and first connected mission chain with tutorial-experienced coders; audit native runtime isolation and CodeLens handoff before implementation. The lab itself is not implemented.
+
 ### Spotlight and lab discovery (2026-10-18)
 
 - [x] Feature ML Foundations Lab, the OpenMAT Linear Algebra Lab and the new Dynamic Programming Lab in Spotlight while retaining their subject placements. Home and Start menu search share metadata matching, including partial names, tags, descriptions and registry keys; typing searches across categories regardless of the selected tab. Regression checks cover every discovered lab's name as it is typed and opening the newly featured labs.
