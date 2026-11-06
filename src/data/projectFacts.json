@@ -11,7 +11,7 @@
     "courses": 44,
     "chapters": 239,
     "lessons": 1374,
-    "labs": 75,
+    "labs": 76,
     "games": 16
   },
   "courses": [
@@ -596,6 +596,12 @@
       "label": "Little Schemer Sandbox",
       "kind": "lesson",
       "path": "/lab/little-schemer"
+    },
+    {
+      "id": "live-machine",
+      "label": "Live Machine",
+      "kind": "lab",
+      "path": "/lab/live-machine"
     },
     {
       "id": "llm-lab",

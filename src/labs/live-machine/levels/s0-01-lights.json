@@ -1,0 +1,179 @@
+{
+  "id": "lm-s0-01-lights",
+  "season": 0,
+  "seasonTitle": "Wake up",
+  "order": 1,
+  "title": "Lights",
+  "tagline": "The ship is dark. Teach it when a room needs light.",
+  "language": "javascript",
+  "world": "lights",
+  "file": "ship/lighting",
+  "entry": "lightOn",
+  "briefing": [
+    "You wake up on the **Meridian**, a cargo ship drifting between stars. Its software was wiped. Every room is dark and the crew are stumbling around.",
+    "The ship still knows how to ask one question, many times a second, for every room: *should this room's light be on?* It asks by calling a function named `lightOn` and giving it the room. Whatever your function returns is the answer.",
+    "Right now the function always answers `false`. Your job: make the answer good enough to keep the crew safe without draining the ship's power."
+  ],
+  "starter": [
+    "// The ship calls this for every room, twice a second.",
+    "// `room` looks like: { name: \"Cargo\", crew: 2, emergency: false }",
+    "// Return true to switch the light on, false to switch it off.",
+    "",
+    "function lightOn(room) {",
+    "  return false;",
+    "}",
+    ""
+  ],
+  "steps": [
+    {
+      "id": "all-on",
+      "title": "Turn every light on",
+      "text": [
+        "A function is a named piece of code that gets **inputs** and gives back an **output**. Here the input is `room` and the output is whatever comes after `return`.",
+        "The ship calls `lightOn` once for each of its six rooms. Change `false` to `true` and watch the ship."
+      ],
+      "code": ["  return true;"],
+      "predict": {
+        "question": "`lightOn` is called once for every room. If it always returns `true`, how many of the six rooms light up?",
+        "options": ["None of them", "Only the Bridge", "All six", "Only rooms with crew in them"],
+        "answer": 2,
+        "explain": "The function ignores `room` completely, so every call gets the same answer: `true`. Now look at the power gauge. Six lights cost more than the reactor makes, so the ship is draining. Lighting everything isn't the answer."
+      },
+      "goal": {
+        "text": "Every room is lit.",
+        "cases": [
+          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": true },
+          { "label": "Busy Galley", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
+        ]
+      },
+      "hints": [
+        "Which word comes after `return`? That word is the answer the ship gets.",
+        "In JavaScript, the two true-or-false values are written `true` and `false`, without quotes.",
+        "The line should read `return true;`."
+      ]
+    },
+    {
+      "id": "crew-only",
+      "title": "Light only rooms with crew",
+      "text": [
+        "`room` is an **object**: a bundle of named values. `room.crew` reads the value named `crew`, the number of people in that room.",
+        "A comparison like `room.crew > 0` doesn't print anything. It *produces* a value, `true` or `false`, and that value can be returned directly.",
+        "Return whether the room has anyone in it. Then click a room on the ship to see exactly what your function was given and what it answered."
+      ],
+      "code": ["  return room.crew > 0;"],
+      "predict": {
+        "question": "The Cargo bay is empty, so `room.crew` is `0`. What does `room.crew > 0` produce?",
+        "options": ["0", "true", "false", "An error, because 0 means nothing"],
+        "answer": 2,
+        "explain": "`0 > 0` is a question, and its answer is `false`. Comparisons always produce `true` or `false`, so returning one is exactly the yes/no answer the ship wants."
+      },
+      "goal": {
+        "text": "Rooms with crew are lit; empty rooms are dark.",
+        "cases": [
+          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
+          { "label": "One person in Med bay", "args": [{ "name": "Med bay", "crew": 1, "emergency": false }], "expect": true },
+          { "label": "Busy Galley", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
+        ]
+      },
+      "hints": [
+        "Read the number of people with `room.crew`.",
+        "You want `true` when that number is more than zero. Which comparison operator means \"more than\"?",
+        "`return room.crew > 0;`"
+      ]
+    },
+    {
+      "id": "emergency",
+      "title": "Emergencies need light",
+      "text": [
+        "Alarms go off in empty rooms, and the crew run in to fix them, in the dark. An emergency room must be lit even before anyone arrives.",
+        "An `if` runs its block only when its condition is `true`. A `return` inside it answers immediately and **ends the function**: nothing below it runs for that call.",
+        "Add a check for `room.emergency` *above* your crew line."
+      ],
+      "code": [
+        "  if (room.emergency) {",
+        "    return true;",
+        "  }",
+        "  return room.crew > 0;"
+      ],
+      "predict": {
+        "question": "Suppose the `if` block were written *below* the line `return room.crew > 0;`. Would the emergency check ever run?",
+        "options": ["Yes, every time", "Only when there is an emergency", "No, never"],
+        "answer": 2,
+        "explain": "`return` ends the function. Every call returns at the crew line, so code after it is never reached. Order matters: the special case goes first, the general rule last."
+      },
+      "goal": {
+        "text": "Emergency rooms are always lit; otherwise rooms with crew are lit.",
+        "cases": [
+          { "label": "Alarm in empty Engine room", "args": [{ "name": "Engine", "crew": 0, "emergency": true }], "expect": true },
+          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
+          { "label": "Busy Galley", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
+        ]
+      },
+      "hints": [
+        "`room.emergency` is already `true` or `false`, so it can be the condition on its own: `if (room.emergency)`.",
+        "Inside the `if`, return `true`.",
+        "Put the whole `if` block on the lines just after `function lightOn(room) {`."
+      ]
+    },
+    {
+      "id": "bridge",
+      "title": "The Bridge never goes dark",
+      "text": [
+        "Captain's order: the Bridge holds the navigation displays, so its light stays on even when nobody is there.",
+        "Room names are **strings**: text in quotes. `===` asks whether two values are exactly the same. For strings, that includes capital letters.",
+        "Add a second special case for the Bridge."
+      ],
+      "code": [
+        "  if (room.name === \"Bridge\") {",
+        "    return true;",
+        "  }"
+      ],
+      "predict": {
+        "question": "What does `\"bridge\" === \"Bridge\"` produce?",
+        "options": ["true", "false"],
+        "answer": 1,
+        "explain": "Strings are compared character by character, and `b` is not the same character as `B`. The ship spells it `\"Bridge\"`, so match it exactly."
+      },
+      "goal": {
+        "text": "The Bridge is always lit, plus everything from before.",
+        "cases": [
+          { "label": "Empty Bridge", "args": [{ "name": "Bridge", "crew": 0, "emergency": false }], "expect": true },
+          { "label": "Alarm in empty Engine room", "args": [{ "name": "Engine", "crew": 0, "emergency": true }], "expect": true },
+          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
+          { "label": "One person in Med bay", "args": [{ "name": "Med bay", "crew": 1, "emergency": false }], "expect": true }
+        ]
+      },
+      "hints": [
+        "Compare `room.name` with the string `\"Bridge\"` using `===`.",
+        "It's the same shape as the emergency check: an `if` with `return true;` inside.",
+        "Put it next to the emergency check, before the final `return`."
+      ]
+    }
+  ],
+  "check": {
+    "text": "The ship runs scenarios you haven't seen. Every room must get the right answer.",
+    "cases": [
+      { "label": "Quarters, nobody home", "args": [{ "name": "Quarters", "crew": 0, "emergency": false }], "expect": false },
+      { "label": "Quarters, two sleeping", "args": [{ "name": "Quarters", "crew": 2, "emergency": false }], "expect": true },
+      { "label": "Bridge with an alarm", "args": [{ "name": "Bridge", "crew": 0, "emergency": true }], "expect": true },
+      { "label": "Bridge, pilot on duty", "args": [{ "name": "Bridge", "crew": 1, "emergency": false }], "expect": true },
+      { "label": "Engine fire, engineer present", "args": [{ "name": "Engine", "crew": 1, "emergency": true }], "expect": true },
+      { "label": "Galley after dinner", "args": [{ "name": "Galley", "crew": 0, "emergency": false }], "expect": false },
+      { "label": "Med bay, whole crew", "args": [{ "name": "Med bay", "crew": 5, "emergency": false }], "expect": true },
+      { "label": "Cargo alarm, empty", "args": [{ "name": "Cargo", "crew": 0, "emergency": true }], "expect": true }
+    ]
+  },
+  "solution": [
+    "function lightOn(room) {",
+    "  if (room.emergency) {",
+    "    return true;",
+    "  }",
+    "  if (room.name === \"Bridge\") {",
+    "    return true;",
+    "  }",
+    "  return room.crew > 0;",
+    "}"
+  ],
+  "concepts": ["functions", "return values", "true and false", "objects and properties", "comparisons", "if", "strings and ==="],
+  "deeper": []
+}
