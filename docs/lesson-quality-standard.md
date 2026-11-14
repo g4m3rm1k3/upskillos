@@ -99,12 +99,6 @@ primary mode:
     applies it in a new context.
 8.  **Reference lesson** — provides a structured lookup resource. It
     must not be used as a substitute for teaching a concept.
-9.  **Runway lesson** — translates basics the learner already knows
-    into a new language's syntax, then teaches only what is new to that
-    language, and only as much as the next project increment needs (see
-    the curriculum's language runways). A runway teaches syntax and
-    tooling; it must not claim to teach the computer-science concept
-    underneath.
 
 A project lesson must not introduce a large collection of unexplained
 concepts just because the project needs them. Teach the required concept
@@ -167,7 +161,7 @@ List only knowledge the learner is expected to have already acquired.
 For each prerequisite, identify where it was taught. If the lesson uses
 a term or mechanism that has not been taught, either:
 
-- teach the minimum needed in a short, explicit runway;
+- teach the minimum needed, explicitly, at the point of use;
 - link to a prerequisite lesson and verify the learner has it; or
 - remove the dependency.
 
@@ -951,7 +945,7 @@ By the end, the learner can:
 ## 15. How this standard governs the curriculum
 
 This standard complements the curriculum; it does not replace the module
-map, project specifications, language runways, or existing app-level
+map, project specifications, language idioms list, or existing app-level
 lesson standards.
 
 Apply it in this order:

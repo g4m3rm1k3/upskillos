@@ -85,7 +85,7 @@ Spot-the-flaw is never the only measure; recognizing familiar mistakes is not th
 - **Teach alternatives.** Never one solution; always "what else, and why not."
 - **Math appears where it belongs**, inside the module that needs it.
 - **Language per concept.** A concept lesson uses the language that exposes its concept best, and says why in one line: C for memory and layout, Rust for ownership and sum types, Go for small interfaces and channels, SQL for the relational model, TypeScript for gradual types, assembly for execution, Python for scripting and quick experiments. A project lesson uses that project's language. Seeing one idea in two languages separates the idea from the syntax.
-- **Project language runway.** Before a project first uses a language, a short runway translates what the learner already knows into that language's syntax. It then teaches only what is new to that language, and only as much as the project's next piece needs. Syntax is not computer science: the runway teaches how to write it, and the modules teach the ideas underneath (section 4 lists the runways).
+- **Language idioms at the point of use.** There are no separate runway lessons. When a lesson first uses a language feature, tool or setup step the learner hasn't met, it explains it right there, and only as much as that step needs. Syntax is not computer science: the explanation teaches how to write it, and the modules teach the ideas underneath (section 4 lists what each language's first lessons must explain).
 - **Smallest increment.** A project grows only when the current module teaches a concept that justifies its next piece. A **Builds** line is the smallest meaningful increment: no speculative features, infrastructure or abstractions. Ten projects never mean ten applications being developed at once.
 - **Vocabulary is part of every module:** 10 to 20 precise terms per module, each taught in the lesson where it is first needed, not appended as a list at the end.
 
@@ -172,11 +172,11 @@ Projects grow across the series. A project gets a new piece when a module teache
 | **Netkit**    | Python                                 | Network tools: DNS lookup, reachability checks, TCP chat, an HTTP client from sockets, an uptime monitor, a load generator                                                    | 7.4    | Protocols from the bytes up; a client that tests Framework's server across languages                  |
 | **Renderer**  | C++                                    | A software renderer: vector maths, transforms, rasterizer, then a ray tracer                                                                                                  | 10.2   | Numerics, geometry, graphics (a specialization)                                                       |
 
-### Language runways
+### Language idioms, explained at first use
 
-Each runway assumes the basics in some language and translates them. The learner sees the familiar ideas in the new syntax, then only what is new to that language. A learner who already knows a runway's language skips it.
+There are no runway lessons. Learners already program in some language, so a lesson never re-teaches values, loops or functions. When a project first uses a language, its lessons explain each new idiom, tool and setup step at the point where it is first used. This table is the planning list of what those first lessons must cover; a learner who already knows the language skims those explanations.
 
-| Before | Runway | Familiar ideas, new syntax | New to this language |
+| First used in | Language | Familiar ideas, new syntax | New to this language |
 |---|---|---|---|
 | 1.1 | Python | Values, control flow, functions, lists, dictionaries | Virtual environments, modules and packages, standard input and output, `pytest` |
 | 1.2 | HTML and JavaScript | The same, in JavaScript | A page with a canvas, the event loop, key events, `requestAnimationFrame` |
@@ -227,7 +227,7 @@ Each runway assumes the basics in some language and translates them. The learner
 5. **Generic wording:** CAD/CAM examples and personal references removed. Domain-specific labs (G-code controller, material removal) are dropped; the app's G-code and CNC courses cover them.
 6. **Not agent-specific:** the title, goal, section 2, 1.12, 3.7, 3.11, 3.12, 8.11 and the closing principle are reframed so they apply to any collaborator, human or AI. 1.11 stays as a concept lesson on how language models work. Tool-specific agent controls are out of scope.
 7. **Ordering:** types that rule out invalid states (6.3) and executable architecture (3.6) are needed early. 3.14 teaches them "well enough" in stage 3; the full modules stay in place.
-8. **Language runways and smallest increments** are standing rules. HTML and CSS are a runway before 7.6: a dependency, not a later enhancement.
+8. **Idioms at the point of use and smallest increments** are standing rules. HTML and CSS are explained in the lessons before 7.6 that first need them: a dependency, not a later enhancement.
 9. **Still to do, in order:**
    1. **Module-to-lesson map.** Divide every module's full **Covers** scope into lessons, with nothing missing and nothing added. A lesson belongs to a module and never claims to complete it alone. For example, 1.4 might be four lessons: names and identity; state and copying; invariants and value objects; reading unfamiliar code.
    2. **Lesson specification.** The [Lesson Quality Standard](lesson-quality-standard.md) governs how every lesson is written, reviewed and released. `docs/project-studio-lesson-standard.md` governs platform mechanics.
@@ -260,7 +260,7 @@ Each runway assumes the basics in some language and translates them. The learner
 
 ### 1.4 State, identity, and execution (reading and tracing code)
 
-`CS` `SE` · Target: E · Needs: 1.1  
+`CS` `SE` · Target: R · Needs: 1.1  
 **Covers:** names vs objects; values vs references; aliasing; mutable vs immutable; in-place change vs rebinding; side effects vs pure functions; shallow vs deep copy; where state lives (global, closure, object); invariants and encapsulation; value objects vs entities; reading unfamiliar code (entry points, following data); expanding dense code until the logic is visible.  
 **Why:** you cannot evaluate what you cannot read. Hidden shared state and mutation of inputs are the most common sources of agent bugs.  
 **Builds:** **Blockfall:** the game-state object, with a planted aliasing bug (copying the board copies only the outer array) and its fix. Concept lesson in Python and JavaScript, which share the name-versus-object model.
@@ -288,14 +288,14 @@ Each runway assumes the basics in some language and translates them. The learner
 
 ### 1.8 Version control, diffs, and review
 
-`SE` · Target: E · Needs: 1.6  
+`SE` · Target: A · Needs: 1.6  
 **Covers:** the commit graph (a DAG); objects (blob, tree, commit); refs, HEAD, branches as pointers; merge vs rebase; conflicts; revert vs reset vs restore; stash; tags; `.gitignore`; remotes; pull requests; **reading a diff**; review checklist (deleted or weakened tests, changed signatures, new dependencies, generated or large files, secrets, unrelated changes, TODOs and stubs); `bisect`; `blame`; worktrees; hooks; commit hygiene; removing committed secrets.  
 **Why:** it is the undo button and audit trail for all agent work. Every other control depends on it.  
 **Builds:** Both projects are under version control from here on, one piece per commit. Review a provided Blockfall diff that quietly weakens a test.
 
 ### 1.9 Verification I: assertions, tests, oracles
 
-`SE` · Target: E · Needs: 1.4, 1.5  
+`SE` · Target: A · Needs: 1.4, 1.5  
 **Covers:** what a test is; assertions; the oracle problem (how do you know the right answer?); unit, integration, end-to-end (preview); regression tests; boundaries and edge cases; red-green-refactor; reproduction scripts; evidence vs claims; determinism and isolation; fixtures; judging a test (would it fail if the code were wrong?); tautological tests; over-mocking.  
 **Why:** you can't read 200,000 lines. Tests turn trust into measurement. Agents write tests that merely confirm their own code.  
 **Builds:** **Blockfall:** rotation and line clearing move into pure functions so they can be tested without a screen. This is the first boundary. **Kit:** tests for `count` and `filter`, with fixture files.
@@ -316,7 +316,7 @@ Each runway assumes the basics in some language and translates them. The learner
 
 ### 1.12 Working in small verified steps: tasks, plans, checkpoints, review
 
-`AI` · Target: E · Needs: 1.8, 1.9, 1.11  
+`AI` · Target: A · Needs: 1.8, 1.9, 1.11  
 **Covers:** task decomposition into small vertical slices; plan before edit; asking for options and choosing; read-only exploration first; one task per diff; checkpoint commits; acceptance criteria in the request; test-first loop; review loop; demanding evidence; handling confident "done" claims; least privilege; approval for destructive or irreversible actions; protecting secrets and production data; verifying changes before deployment.  
 **Why:** the same collaborator, human or AI, does far better or worse work depending on direction. This is the basic driving technique.  
 **Builds:** **Blockfall:** a hold-piece feature delivered as one small vertical slice: acceptance criteria first, then a plan, checkpoint commits, and review.

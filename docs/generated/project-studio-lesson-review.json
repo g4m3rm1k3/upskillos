@@ -10052,7 +10052,7 @@
       "title": "What a File Holds: Bytes, Text and Meaning",
       "level": "bridge",
       "maturity": "in-development",
-      "firstStep": "Set up Kit's folder",
+      "firstStep": "Set up the course folder and Kit",
       "firstIndependentTask": "Your turn: choose the encoding",
       "signals": [],
       "errors": []

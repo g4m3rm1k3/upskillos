@@ -95,11 +95,11 @@ const SERIES = [
   },
   {
     // Curriculum: docs/software-engineering-curriculum.md. Conventions and status: docs/swe-course-status.md.
-    // Lessons name their own project folder (`project:` frontmatter), so chapters don't share one.
+    // One folder for the whole course; each project is a subfolder of it (kit/, blockfall/, ...).
     key: 'swe',
     label: 'Software Engineering for the Age of AI',
     prefix: 'swe-',
-    sharedProject: false,
+    sharedProject: true,
     chapters: [['swe-s01-ignition', '01 · Ignition: First Principles and First Controls']],
     planned: 'For programmers comfortable in at least one language. Computer science and software engineering from the bottom up, taught through several projects that grow side by side (Kit, Blockfall, Ledger, a C# web framework and more), so you can design systems and steer whoever builds them. Stage 1 is being piloted; later stages follow the curriculum in docs/software-engineering-curriculum.md. Reviews and learner walkthroughs remain open.',
   },

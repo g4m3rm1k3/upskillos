@@ -2,7 +2,6 @@
 title: What a File Holds: Bytes, Text and Meaning
 track: 01 · Ignition
 runtime: python
-project: swe-kit
 ---
 
 Ask three people how long a word is and you can get three right answers. This lesson starts **Kit**, a set of small command-line tools you will grow through the course, with its first tool, `count`. Building it shows you the difference between what a file *holds*, what those contents *represent*, and what they *mean*. That difference is under every bug where "the data looked fine".
@@ -13,13 +12,22 @@ Ask three people how long a word is and you can get three right answers. This le
 - Predict what a program reports when the same bytes are read under a different assumption about their encoding.
 - Explain why a program's source file is data to one program and instructions to another.
 
-**You need:** Python 3.10 or later, and the basics of one programming language. Python syntax is used throughout; the Python runway (lesson 01-00-01) translates it from other languages if you need it.
+**You need:** Python 3.10 or later, and the basics of one programming language. The code is Python; each piece of Python syntax that isn't common to most languages is explained where it first appears.
 
-## Set up Kit's folder
+## Set up the course folder and Kit
 
-Kit lives in its own folder. Project Studio asks you to choose one the first time you open a Kit lesson; pick an empty folder called `kit`.
+The whole course lives in one folder. Project Studio asks you to choose it the first time you open a lesson; pick an empty folder, for example one called `swe`. Every project you build gets its own subfolder inside it, and you move between them in the terminal, as you would on any real codebase.
 
-Open the terminal (the panel at the bottom) and create a **virtual environment**: a private copy of Python for this project, so packages installed later don't affect anything else on your computer.
+Open the terminal (the panel at the bottom). It starts in the course folder. Make Kit's subfolder and move into it:
+
+```
+mkdir kit
+cd kit
+```
+
+`mkdir` makes a directory; `cd` ("change directory") makes it the terminal's current folder, so the commands that follow run inside `kit`. Every Kit command in this course assumes you are there. If you open a new terminal later, `cd kit` again first.
+
+Now create a **virtual environment**: a private copy of Python for this project, so packages installed later don't affect anything else on your computer. It lives in a folder called `.venv` inside `kit`.
 
 | | Windows (PowerShell) | macOS or Linux |
 |---|---|---|
@@ -29,7 +37,7 @@ Open the terminal (the panel at the bottom) and create a **virtual environment**
 Run your environment's Python with `--version` to see that it works, for example `.venv/bin/python --version`. It prints something like `Python 3.13.2`.
 
 ```check
-run ".venv/Scripts/python --version" stdout="Python 3" -- Create the virtual environment in the Kit folder first (see the table above).
+run "cd kit; .venv/Scripts/python --version" stdout="Python 3" -- Make the kit folder inside the course folder, cd into it, and create the virtual environment there (see the table above).
 ```
 
 ## Same bytes, different meanings
@@ -46,7 +54,7 @@ A program that expects a two-byte number reads them differently. The first byte 
 question: Read as one two-byte number (first byte × 256, plus the second byte), what number do the bytes 104 and 105 make?
 answer: 26729
 explain: 104 × 256 = 26624, and 26624 + 105 = 26729. The bytes didn't change. Only the rule used to read them changed. That rule is a **representation**: an agreement about how numbers stand for something. The same bytes are the text "hi" under one representation and the number 26729 under another.
-verify: .venv/Scripts/python -c "print(104 * 256 + 105)"
+verify: cd kit; .venv/Scripts/python -c "print(104 * 256 + 105)"
 ```
 
 Keep three layers apart from here on:
@@ -68,10 +76,10 @@ choice: 7
 choice: 12
 answer: 7
 explain: Five letters and a newline are six characters, but UTF-8 stores é as two bytes (195 and 169) while h, l, l, o and the newline take one byte each. Six characters, seven bytes. Latin-1, the other encoding here, stores é as a single byte, 233, so latin1.txt will be six bytes.
-verify: .venv/Scripts/python -c "print(len(open('samples/hello.txt', 'rb').read()))"
+verify: cd kit; .venv/Scripts/python -c "print(len(open('samples/hello.txt', 'rb').read()))"
 ```
 
-```python file=make_samples.py
+```python file=kit/make_samples.py
 # Writes the same word to two files, in two different encodings.
 from pathlib import Path
 
@@ -82,14 +90,14 @@ Path("samples/hello.txt").write_bytes(word.encode("utf-8"))
 Path("samples/latin1.txt").write_bytes(word.encode("latin-1"))
 ```
 
-Save the file, then run it from the terminal: `.venv/bin/python make_samples.py` (or `.venv\Scripts\python make_samples.py` on Windows). It prints nothing; it creates the `samples` folder and both files.
+Save the file, then run it from the terminal, in the `kit` folder: `.venv/bin/python make_samples.py` (or `.venv\Scripts\python make_samples.py` on Windows). It prints nothing; it creates the `samples` folder and both files.
 
 The same word, in two encodings, gives two different files. Neither file says which encoding it uses. A program reading them has to be told, or has to guess.
 
 ```check
-run ".venv/Scripts/python make_samples.py"
-file samples/hello.txt
-file samples/latin1.txt
+run "cd kit; .venv/Scripts/python make_samples.py"
+file kit/samples/hello.txt
+file kit/samples/latin1.txt
 ```
 
 ## Count bytes and lines
@@ -115,15 +123,15 @@ print("lines:", data.count(b"\n"))
 Run it on both samples:
 
 ```
-.venv/bin/python kit/count.py samples/hello.txt
-.venv/bin/python kit/count.py samples/latin1.txt
+.venv/bin/python count.py samples/hello.txt
+.venv/bin/python count.py samples/latin1.txt
 ```
 
 `hello.txt` reports 7 bytes and `latin1.txt` reports 6. Both report 1 line. Counting lines as newline bytes is a definition, not a fact of nature: a file whose last line has no newline after it reports one line fewer. The Unix `wc -l` tool uses the same definition.
 
 ```check
-run ".venv/Scripts/python kit/count.py samples/hello.txt" stdout="bytes: 7" -- Run make_samples.py first, and check count.py opens the file in "rb" mode.
-run ".venv/Scripts/python kit/count.py samples/latin1.txt" stdout="bytes: 6"
+run "cd kit; .venv/Scripts/python count.py samples/hello.txt" stdout="bytes: 7" -- Run make_samples.py first, and check count.py opens the file in "rb" mode.
+run "cd kit; .venv/Scripts/python count.py samples/latin1.txt" stdout="bytes: 6"
 ```
 
 ## Count characters
@@ -134,7 +142,7 @@ Characters are not stored in a file. To count them, `count` must **decode** the 
 question: After this change, how many characters will count report for hello.txt?
 answer: 6
 explain: Decoding with UTF-8 turns the two bytes 195 and 169 back into the single character é. Seven bytes become six characters. The byte count describes the representation; the character count describes the text it represents.
-verify: .venv/Scripts/python -c "print(len(open('samples/hello.txt', 'rb').read().decode('utf-8')))"
+verify: cd kit; .venv/Scripts/python -c "print(len(open('samples/hello.txt', 'rb').read().decode('utf-8')))"
 ```
 
 ```python file=kit/count.py
@@ -152,7 +160,7 @@ print("characters:", len(text))
 ```
 
 ```check
-run ".venv/Scripts/python kit/count.py samples/hello.txt" stdout="characters: 6"
+run "cd kit; .venv/Scripts/python count.py samples/hello.txt" stdout="characters: 6"
 ```
 
 ## When the assumption is wrong
@@ -215,26 +223,26 @@ else:
 Catching only `UnicodeDecodeError` matters. A bare `except:` would also hide a mistyped variable name or a missing file, and `count` would report "not UTF-8 text" for problems that have nothing to do with encodings.
 
 ```check
-run ".venv/Scripts/python kit/count.py samples/latin1.txt" stdout="characters: not UTF-8 text" -- Catch UnicodeDecodeError around the decode, and print the message in the except branch.
-run ".venv/Scripts/python kit/count.py samples/hello.txt" stdout="characters: 6"
+run "cd kit; .venv/Scripts/python count.py samples/latin1.txt" stdout="characters: not UTF-8 text" -- Catch UnicodeDecodeError around the decode, and print the message in the except branch.
+run "cd kit; .venv/Scripts/python count.py samples/hello.txt" stdout="characters: 6"
 ```
 
 ## A program is data too
 
-`kit/count.py` is a file of bytes, like the samples. To Python it is a list of instructions. To `count` it is just bytes to count.
+`count.py` is a file of bytes, like the samples. To Python it is a list of instructions. To `count` it is just bytes to count.
 
 ```predict
-question: Run count on its own source, kit/count.py. Will its character count equal its byte count?
+question: Run count on its own source, count.py. Will its character count equal its byte count?
 choice: Yes
 choice: No
 answer: Yes
 explain: Every character in count.py is plain ASCII: letters, digits, punctuation, spaces and newlines. UTF-8 stores each ASCII character as one byte, so the two counts match. Add an é to a comment and they would differ by one.
 ```
 
-Run `.venv/bin/python kit/count.py kit/count.py`. The same bytes are instructions when Python runs them and data when `count` reads them. Whether bytes are data or instructions depends on which program reads them, not on the bytes. Later in the course that idea explains compilers, which read programs as data and write new programs, and a family of security bugs where data gets run as instructions.
+Run `.venv/bin/python count.py count.py`. The same bytes are instructions when Python runs them and data when `count` reads them. Whether bytes are data or instructions depends on which program reads them, not on the bytes. Later in the course that idea explains compilers, which read programs as data and write new programs, and a family of security bugs where data gets run as instructions.
 
 ```check
-run ".venv/Scripts/python kit/count.py kit/count.py" stdout="characters:"
+run "cd kit; .venv/Scripts/python count.py count.py" stdout="characters:"
 ```
 
 ## Your turn: choose the encoding
@@ -276,9 +284,9 @@ Decoding hello.txt as Latin-1 reports 7 characters. Latin-1 maps every byte to e
 ```
 
 ```check
-run ".venv/Scripts/python kit/count.py samples/latin1.txt latin-1" stdout="characters: 6" -- Read the encoding from sys.argv[2] when it is given.
-run ".venv/Scripts/python kit/count.py samples/hello.txt latin-1" stdout="characters: 7"
-run ".venv/Scripts/python kit/count.py samples/hello.txt" stdout="characters: 6" -- With no encoding given, count should still use UTF-8.
+run "cd kit; .venv/Scripts/python count.py samples/latin1.txt latin-1" stdout="characters: 6" -- Read the encoding from sys.argv[2] when it is given.
+run "cd kit; .venv/Scripts/python count.py samples/hello.txt latin-1" stdout="characters: 7"
+run "cd kit; .venv/Scripts/python count.py samples/hello.txt" stdout="characters: 6" -- With no encoding given, count should still use UTF-8.
 ```
 
 **What these checks establish, and what they don't.** They run your tool on three cases and look for one line of output in each. They don't try an encoding name Python doesn't know. Try it yourself: `count.py samples/hello.txt klingon`. Python stops with `LookupError: unknown encoding: klingon`, a different error from the one you caught. Decide whether `count` should report that more helpfully; the curriculum returns to error design in module 1.10.
