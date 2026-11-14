@@ -25,16 +25,24 @@ function lcsTable(a, b) {
  * where targetLineNumber is the 1-based line in `target` for 'same'/'add'
  * ops (what Monaco needs to decorate), and null for 'remove'.
  */
+// Trailing whitespace is invisible and never changes what code does (an editor leaves spaces on a
+// blank line after an indented one), so lines are compared without it. Leading whitespace still
+// counts: in Python, indentation is syntax.
+const lines = (text) => (text ?? '').replace(/\r\n/g, '\n').split('\n');
+const trimEnd = (line) => line.replace(/\s+$/, '');
+
 export function diffLines(current, target) {
-  const a = (current ?? '').replace(/\r\n/g, '\n').split('\n');
-  const b = (target ?? '').replace(/\r\n/g, '\n').split('\n');
-  const table = lcsTable(a, b);
+  const a = lines(current);
+  const b = lines(target);
+  const ka = a.map(trimEnd);
+  const kb = b.map(trimEnd);
+  const table = lcsTable(ka, kb);
 
   const ops = [];
   let i = 0;
   let j = 0;
   while (i < a.length && j < b.length) {
-    if (a[i] === b[j]) {
+    if (ka[i] === kb[j]) {
       ops.push({ type: 'same', line: a[i], targetLineNumber: j + 1 });
       i++; j++;
     } else if (table[i + 1][j] >= table[i][j + 1]) {
@@ -121,15 +129,15 @@ const indentOf = (line) => line.length - line.trimStart().length;
  * the learner should be told "indent these", not shown them twice.
  */
 export function diffLinesIndentAware(current, target) {
-  const a = (current ?? '').replace(/\r\n/g, '\n').split('\n');
-  const b = (target ?? '').replace(/\r\n/g, '\n').split('\n');
-  const table = lcsTable(a.map((l) => l.trimStart()), b.map((l) => l.trimStart()));
+  const a = lines(current);
+  const b = lines(target);
+  const table = lcsTable(a.map((l) => l.trim()), b.map((l) => l.trim()));
   const ops = [];
   let i = 0;
   let j = 0;
   while (i < a.length && j < b.length) {
-    if (a[i].trimStart() === b[j].trimStart()) {
-      ops.push(a[i] === b[j] || !b[j].trim()
+    if (a[i].trim() === b[j].trim()) {
+      ops.push(trimEnd(a[i]) === trimEnd(b[j]) || !b[j].trim()
         ? { type: 'same', line: b[j], targetLineNumber: j + 1 }
         : { type: 'indent', line: b[j], from: a[i], delta: indentOf(b[j]) - indentOf(a[i]), targetLineNumber: j + 1 });
       i++; j++;

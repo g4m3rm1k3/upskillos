@@ -21,7 +21,23 @@ const LANG_BY_EXT = {
   py: 'python', js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
   json: 'json', md: 'markdown', css: 'css', html: 'html', lisp: 'scheme', java: 'java', cs: 'csharp',
   cpp: 'cpp', c: 'c', h: 'cpp', toml: 'ini', ini: 'ini', txt: 'plaintext', xml: 'xml', csproj: 'xml',
+  go: 'go', rs: 'rust',
 };
+
+// Lessons show code indented with spaces, so the editor inserts spaces. Two kinds of file need real
+// tab characters: a Makefile's recipe lines must start with one, and Go is formatted with tabs.
+function indentsWithTabs(rel) {
+  const name = (rel || '').split('/').pop().toLowerCase();
+  return name === 'makefile' || name.endsWith('.mk') || name.endsWith('.go');
+}
+
+// Auto-indent puts the cursor under the previous line when Enter is pressed. A learner typing a
+// lesson's code then types the indentation shown as well, and every line ends up indented twice.
+// So it starts off; anyone writing their own code can turn it on, and the choice is remembered.
+const AUTO_INDENT_KEY = 'project-studio:auto-indent';
+function savedAutoIndent() {
+  try { return localStorage.getItem(AUTO_INDENT_KEY) === 'on'; } catch { return false; }
+}
 
 function languageFor(rel) {
   const ext = (rel || '').split('.').pop()?.toLowerCase();
@@ -36,6 +52,12 @@ export default function EditorPane({
   const canChoose = !!onEditorKind && typeof window !== 'undefined' && !!window.openCalcDesktop?.terminal;
   const nvim = canChoose && editorKind === 'nvim';
   const [showKeys, setShowKeys] = useState(false);
+  const [autoIndent, setAutoIndent] = useState(savedAutoIndent);
+  const toggleAutoIndent = () => {
+    const next = !autoIndent;
+    setAutoIndent(next);
+    try { localStorage.setItem(AUTO_INDENT_KEY, next ? 'on' : 'off'); } catch { /* not remembered */ }
+  };
 
   // Monaco owns the text while the learner types; `content` is pushed in only when it changed
   // from outside (a reload from disk, a step writing the file). Passing it as `value` instead let
@@ -63,6 +85,11 @@ export default function EditorPane({
       applying.current = false;
     }
   }, [content, activeFile]);
+  // Spaces or tabs live on each file's model in Monaco, not only on the editor, so set them on
+  // the model whenever the file changes.
+  useEffect(() => {
+    editorRef.current?.getModel()?.updateOptions({ tabSize: 4, insertSpaces: !indentsWithTabs(activeFile) });
+  }, [activeFile]);
   const tracked = targetContent != null;
   const missing = tracked ? addedLineNumbers(content, targetContent).length : 0;
   const done = tracked && matchesTarget(content, targetContent);
@@ -107,6 +134,13 @@ export default function EditorPane({
           >
             Keys
           </button>
+        )}
+        {!nvim && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px', fontSize: 11, color: C.hint, whiteSpace: 'nowrap' }}
+            title="On: Enter keeps the previous line's indentation. Off: Enter starts at the margin, so you type the indentation the lesson shows.">
+            <input type="checkbox" aria-label="Auto-indent" checked={autoIndent} onChange={toggleAutoIndent} />
+            Auto-indent
+          </label>
         )}
         {canChoose && (
           <label style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '0 8px', fontSize: 11, color: C.hint, whiteSpace: 'nowrap' }}
@@ -153,7 +187,10 @@ export default function EditorPane({
           theme={monacoTheme || (C.dark ? 'open-calc-dark' : 'open-calc-light')}
           defaultValue={content}
           beforeMount={setupOpenCalcMonaco}
-          onMount={(editor) => { editorRef.current = editor; }}
+          onMount={(editor) => {
+            editorRef.current = editor;
+            editor.getModel()?.updateOptions({ tabSize: 4, insertSpaces: !indentsWithTabs(activeFile) });
+          }}
           onChange={(val) => { if (applying.current) return; emitted.current.add(val ?? ''); onChange(val ?? ''); }}
           options={{
             minimap: { enabled: false },
@@ -163,6 +200,10 @@ export default function EditorPane({
             automaticLayout: true,
             acceptSuggestionOnEnter: 'off',
             tabSize: 4,
+            insertSpaces: !indentsWithTabs(activeFile),
+            // Don't guess from the file's contents: an empty new file would get the editor's default.
+            detectIndentation: false,
+            autoIndent: autoIndent ? 'full' : 'none',
           }}
         />}
       </div>

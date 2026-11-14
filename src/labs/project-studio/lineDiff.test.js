@@ -57,3 +57,21 @@ describe('indentation-aware diffs', () => {
     expect(rows.map((r) => r.type)).toEqual(['same', 'indent', 'same']);
   });
 });
+
+describe('trailing whitespace', () => {
+  it('does not count spaces at the end of a line as a change', async () => {
+    const { diffLines, addedLineNumbers } = await import('./lineDiff.js');
+    const target = 'def f():\n    return 1\n\nprint(f())';
+    // An editor leaves the indent on the blank line, and a stray space after a line.
+    const typed = 'def f():  \n    return 1\n    \nprint(f())';
+    expect(addedLineNumbers(typed, target)).toEqual([]);
+    expect(diffLines(typed, target).every((op) => op.type === 'same')).toBe(true);
+  });
+  it('still reports a line indented differently, because indentation is syntax', async () => {
+    const { diffLinesIndentAware, addedLineNumbers } = await import('./lineDiff.js');
+    const target = 'if x:\n    y()';
+    const typed = 'if x:\n        y()  ';
+    expect(addedLineNumbers(typed, target)).toEqual([2]);
+    expect(diffLinesIndentAware(typed, target).map((op) => op.type)).toEqual(['same', 'indent']);
+  });
+});
