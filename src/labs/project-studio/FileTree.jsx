@@ -60,6 +60,7 @@ function Node({ node, depth, activeFile, onOpen, onDelete, onRename, C }) {
       <button
         onClick={(e) => { e.stopPropagation(); onDelete(node.rel); }}
         title={`Delete ${node.name}`}
+        aria-label={`Delete ${node.name}`}
         style={{
           border: 'none', background: 'transparent', cursor: 'pointer',
           color: isActive ? '#fff' : C.hint, fontSize: 11, padding: '0 2px', opacity: 0.5,
@@ -81,12 +82,18 @@ export default function FileTree({ entries, root, activeFile, onOpen, onDelete, 
   useEffect(() => { setCreating(null); setName(''); setError(null); }, [root]);
   const begin = kind => { setCreating(kind); setName(''); setError(null); };
   const beginRename = rel => { if (busy) return; setRenameFrom(rel); setCreating('rename'); setName(rel); setError(null); };
+  // Deleting asks here, in the page, not with window.confirm: after a native dialog closes,
+  // Electron can leave text fields and terminals ignoring the keyboard until the window loses
+  // and regains focus, which looks like the whole app freezing.
+  const beginDelete = rel => { if (busy) return; setRenameFrom(rel); setCreating('delete'); setName(rel); setError(null); };
   const submit = async event => {
     event.preventDefault();
     if (!name.trim() || busy) return;
     setBusy(true); setError(null);
     try {
-      const result = creating === 'rename' ? await onRename(renameFrom, name.trim()) : await (creating === 'file' ? onNewFile : onNewFolder)(name.trim());
+      const result = creating === 'delete' ? await onDelete(renameFrom)
+        : creating === 'rename' ? await onRename(renameFrom, name.trim())
+          : await (creating === 'file' ? onNewFile : onNewFolder)(name.trim());
       if (!result?.ok) throw new Error(result?.reason || 'Could not create the item.');
       setCreating(null); setName('');
     } catch (failure) { setError(failure.message); }
@@ -110,7 +117,18 @@ export default function FileTree({ entries, root, activeFile, onOpen, onDelete, 
         <button onClick={() => begin('folder')} disabled={!root || busy} title="New folder" aria-label="New folder" style={iconBtn(C)}>📁</button>
       </div>
 
-      {creating && (
+      {creating === 'delete' && (
+        <form onSubmit={submit} style={{ padding: 8, borderBottom: `1px solid ${C.border}` }}>
+          <p style={{ margin: 0, fontSize: 12, color: C.text }}>Delete <code>{renameFrom}</code>? This removes it from disk.</p>
+          <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+            <button type="submit" autoFocus disabled={busy} style={{ padding: '4px 8px', borderRadius: 4, border: `1px solid ${C.border}`, background: C.surface2, color: C.text }}>{busy ? 'Working…' : 'Delete'}</button>
+            <button type="button" disabled={busy} onClick={() => setCreating(null)} onKeyDown={event => { if (event.key === 'Escape') setCreating(null); }} style={{ padding: '4px 8px', borderRadius: 4, border: `1px solid ${C.border}`, background: C.surface2, color: C.text }}>Cancel</button>
+          </div>
+          {error && <p role="alert" style={{ fontSize: 12, color: C.amber }}>{error}</p>}
+        </form>
+      )}
+
+      {creating && creating !== 'delete' && (
         <form onSubmit={submit} style={{ padding: 8, borderBottom: `1px solid ${C.border}` }}>
           <label style={{ display: 'block', fontSize: 12, color: C.text }}>
             {creating === 'rename' ? `Rename ${renameFrom}` : creating === 'file' ? 'New file name' : 'New folder name'}
@@ -154,7 +172,7 @@ export default function FileTree({ entries, root, activeFile, onOpen, onDelete, 
           </p>
         )}
         {entries.map((node) => (
-          <Node key={node.rel} node={node} depth={0} activeFile={activeFile} onOpen={onOpen} onDelete={onDelete} onRename={beginRename} C={C} />
+          <Node key={node.rel} node={node} depth={0} activeFile={activeFile} onOpen={onOpen} onDelete={beginDelete} onRename={beginRename} C={C} />
         ))}
       </div>
     </div>

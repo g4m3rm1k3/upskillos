@@ -446,12 +446,15 @@ export default function ProjectStudio() {
     return fs.mkdir(rel);
   }, [fs]);
 
+  // The file tree has already asked the learner to confirm (FileTree.jsx explains why it doesn't
+  // use window.confirm).
   const deleteEntry = useCallback(async (rel) => {
-    if (!window.confirm(`Delete ${rel}? This removes it from disk.`)) return;
-    await fs.remove(rel);
+    const result = await fs.remove(rel);
+    if (result && result.ok === false) return result;
     setOpenFiles((prev) => prev.filter((f) => f !== rel));
     setBuffers((prev) => { const next = { ...prev }; delete next[rel]; return next; });
     setActiveFile((cur) => (cur === rel ? null : cur));
+    return { ok: true };
   }, [fs]);
 
   // Dragging the bar between the editor and the terminal.

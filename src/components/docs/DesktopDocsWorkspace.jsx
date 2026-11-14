@@ -40,6 +40,9 @@ function Project({ fs, C, pendingRun, onCodeChange, monacoTheme }) {
   const operation = useRef(false);
   const [snippet, setSnippet] = useState(null);
   const [wrap, setWrap] = useState(false);
+  // A question waiting for an answer, asked in the page rather than with window.confirm: after a
+  // native dialog closes, Electron can leave the editor and terminal ignoring the keyboard.
+  const [asking, setAsking] = useState(null);
   const { codeTypography } = useGlobalTheme();
   const state = useRef({ buffers, active });
   state.current = { buffers, active };
@@ -95,11 +98,14 @@ function Project({ fs, C, pendingRun, onCodeChange, monacoTheme }) {
     await fs.refresh();
     return result;
   }
+  function discard(path) {
+    const next = { ...state.current.buffers }; delete next[path]; update(next);
+    if (state.current.active === path) setActive(Object.keys(next)[0] || null);
+  }
   function close(path) {
     const b = state.current.buffers[path];
-    if (b.content !== b.base && !window.confirm(`Discard unsaved changes to ${path}?`)) return;
-    const next = { ...state.current.buffers }; delete next[path]; update(next);
-    if (active === path) setActive(Object.keys(next)[0] || null);
+    if (b.content !== b.base) setAsking({ message: `Discard unsaved changes to ${path}?`, label: 'Discard', run: () => discard(path) });
+    else discard(path);
   }
 
   return <>
@@ -110,6 +116,11 @@ function Project({ fs, C, pendingRun, onCodeChange, monacoTheme }) {
       <button style={button} disabled={busy} onClick={() => action(async () => { await saveAll(); setTerminalStarted(true); setOutput(true); })}>Terminal / output</button>
       <button style={button} aria-pressed={wrap} onClick={() => setWrap(v => !v)}>Wrap</button>
     </header>
+    {asking && <div role="alertdialog" aria-label={asking.message} className="flex flex-wrap items-center gap-2 px-2 py-1 text-xs border-b" style={{ borderColor: C.border, background: C.surface2 }}>
+      <span className="flex-1">{asking.message}</span>
+      <button style={button} autoFocus onClick={() => { const { run } = asking; setAsking(null); run(); }}>{asking.label}</button>
+      <button style={button} onClick={() => setAsking(null)}>Cancel</button>
+    </div>}
     {error && <p role="alert" className="p-3 text-xs text-amber-600">{error}</p>}
     {snippet && <div className="p-3 text-xs border-b space-x-2">
       <span>Tutorial snippet ready. Select a file to append it without replacing your work.</span>
@@ -131,10 +142,11 @@ function Project({ fs, C, pendingRun, onCodeChange, monacoTheme }) {
             const next = { ...state.current.buffers }; delete next[from]; update(next); await open(to); return r;
           })}
           onDelete={path => action(async () => {
-            if (!window.confirm(`Delete ${path} from disk?`)) return;
+            // The file tree has already asked for confirmation, in the page.
             await mutate(() => fs.api.remove(path));
             const next = { ...state.current.buffers }; delete next[path]; update(next);
             if (active === path) setActive(Object.keys(next)[0] || null);
+            return { ok: true };
           })} />
       </aside>}
       <div className="flex flex-col flex-1 min-w-0 min-h-0">
@@ -156,12 +168,14 @@ function Project({ fs, C, pendingRun, onCodeChange, monacoTheme }) {
         <footer className="flex items-center gap-2 px-2 py-1 text-xs border-t" style={{ borderColor: C.border }}>
           <span className="truncate flex-1" title={fs.root}>{active || fs.root} · {dirty ? 'Unsaved draft' : 'Saved'}</span>
           <button style={button} disabled={busy} onClick={() => action(() => fs.refresh())}>Refresh files</button>
-          <button style={button} disabled={!active || busy} onClick={() => action(async () => {
-            if (!window.confirm(`Reload ${active} from disk and discard its draft?`)) return;
-            const res = await fs.api.read(active);
-            if (!res.ok || res.missing) throw new Error(res.reason || 'File no longer exists. Draft retained.');
-            update({ ...state.current.buffers, [active]: { content: res.content, base: res.content } });
-          })}>Reload file</button>
+          <button style={button} disabled={!active || busy} onClick={() => {
+            const path = active;
+            setAsking({ message: `Reload ${path} from disk and discard its draft?`, label: 'Reload', run: () => action(async () => {
+              const res = await fs.api.read(path);
+              if (!res.ok || res.missing) throw new Error(res.reason || 'File no longer exists. Draft retained.');
+              update({ ...state.current.buffers, [path]: { content: res.content, base: res.content } });
+            }) });
+          }}>Reload file</button>
         </footer>
       </div>
     </div>

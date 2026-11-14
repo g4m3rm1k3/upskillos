@@ -3,6 +3,7 @@ import { configDefaults } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import rawGlobAssets from "./scripts/vite-plugin-raw-glob-assets.mjs";
 import rawLf from "./scripts/vite-plugin-raw-lf.mjs";
+import { learnerProjectIgnore } from "./scripts/vite-learner-projects.mjs";
 import { createHash } from "crypto";
 import fs from "fs";
 import path from "path";
@@ -240,7 +241,10 @@ export default defineConfig({
   // One fixed port: the browser stores caches (including the ~1 GB in-browser AI model) per origin,
   // and every localhost port is a separate origin. Silently moving to 5174, 5175… when 5173 is busy
   // downloaded and stored the model again for each port. Pass --port explicitly for a second server.
-  server: { port: 5173, strictPort: true },
+  // The watcher skips learners' Project Studio and Markdown Hub folders: a project inside this repo
+  // otherwise reloaded the app after every file the learner created or deleted
+  // (scripts/vite-learner-projects.mjs).
+  server: { port: 5173, strictPort: true, watch: { ignored: [learnerProjectIgnore(process.cwd())] } },
   build: {
     outDir: "dist",
     reportCompressedSize: false,

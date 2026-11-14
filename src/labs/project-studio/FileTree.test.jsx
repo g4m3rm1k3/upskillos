@@ -24,3 +24,14 @@ it('prefills rename and submits the original and corrected paths without opening
  expect(host.querySelector('input').value).toBe('wrong.cpp');await enter('main.cpp');await submit();
  expect(rename).toHaveBeenCalledWith('wrong.cpp','main.cpp');expect(open).not.toHaveBeenCalled();expect(host.querySelector('form')).toBeNull();
 });
+it('asks before deleting in the page, never with window.confirm, and deletes only on confirming',async()=>{
+ const remove=vi.fn(async()=>({ok:true}));const confirm=vi.fn(()=>true);window.confirm=confirm;
+ await act(async()=>root.render(<FileTree entries={[{name:'old.py',rel:'old.py',type:'file'}]} root="/kit" C={{}} onDelete={remove} onNewFile={create} onNewFolder={folder}/>));
+ const deleteButton=()=>host.querySelector('[aria-label="Delete old.py"]');
+ await act(async()=>deleteButton().click());
+ expect(host.querySelector('form').textContent).toContain('Delete old.py?');expect(remove).not.toHaveBeenCalled();
+ await act(async()=>[...host.querySelectorAll('button')].find(b=>b.textContent==='Cancel').click());
+ expect(host.querySelector('form')).toBeNull();expect(remove).not.toHaveBeenCalled();
+ await act(async()=>deleteButton().click());await submit();
+ expect(remove).toHaveBeenCalledWith('old.py');expect(host.querySelector('form')).toBeNull();expect(confirm).not.toHaveBeenCalled();
+});
