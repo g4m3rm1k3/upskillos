@@ -32,7 +32,9 @@ import "prismjs/components/prism-sql";
 import "prismjs/components/prism-json";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-markup";
+import "prismjs/components/prism-diff";
 import { setupOpenCalcMonaco } from "../../utils/monacoThemes.js";
+import { parseDiffLang, applyDiffDecorations } from "../../utils/monacoDiff.js";
 import MarkdownToolbar from "../markdown-toolbar/MarkdownToolbar.jsx";
 import { LANG_LABEL } from "../markdown/codeDisplay.jsx";
 import {
@@ -661,8 +663,10 @@ function MdCodeBlock({ language, code }) {
     if (output === null) didScrollRef.current = false;
   }, [output !== null]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const monacoLang = MONACO_LANG[language] || language;
-  const displayLang = LANG_LABEL[language] || monacoLang;
+  const { monacoLang, isDiff, baseLang } = parseDiffLang(language, MONACO_LANG);
+  const displayLang = isDiff
+    ? `diff${baseLang ? ` · ${LANG_LABEL[baseLang] || monacoLang}` : ""}`
+    : LANG_LABEL[language] || monacoLang;
   const runnable = RUNNABLE_LANGS.has(language);
 
   const onResizeStart = useCallback(
@@ -915,8 +919,9 @@ function MdCodeBlock({ language, code }) {
           defaultValue={code}
           theme={monacoTheme || (isDark ? "open-calc-dark" : "open-calc-light")}
           beforeMount={setupOpenCalcMonaco}
-          onMount={(editor) => {
+          onMount={(editor, monaco) => {
             editorRef.current = editor;
+            if (isDiff) applyDiffDecorations(editor, monaco, { colourText: !baseLang });
           }}
           options={{
             readOnly: !runnable,
@@ -997,8 +1002,10 @@ function BasicMdCodeBlock({ language, code }) {
   const { monacoTheme } = useContext(DocsCtx);
   const [copied, setCopied] = useState(false);
 
-  const monacoLang = MONACO_LANG[language] || language;
-  const displayLang = LANG_LABEL[language] || monacoLang;
+  const { monacoLang, isDiff, baseLang } = parseDiffLang(language, MONACO_LANG);
+  const displayLang = isDiff
+    ? `diff${baseLang ? ` · ${LANG_LABEL[baseLang] || monacoLang}` : ""}`
+    : LANG_LABEL[language] || monacoLang;
   const lineCount = code.split('\n').length;
   const editorHeight = Math.min(Math.max(lineCount * 19 + 24, 48), 600);
 
@@ -1027,6 +1034,9 @@ function BasicMdCodeBlock({ language, code }) {
           defaultValue={code}
           theme={monacoTheme || (isDark ? 'open-calc-dark' : 'open-calc-light')}
           beforeMount={setupOpenCalcMonaco}
+          onMount={(editor, monaco) => {
+            if (isDiff) applyDiffDecorations(editor, monaco, { colourText: !baseLang });
+          }}
           options={{
             readOnly: true,
             minimap: { enabled: false },
@@ -1597,7 +1607,7 @@ const MD_COMPONENTS = {
     const langClass = (
       Array.isArray(classNames) ? classNames : [String(classNames)]
     ).find((c) => /^language-/.test(String(c)));
-    const match = /language-(\w+)/.exec(langClass || "");
+    const match = /language-(diff[-_][\w+#]+|\w+)/.exec(langClass || "");
     const rawCode = (codeNode?.children ?? [])
       .filter((n) => n.type === "text")
       .map((n) => n.value)
@@ -1734,6 +1744,11 @@ pre[class*="language-"]{background:#161b22;color:#c9d1d9;border:1px solid #30363
 .token.italic{font-style:italic}
 pre[class*="language-"]{background:#f6f8fa;color:#24292e;border:1px solid #e1e4e8}`
       }</style>
+      {/* ```diff: whole-line green/red, matching the Monaco blocks */}
+      <style>{`.token.inserted-sign,.token.deleted-sign,.token.coord{display:inline-block;width:100%}
+.token.inserted-sign{background:rgba(46,160,67,.18);color:#3fb950}
+.token.deleted-sign{background:rgba(248,81,73,.18);color:#f85149}
+.token.coord{background:rgba(56,139,253,.12);color:#58a6ff}`}</style>
       {highlighted ? (
         <pre className={lang ? `language-${lang}` : undefined}>
           <code

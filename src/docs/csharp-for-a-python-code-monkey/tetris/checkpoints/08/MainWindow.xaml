@@ -1,0 +1,22 @@
+<Window x:Class="PythonMonkey.Tetris.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="C# for a Python code monkey - Tetris">
+  <UserControl x:Name="Surface" IsTabStop="True" Loaded="Surface_Loaded"
+               KeyDown="Surface_KeyDown" PointerPressed="Surface_PointerPressed">
+    <Grid Background="#101827" Padding="20" ColumnSpacing="24">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Canvas x:Name="BoardCanvas" Width="240" Height="480"
+              Background="#1F2937" VerticalAlignment="Top" />
+      <StackPanel Grid.Column="1" Spacing="16" MinWidth="170">
+        <TextBlock Text="TETRIS" FontSize="28" Foreground="White" />
+        <TextBlock x:Name="Status" Foreground="White" TextWrapping="Wrap" />
+        <TextBlock Foreground="#CBD5E1" TextWrapping="Wrap"
+          Text="Arrows: move / turn&#10;Down: soft drop&#10;Space: hard drop&#10;P: pause&#10;R: restart&#10;&#10;Click the board to focus.&#10;Later controls unlock as you learn." />
+      </StackPanel>
+    </Grid>
+  </UserControl>
+</Window>

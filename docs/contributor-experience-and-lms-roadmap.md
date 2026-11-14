@@ -8,6 +8,11 @@ Last reconciled: 2026-09-26
 
 ## Current status and prioritized backlog
 
+### C# for a Python code monkey (2026-11-13)
+
+- [x] Authored the [Tetris tutorial sequence](../src/docs/csharp-for-a-python-code-monkey/00-start-here.md) alongside separate runnable C#/WinUI checkpoints: window, drawing, input, time, rotation, stacking, row compaction, piece generation, scoring, and extraction of independently checked rules. Includes Python comparisons, execution traces, exercises, and recovery checkpoints.
+- [ ] Review pacing with the learner; the tutorials do not certify mastery. Next project: map the learner's actual XML into an editable desktop table and SQLite persistence. Schema and import/export decisions await that sample after Tetris.
+
 ### Computing Foundry apprenticeship (2026-11-05)
 
 - [x] Drafted the [master BRD](computing-foundry-master-brd.md): desktop-first, active learning for advanced computer users with tutorial-level coding experience, connected computing/engineering/maths curriculum, reusable learner artifacts, lab handoffs, assessment and delivery gates.

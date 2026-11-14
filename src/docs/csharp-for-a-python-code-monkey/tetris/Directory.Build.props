@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <Stage Condition="'$(Stage)' == ''">10</Stage>
+    <BaseIntermediateOutputPath>obj/$(Stage)/</BaseIntermediateOutputPath>
+    <BaseOutputPath>bin/$(Stage)/</BaseOutputPath>
+  </PropertyGroup>
+</Project>

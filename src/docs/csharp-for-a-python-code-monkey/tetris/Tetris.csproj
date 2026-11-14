@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>PythonMonkey.Tetris</RootNamespace>
+    <AssemblyName>Tetris.Stage$(Stage)</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>false</SelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <PlatformTarget>x64</PlatformTarget>
+    <EnableDefaultItems>false</EnableDefaultItems>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
+    <ApplicationDefinition Include="App.xaml" />
+    <Page Include="checkpoints/$(Stage)/MainWindow.xaml" Link="MainWindow.xaml" />
+    <Compile Include="App.xaml.cs" />
+    <Compile Include="checkpoints/$(Stage)/*.cs" />
+  </ItemGroup>
+  <Target Name="CheckStage" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('checkpoints/$(Stage)/MainWindow.xaml')" Text="Stage must be 01 through 10 (include the leading zero)." />
+  </Target>
+</Project>
