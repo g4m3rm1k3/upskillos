@@ -1,14 +1,12 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 827,
-    "tracks": 138,
-    "errors": {
-      "independent task exposes full target": 4
-    },
+    "lessons": 857,
+    "tracks": 144,
+    "errors": {},
     "signals": {
-      "authored check limits not detected": 590,
-      "prediction not detected": 76,
+      "authored check limits not detected": 615,
+      "prediction not detected": 100,
       "task lacks parsed hint ladder": 105,
       "independent task heading not detected": 199
     }
@@ -3127,9 +3125,7 @@
       "signals": [
         "authored check limits not detected"
       ],
-      "errors": [
-        "independent task exposes full target"
-      ]
+      "errors": []
     },
     {
       "id": "electron-basics-ipc/02-01-a-safe-door",
@@ -6808,6 +6804,368 @@
       "errors": []
     },
     {
+      "id": "pyinternals-c-bridge/01-c-basics",
+      "track": "pyinternals-c-bridge",
+      "title": "1 — C from Python: Variables, Types and Control Flow",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Your First C Program",
+      "firstIndependentTask": "Step 7 — Challenge: FizzBuzz in C",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-c-bridge/02-functions-and-headers",
+      "track": "pyinternals-c-bridge",
+      "title": "2 — Functions, Headers and Compilation Units",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A C Function",
+      "firstIndependentTask": "Step 6 — Challenge: Write a Math Utility Header",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-c-bridge/03-pointers",
+      "track": "pyinternals-c-bridge",
+      "title": "3 — Pointers: Addresses, Not Values",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The Address-of Operator: &x",
+      "firstIndependentTask": "Step 7 — Challenge: Swap Two Ints Using Pointers",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-c-bridge/04-arrays-and-strings",
+      "track": "pyinternals-c-bridge",
+      "title": "4 — Arrays and C Strings",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Fixed-Size Arrays",
+      "firstIndependentTask": "Step 7 — Challenge: Implement Your Own strlen",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-c-bridge/05-memory-management",
+      "track": "pyinternals-c-bridge",
+      "title": "5 — malloc, free and Why Python Hides This",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Stack Memory: Automatic Allocation",
+      "firstIndependentTask": "Step 7 — Challenge: Implement a Dynamic Array in C",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpp-ds/01-cpp-vs-c-for-python",
+      "track": "pyinternals-cpp-ds",
+      "title": "1 — Why C++ Instead of C for Data Science Libraries",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — What NumPy, pandas, and scikit-learn actually use",
+      "firstIndependentTask": "Step 6 — Challenge: template a statistics function",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpp-ds/02-arrays-and-memory-layout",
+      "track": "pyinternals-cpp-ds",
+      "title": "2 — Array Memory Layouts: How NumPy Slicing is O(1)",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — A 2D array in memory: row-major layout",
+      "firstIndependentTask": "Step 6 — Challenge: implement a matrix transpose using strides",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpp-ds/03-templates-and-generics",
+      "track": "pyinternals-cpp-ds",
+      "title": "3 — C++ Templates: How NumPy Supports All dtypes",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The type problem: writing `sum()` for every numeric type",
+      "firstIndependentTask": "Step 6 — Challenge: template a `clip()` function like `np.clip`",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpp-ds/04-stl-containers",
+      "track": "pyinternals-cpp-ds",
+      "title": "4 — STL Containers: The Building Blocks of pandas",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — `std::vector<double>`: the workhorse",
+      "firstIndependentTask": "Step 6 — Challenge: implement a simple group-by using `std::unordered_map`",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpp-ds/05-simd-and-vectorization",
+      "track": "pyinternals-cpp-ds",
+      "title": "5 — SIMD Vectorization: Why NumPy Beats a Python Loop by 100×",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Python loop vs NumPy: time them",
+      "firstIndependentTask": "Step 6 — Challenge: write an auto-vectorising element-wise exp approximation",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpython/01-python-object-model",
+      "track": "pyinternals-cpython",
+      "title": "1 — Every Python Object is a C Struct",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Inspect a Python object's refcount with `sys.getrefcount`",
+      "firstIndependentTask": "Step 5 — Challenge: why can `id(x) == id(y)` be true when `x is not y`?",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpython/02-reference-counting",
+      "track": "pyinternals-cpython",
+      "title": "2 — How Python Manages Memory: Reference Counting",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Observe reference counting in Python with `sys.getrefcount`",
+      "firstIndependentTask": "Step 6 — Challenge: implement a simple arena allocator in C",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpython/03-the-gil",
+      "track": "pyinternals-cpython",
+      "title": "3 — The GIL: Why Python Threads Don't Speed Up CPU Work",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Show that Python threads don't speed up CPU-bound work",
+      "firstIndependentTask": "Step 6 — Challenge: write a C function that releases the GIL",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpython/04-bytecode",
+      "track": "pyinternals-cpython",
+      "title": "4 — Python Bytecode: What the Interpreter Actually Executes",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Disassemble a Python function with `dis.dis`",
+      "firstIndependentTask": "Step 6 — Challenge: write a function that has fewer bytecode instructions",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpython/05-c-types-from-python",
+      "track": "pyinternals-cpython",
+      "title": "5 — Talking to C from Python: ctypes",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Load the C standard library with `ctypes`",
+      "firstIndependentTask": "Step 7 — Challenge: wrap a C function that modifies an array in-place",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-cpython/06-pyobject-in-c",
+      "track": "pyinternals-cpython",
+      "title": "6 — Writing a Minimal C Extension Module",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — The anatomy of a C extension module",
+      "firstIndependentTask": "Step 6 — Challenge: add error handling with `PyErr_SetString`",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-extensions/01-c-extension-anatomy",
+      "track": "pyinternals-extensions",
+      "title": "1 — Anatomy of a C Extension Module",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — What a C Extension Actually Is",
+      "firstIndependentTask": "Step 6 — Challenge: Export a Constant from Your Module",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-extensions/02-parse-and-build",
+      "track": "pyinternals-extensions",
+      "title": "2 — Parsing Arguments and Building Return Values",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — PyArg_ParseTuple: Parsing Positional Arguments",
+      "firstIndependentTask": "Step 6 — Challenge: Accept *args and Return a Tuple",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-extensions/03-error-handling",
+      "track": "pyinternals-extensions",
+      "title": "3 — Raising Python Exceptions from C",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — How Python Exceptions Work in C: Returning NULL",
+      "firstIndependentTask": "Step 7 — Challenge: Wrap a C Function That Returns an Error Code",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-extensions/04-reference-counts",
+      "track": "pyinternals-extensions",
+      "title": "4 — Reference Counting in C Extensions",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Every Python Object Has a Refcount",
+      "firstIndependentTask": "Step 7 — Challenge: Find the Refcount Bug",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-extensions/05-numpy-c-api",
+      "track": "pyinternals-extensions",
+      "title": "5 — Calling NumPy's C API",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Import NumPy's C API Headers",
+      "firstIndependentTask": "Step 7 — Challenge: Implement a C-Accelerated Moving Average",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-extensions/06-cpp-extension",
+      "track": "pyinternals-extensions",
+      "title": "6 — C++ Extensions with pybind11",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Why pybind11? A Direct Comparison",
+      "firstIndependentTask": "Step 7 — Challenge: Wrap a C++ Class That Holds a std::vector<double>",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-performance/01-profiling",
+      "track": "pyinternals-performance",
+      "title": "1 — Finding the Slow Part: cProfile, line_profiler and perf",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — cProfile: profile a Python program from the command line",
+      "firstIndependentTask": "Step 7 — Challenge: find the hotspot in a slow data pipeline",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-performance/02-numpy-speedups",
+      "track": "pyinternals-performance",
+      "title": "2 — NumPy Best Practices: Vectorize Everything",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Python loop vs NumPy vectorization: time the difference",
+      "firstIndependentTask": "Step 7 — Challenge: rewrite a nested loop as a single broadcasting expression",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-performance/03-cython",
+      "track": "pyinternals-performance",
+      "title": "3 — Cython: Python with C Types",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — Install Cython and write a .pyx file",
+      "firstIndependentTask": "Step 7 — Challenge: Cythonize a slow function from lesson 1",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "pyinternals-performance/04-numba",
+      "track": "pyinternals-performance",
+      "title": "4 — Numba: JIT-compile Python to Machine Code",
+      "level": "advanced",
+      "maturity": "review-required",
+      "firstStep": "Step 1 — @jit: decorate a function and watch it speed up",
+      "firstIndependentTask": "Step 7 — Challenge: use @vectorize to write a fast log-sum-exp",
+      "signals": [
+        "prediction not detected",
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
       "id": "pyside6-engine/01-a-window",
       "track": "pyside6-engine",
       "title": "1 — A Window That Stays Open",
@@ -8250,9 +8608,7 @@
       "signals": [
         "authored check limits not detected"
       ],
-      "errors": [
-        "independent task exposes full target"
-      ]
+      "errors": []
     },
     {
       "id": "spreadsheet-build/05-04-challenge-types-for-a-colleagues-code",
@@ -8279,9 +8635,7 @@
       "signals": [
         "authored check limits not detected"
       ],
-      "errors": [
-        "independent task exposes full target"
-      ]
+      "errors": []
     },
     {
       "id": "spreadsheet-build/06-01-first-test",
@@ -8346,9 +8700,7 @@
       "signals": [
         "authored check limits not detected"
       ],
-      "errors": [
-        "independent task exposes full target"
-      ]
+      "errors": []
     },
     {
       "id": "spreadsheet-build/06-06-tidy-into-src",
@@ -9695,6 +10047,17 @@
       "errors": []
     },
     {
+      "id": "swe-s01-ignition/01-01-01-what-a-file-holds",
+      "track": "swe-s01-ignition",
+      "title": "What a File Holds: Bytes, Text and Meaning",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Set up Kit's folder",
+      "firstIndependentTask": "Your turn: choose the encoding",
+      "signals": [],
+      "errors": []
+    },
+    {
       "id": "tabletop-design/01-one-rule",
       "track": "tabletop-design",
       "title": "4.1 — A selector and a declaration",
@@ -10566,33 +10929,46 @@
     {
       "id": "winforms-forms/02-02-controls-and-layout",
       "track": "winforms-forms",
-      "title": "2.2 — Controls that resize and work from the keyboard",
+      "title": "2.2 — Build the form one row at a time",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Put controls in a table",
-      "firstIndependentTask": "Your turn: add a useful keyboard hint",
+      "firstIndependentTask": "Your turn: build the quantity row",
       "signals": [],
       "errors": []
     },
     {
       "id": "winforms-forms/02-03-events-and-values",
       "track": "winforms-forms",
-      "title": "2.3 — Respond to clicks and read current values",
+      "title": "2.3 — A click, current values, then a validation gate",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Subscribe a method to a click",
       "firstIndependentTask": "Your turn: reset a draft",
+      "signals": [
+        "authored check limits not detected"
+      ],
+      "errors": []
+    },
+    {
+      "id": "winforms-forms/02-03a-field-validation",
+      "track": "winforms-forms",
+      "title": "2.3a — Put validation feedback beside each input",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Give the error display a lifetime",
+      "firstIndependentTask": "Your turn: show both errors and guard success",
       "signals": [],
       "errors": []
     },
     {
       "id": "winforms-forms/02-04-validation-and-dialogs",
       "track": "winforms-forms",
-      "title": "2.4 — Show field errors and a cancellable preview",
+      "title": "2.4 — Ask for confirmation and respect cancellation",
       "level": "bridge",
       "maturity": "in-development",
       "firstStep": "Attach errors to the fields that need attention",
-      "firstIndependentTask": "Your turn: clear errors when resetting",
+      "firstIndependentTask": "Your turn: give the preview a safe exit",
       "signals": [],
       "errors": []
     },
@@ -10617,9 +10993,7 @@
       "maturity": "in-development",
       "firstStep": "Create the field checks",
       "firstIndependentTask": "Your turn: require a whole quantity",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -10630,9 +11004,7 @@
       "maturity": "in-development",
       "firstStep": "Create a separate desktop project",
       "firstIndependentTask": "Your turn: permit only the exact page",
-      "signals": [
-        "authored check limits not detected"
-      ],
+      "signals": [],
       "errors": []
     },
     {
@@ -10687,6 +11059,28 @@
       "maturity": "in-development",
       "firstStep": "Create a library project",
       "firstIndependentTask": "Your turn: protect the name-length boundary",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "winforms-workflow/03-00a-text-files",
+      "track": "winforms-workflow",
+      "title": "3.0a — A File Is Text That Survives Closing",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Prepare a small experiment",
+      "firstIndependentTask": "Your turn: read one path and write another",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "winforms-workflow/03-00b-json-values",
+      "track": "winforms-workflow",
+      "title": "3.0b — JSON Numbers Are Different from JSON Text",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Prepare the JSON experiment",
+      "firstIndependentTask": "Your turn: inspect two real input files",
       "signals": [],
       "errors": []
     },
