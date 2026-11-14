@@ -1,5 +1,5 @@
 export default {
-  id: 'ch5-002',
+  id: 'precalc5-002',
   slug: 'complex-polar-demoivre',
   chapter: 'precalc-5',
   order: 2,

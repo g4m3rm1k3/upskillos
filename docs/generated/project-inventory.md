@@ -165,21 +165,4 @@
 
 ## Problems found
 
-### duplicateIds (14)
-
-The same lesson `id` in more than one lesson file. Progress is saved as "<course>::<id>", so this only mixes progress up within one course. Across courses it is harmless for progress; ids are still meant to be unique (AGENTS.md).
-
-- `ch3-002`: `src/courses/calculus/4-applications-of-derivatives/003-mean-value-theorem.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/009-trig-in-calculus.js`
-- `ch3-001`: `src/courses/calculus/4-applications-of-derivatives/004-linear-approximation.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/007-trig-identities-deep-dive.js`
-- `ch3-003`: `src/courses/calculus/4-applications-of-derivatives/009-curve-sketching.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/010-logarithm-relationships.js`
-- `ch3-004`: `src/courses/calculus/4-applications-of-derivatives/010-optimization.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/005-inverse-trig-functions.js`
-- `ch3-005`: `src/courses/calculus/4-applications-of-derivatives/011-lhopital.js`, `src/courses/precalculus/3-trigonometry-transcendental-functions/011-trig-applications.js`
-- `ch4-001`: `src/courses/calculus/5-integration/004-riemann-sums.js`, `src/courses/precalculus/4-exponential-logarithmic-functions/001-exponential-functions.js`
-- `ch4-003`: `src/courses/calculus/5-integration/006-fundamental-theorem.js`, `src/courses/precalculus/4-exponential-logarithmic-functions/003-logarithms-intro.js`
-- `ch4-004`: `src/courses/calculus/5-integration/008-indefinite-integrals.js`, `src/courses/precalculus/4-exponential-logarithmic-functions/004-log-properties.js`
-- `ch4-005`: `src/courses/calculus/5-integration/010-applications.js`, `src/courses/precalculus/4-exponential-logarithmic-functions/005-solving-exponential-log.js`
-- `ch4-006`: `src/courses/calculus/5-integration/012-u-substitution.js`, `src/courses/precalculus/4-exponential-logarithmic-functions/006-exponential-applications.js`
-- `ch5-001`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/002-series-intro.js`, `src/courses/precalculus/5-polar-complex-vectors/001-polar-coordinates-deep.js`
-- `ch5-002`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/003-convergence-tests.js`, `src/courses/precalculus/5-polar-complex-vectors/002-complex-polar-demoivre.js`
-- `ch5-003`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/004-power-series.js`, `src/courses/precalculus/5-polar-complex-vectors/003-vectors-2d.js`
-- `ch5-004`: `src/courses/calculus/6-calc-2-bridge-sequences-series-beyond/005-taylor-maclaurin.js`, `src/courses/precalculus/5-polar-complex-vectors/004-vectors-dot-product.js`
+None.

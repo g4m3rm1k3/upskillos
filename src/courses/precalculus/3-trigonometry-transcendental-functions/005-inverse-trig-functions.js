@@ -1,5 +1,5 @@
 export default {
-  id: 'ch3-004',
+  id: 'precalc3-004',
   slug: 'inverse-trig-functions',
   chapter: 'precalc-3',
   order: 6,

@@ -1,5 +1,5 @@
 export default {
-  id: 'ch3-003',
+  id: 'precalc3-003',
   slug: 'logarithm-relationships',
   chapter: 'precalc-3',
   order: 10,

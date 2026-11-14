@@ -1,5 +1,5 @@
 export default {
-  id: 'ch3-002',
+  id: 'precalc3-002',
   slug: 'trig-in-calculus',
   chapter: 'precalc-3',
   order: 9,

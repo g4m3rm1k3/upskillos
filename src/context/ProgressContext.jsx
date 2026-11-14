@@ -11,7 +11,8 @@ import { useAuth } from './AuthContext.jsx'
 import { getLessonIdLookup } from '../courses/courseLoader.js'
 import LESSON_ID_REPAIRS from '../data/lessonIdRepairs.json'
 import LESSON_ID_SPLITS from '../data/lessonIdSplits.json'
-import { normalizeLessonProgress, copyProgressKeys } from './progressMigration.ts'
+import LESSON_ID_RENAMES from '../data/lessonIdRenames.json'
+import { normalizeLessonProgress, copyProgressKeys, migrateProgressKeyAliases } from './progressMigration.ts'
 import { deriveLessonProgress } from './lessonProgress.js'
 import { celebrate } from '../features/compass/montyNudge.ts'
 
@@ -37,7 +38,14 @@ function useProgressValue() {
   //    Only progress is copied: current notes are not keyed by lesson
   //    (see src/components/ui/notesStore.js).
   //
-  // Both steps work on the same value so the second cannot overwrite the first's result.
+  // 3. Moves progress for lessons whose id was renamed (src/data/lessonIdRenames.json,
+  //    "<course>::<old id>" -> "<course>::<new id>"), merging into any record already at the new key.
+  //    It runs on every load, with no flag: moving is a no-op once the old key is gone, so an
+  //    entry added to the table later still reaches learners who ran it before, and an old key
+  //    brought back by syncing another device is moved again. Old ids are never reused
+  //    (progressMigration.test.ts checks), so moving can't take another lesson's record.
+  //
+  // All steps work on the same value so a later one cannot overwrite an earlier one's result.
   const ranMigration = useRef(false)
   useEffect(() => {
     if (ranMigration.current) return
@@ -51,6 +59,11 @@ function useProgressValue() {
     }
     if (!localStorage.getItem(SPLIT_FLAG)) {
       const step = copyProgressKeys(current, LESSON_ID_SPLITS)
+      current = step.migrated
+      changed = changed || step.changed
+    }
+    {
+      const step = migrateProgressKeyAliases(current, LESSON_ID_RENAMES)
       current = step.migrated
       changed = changed || step.changed
     }

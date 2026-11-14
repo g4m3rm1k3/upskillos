@@ -1,5 +1,5 @@
 export default {
-  id: 'ch4-004',
+  id: 'precalc4-004',
   slug: 'log-properties',
   chapter: 'precalc-4',
   order: 4,

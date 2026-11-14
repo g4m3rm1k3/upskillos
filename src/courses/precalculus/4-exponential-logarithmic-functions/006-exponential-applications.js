@@ -1,5 +1,5 @@
 export default {
-  id: 'ch4-006',
+  id: 'precalc4-006',
   slug: 'exponential-applications',
   chapter: 'precalc-4',
   order: 6,

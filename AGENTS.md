@@ -20,7 +20,7 @@ There is no `src/content/` folder and no chapter `index.js` to register lessons 
 
 ## Rules
 
-1. **Lesson ids are progress keys.** Each lesson's `id:` must be unique across all courses and must never change once published. Renaming a file changes its route but not its id.
+1. **Lesson ids are progress keys.** Each lesson's `id:` must be unique across all courses and must never change once published. Renaming a file changes its route but not its id. If an id has to change anyway (to fix a duplicate), add `"<course>::<old id>": "<course>::<new id>"` to `src/data/lessonIdRenames.json` in the same change, so learners' saved progress moves with it; `src/context/progressMigration.test.ts` checks the table.
 2. **Don't renumber lesson files to reorder them.** The number prefix only sets order within a chapter. Moving a lesson to another chapter or course changes its URL.
 3. **Don't edit generated files by hand.** Regenerate them instead (see below).
 4. **Put helpers outside chapter folders.** Any `.js` file directly in a chapter folder is treated as a lesson.

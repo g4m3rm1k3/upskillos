@@ -1,5 +1,5 @@
 export default {
-  id: 'ch3-001',
+  id: 'precalc3-001',
   slug: 'trig-identities-deep-dive',
   chapter: 'precalc-3',
   order: 7,

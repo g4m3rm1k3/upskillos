@@ -1,5 +1,5 @@
 export default {
-  id: 'ch3-005',
+  id: 'precalc3-005',
   slug: 'trig-applications',
   chapter: 'precalc-3',
   order: 8,

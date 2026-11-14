@@ -1,5 +1,5 @@
 export default {
-  id: 'ch5-004',
+  id: 'precalc5-004',
   slug: 'vectors-dot-product',
   chapter: 'precalc-5',
   order: 4,

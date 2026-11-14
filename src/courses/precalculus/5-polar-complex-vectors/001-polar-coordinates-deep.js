@@ -1,5 +1,5 @@
 export default {
-  id: 'ch5-001',
+  id: 'precalc5-001',
   slug: 'polar-coordinates-deep',
   chapter: 'precalc-5',
   order: 1,

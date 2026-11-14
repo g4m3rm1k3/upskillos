@@ -78,8 +78,9 @@ export default function LessonPage() {
   // (route segments mirror file/folder names under src/courses/, and a
   // rename there used to silently orphan every existing user's progress —
   // confirmed real incident). Namespaced by course because lesson ids are
-  // NOT globally unique (confirmed real collisions across different
-  // courses, e.g. "ch3-001" exists in both calculus and precalculus).
+  // NOT guaranteed globally unique (there were real collisions across
+  // courses: "ch3-001" was in both calculus and precalculus until the
+  // precalculus ids were renamed, see src/data/lessonIdRenames.json).
   // Empty until `lesson` resolves — every call site below already guards
   // on `!progressKey`, so this brief gap during initial load is harmless.
   const progressKey = courseId && lesson?.id ? `${courseId}::${lesson.id}` : ''

@@ -1,5 +1,5 @@
 export default {
-  id: "ch4-001",
+  id: "precalc4-001",
   slug: "exponential-functions",
   chapter: "precalc-4",
   order: 1,

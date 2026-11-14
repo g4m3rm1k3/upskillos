@@ -1,5 +1,5 @@
 export default {
-  id: 'ch4-005',
+  id: 'precalc4-005',
   slug: 'solving-exponential-log',
   chapter: 'precalc-4',
   order: 5,

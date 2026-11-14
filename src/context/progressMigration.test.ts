@@ -283,3 +283,42 @@ describe('copyProgressKeys', () => {
     expect(copyProgressKeys(progress, splits)).toEqual({ migrated: progress, changed: false })
   })
 })
+
+// Lessons whose id was renamed so it no longer collides with another course's
+// (src/data/lessonIdRenames.json, applied once by ProgressContext.jsx).
+import LESSON_ID_RENAMES from '../data/lessonIdRenames.json'
+import LESSON_IDS from '../data/lessonIds.json'
+
+describe('lessonIdRenames.json', () => {
+  // lessonIds.json maps "<course>-<chapter>/<slug>" to the lesson's id.
+  const idsByCourse: Record<string, Set<string>> = {}
+  for (const [route, id] of Object.entries(LESSON_IDS as Record<string, string>)) {
+    const course = route.split('/')[0].replace(/-\d+$/, '')
+    ;(idsByCourse[course] ||= new Set()).add(id)
+  }
+  const split = (key: string) => {
+    const [course, id] = key.split('::')
+    return { course, id }
+  }
+
+  it('moves progress only to ids that exist, and only from ids no longer used in that course', () => {
+    for (const [from, to] of Object.entries(LESSON_ID_RENAMES as Record<string, string>)) {
+      const old = split(from)
+      const target = split(to)
+      expect(target.course).toBe(old.course)
+      expect(idsByCourse[target.course]?.has(target.id), `${to} is a current lesson id`).toBe(true)
+      expect(idsByCourse[old.course]?.has(old.id), `${from} is no longer used`).toBe(false)
+    }
+  })
+
+  it('moves a precalculus record and leaves the calculus lesson with the same old id alone', () => {
+    const precalc = { completedCheckpoints: ['read-intuition'], readingProgress: 40 }
+    const calc = { completedCheckpoints: ['read-math'], readingProgress: 90 }
+    const { migrated, changed } = migrateProgressKeyAliases(
+      { 'precalculus::ch3-001': precalc, 'calculus::ch3-001': calc },
+      LESSON_ID_RENAMES as Record<string, string>,
+    )
+    expect(changed).toBe(true)
+    expect(migrated).toEqual({ 'precalculus::precalc3-001': precalc, 'calculus::ch3-001': calc })
+  })
+})

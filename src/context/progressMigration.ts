@@ -70,8 +70,9 @@ export function mergeProgress(local: ProgressMap | null | undefined, remote: Pro
 // URL (folder/file names), so renaming a lesson file silently orphaned every
 // existing user's progress for it (confirmed real incident: the
 // ai-engineering course rename). The new key is "<courseId>::<lesson.id>",
-// namespaced by course because lesson ids are NOT globally unique (confirmed
-// real collisions, e.g. "ch3-001" exists in both calculus and precalculus).
+// namespaced by course because lesson ids are NOT guaranteed globally unique
+// (there were real collisions, e.g. "ch3-001" in both calculus and precalculus
+// until the precalculus ids were renamed; see src/data/lessonIdRenames.json).
 //
 // This migrates every old-format entry it can resolve via idLookup (built by
 // courseLoader.js's getLessonIdLookup(), mapping "<courseId>/<slug>" -> id),
