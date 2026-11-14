@@ -57,9 +57,10 @@ Each module lists a **Target**: the level to reach first. Targets are a starting
 
 ### Teaching method (applies to every module)
 
-Six stages per concept:
+Seven stages per concept (the [Lesson Quality Standard](lesson-quality-standard.md) makes them operational):
 
-1. **Expose** the idea in isolation, with no framework and no application.
+0. **Start from a problem**: a puzzle, failure, or observation that the learner's current model cannot explain, so the concept has a reason to exist.
+1. **Expose** the mechanism in isolation, with no framework and no application.
 2. **Make it observable**: the smallest runnable or manually traceable example; change an input, watch what happens.
 3. **Vary** one property at a time: edge cases, alternatives, limits, failure.
 4. **Connect** to modules already understood.
@@ -86,7 +87,7 @@ Spot-the-flaw is never the only measure; recognizing familiar mistakes is not th
 - **Language per concept.** A concept lesson uses the language that exposes its concept best, and says why in one line: C for memory and layout, Rust for ownership and sum types, Go for small interfaces and channels, SQL for the relational model, TypeScript for gradual types, assembly for execution, Python for scripting and quick experiments. A project lesson uses that project's language. Seeing one idea in two languages separates the idea from the syntax.
 - **Project language runway.** Before a project first uses a language, a short runway translates what the learner already knows into that language's syntax. It then teaches only what is new to that language, and only as much as the project's next piece needs. Syntax is not computer science: the runway teaches how to write it, and the modules teach the ideas underneath (section 4 lists the runways).
 - **Smallest increment.** A project grows only when the current module teaches a concept that justifies its next piece. A **Builds** line is the smallest meaningful increment: no speculative features, infrastructure or abstractions. Ten projects never mean ten applications being developed at once.
-- **Vocabulary is part of every module:** 10 to 20 precise terms at the end of each.
+- **Vocabulary is part of every module:** 10 to 20 precise terms per module, each taught in the lesson where it is first needed, not appended as a list at the end.
 
 ### Cross-cutting threads (run through everything)
 
@@ -229,7 +230,7 @@ Each runway assumes the basics in some language and translates them. The learner
 8. **Language runways and smallest increments** are standing rules. HTML and CSS are a runway before 7.6: a dependency, not a later enhancement.
 9. **Still to do, in order:**
    1. **Module-to-lesson map.** Divide every module's full **Covers** scope into lessons, with nothing missing and nothing added. A lesson belongs to a module and never claims to complete it alone. For example, 1.4 might be four lessons: names and identity; state and copying; invariants and value objects; reading unfamiliar code.
-   2. **Lesson specification.** Decide how every lesson is written. Start from the app's existing standards (`docs/lesson-writing-standard.md`, `docs/project-studio-lesson-standard.md`) rather than writing a new one.
+   2. **Lesson specification.** The [Lesson Quality Standard](lesson-quality-standard.md) governs how every lesson is written, reviewed and released. `docs/project-studio-lesson-standard.md` governs platform mechanics.
    3. **Per-module work.** Write each module's mastery-level outcomes and checks, and decide which existing app courses serve as deeper material.
 
 ---
