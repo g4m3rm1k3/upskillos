@@ -94,6 +94,16 @@ const SERIES = [
     planned: 'Standalone beginner path from an empty folder through HTML, CSS, JavaScript, SVG, Three.js and tabular Q-learning. Builds complete Yahtzee against a simple heuristic and short-match Pig against a trainable Q-table. No C++ course required. Additional games, full-Yahtzee machine learning and neural networks are extensions. Editorial, learner and cross-platform review remain open; see docs/curricula/tabletop-web-series.md.',
   },
   {
+    // Curriculum: docs/software-engineering-curriculum.md. Conventions and status: docs/swe-course-status.md.
+    // Lessons name their own project folder (`project:` frontmatter), so chapters don't share one.
+    key: 'swe',
+    label: 'Software Engineering for the Age of AI',
+    prefix: 'swe-',
+    sharedProject: false,
+    chapters: [['swe-s01-ignition', '01 · Ignition: First Principles and First Controls']],
+    planned: 'For programmers comfortable in at least one language. Computer science and software engineering from the bottom up, taught through several projects that grow side by side (Kit, Blockfall, Ledger, a C# web framework and more), so you can design systems and steer whoever builds them. Stage 1 is being piloted; later stages follow the curriculum in docs/software-engineering-curriculum.md. Reviews and learner walkthroughs remain open.',
+  },
+  {
     // Plan, chapter map and status: docs/terminal-series-plan.md.
     key: 'term',
     label: 'The Terminal — zsh from Zero',
@@ -475,6 +485,16 @@ export function studioSeries(tracks, keys, title) {
     result.splice(at < 0 ? result.length : Math.min(at, result.length), 0, series);
   }
   return result;
+}
+
+// The project folder a lesson works in. A lesson's `project:` frontmatter names its folder, so a
+// series can interleave lessons from several projects in learning order while each project keeps
+// one folder. Otherwise a series whose chapters build one project shares one folder, and any other
+// track keeps its own.
+export function projectKeyFor(allSeries, trackKey, lesson) {
+  const own = lesson?.meta?.project;
+  if (own) return own;
+  return allSeries.find(item => item.sharedProject && item.chapters.some(chapter => chapter.key === trackKey))?.key ?? trackKey;
 }
 
 export function nextSeriesLesson(series, tracks, trackKey, lessonId) {

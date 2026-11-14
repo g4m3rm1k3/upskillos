@@ -4,6 +4,7 @@ runtime: none
 experiments: What it catches; What it doesn't catch
 teaches: type checking in the build, limits of types
 uses: npm scripts, typescript
+reference: optional
 ---
 
 ### The story so far

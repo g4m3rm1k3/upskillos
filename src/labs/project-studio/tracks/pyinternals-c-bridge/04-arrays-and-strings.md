@@ -4,6 +4,7 @@ track: C for Python Programmers
 trackOrder: 14
 runtime: cpp
 console: true
+reference: optional
 ---
 
 Python lists are dynamic, resizable, and can hold any mix of types. Python strings are immutable, Unicode-aware sequences of characters with a rich API. In C, both are far more primitive — and understanding that primitiveness explains why Python's high-level abstractions are so valuable, and also why NumPy arrays and C extensions are so fast.

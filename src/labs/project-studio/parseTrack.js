@@ -134,6 +134,11 @@ function parseStepBody(rawBody) {
 export function parseLesson(text, id) {
   // Files checked out on Windows can have CRLF line endings; every pattern here expects \n.
   const { meta, body } = parseFrontmatter(String(text).replace(/\r\n/g, '\n'));
+  // `project:` names the folder this lesson works in (series.js projectKeyFor). It is stored as a
+  // folder key, so it must have a key's form.
+  if (meta.project != null && !/^[a-z0-9][a-z0-9-]*$/.test(meta.project)) {
+    throw new Error(`project: must be lowercase letters, digits and hyphens, got "${meta.project}"`);
+  }
 
   // Split on level-2 headings: "## Step 1 — Title" (any "## " heading, so a
   // lesson can also open with "## Overview" before its first step).

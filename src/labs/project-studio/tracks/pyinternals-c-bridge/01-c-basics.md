@@ -4,6 +4,7 @@ track: C for Python Programmers
 trackOrder: 11
 runtime: cpp
 console: true
+reference: optional
 ---
 
 You already know how to program — you know loops, conditions, functions, and data structures. What C will teach you is what Python has been hiding: memory addresses, explicit types, and the raw machine beneath your code. Every Python object you've ever created is backed by a C struct. Every `for` loop you've written compiles (in CPython) to C loops like the ones you'll write here.

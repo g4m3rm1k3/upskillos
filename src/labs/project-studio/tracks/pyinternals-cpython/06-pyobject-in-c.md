@@ -4,6 +4,7 @@ track: Python Internals — Inside CPython
 trackOrder: 15
 runtime: cpp
 console: true
+reference: optional
 ---
 
 In the previous lesson you called pre-compiled C functions from Python via `ctypes`. That's powerful but limited: you can't create real Python objects, raise Python exceptions, or participate in Python's type system. For that, you need a **C extension module** — a shared library compiled specifically against CPython's C API. This is how NumPy, `lxml`, `Pillow`, and thousands of other packages expose their high-performance C internals to Python code with a perfectly native Python interface.

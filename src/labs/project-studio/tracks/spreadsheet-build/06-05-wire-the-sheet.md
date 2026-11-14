@@ -5,6 +5,7 @@ experiments: Watch it run: the debugger
 justified: Positions as addresses
 teaches: the debugger, breakpoints, stepping, source maps, separating data from display
 uses: addresses, classes, devtools
+reference: optional
 ---
 
 ### The story so far

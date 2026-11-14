@@ -4,6 +4,7 @@ track: Python Internals — Inside CPython
 trackOrder: 11
 runtime: cpp
 console: true
+reference: optional
 ---
 
 In Python you never call `free()` or worry about allocating memory — it all just works. The magic behind this is **reference counting**: every Python object carries an integer that tracks how many variables (or containers) refer to it. When that counter hits zero, the object is immediately freed. This lesson shows you exactly how that mechanism works, first from Python's own tools, then by implementing it yourself in C.

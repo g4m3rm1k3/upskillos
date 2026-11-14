@@ -146,10 +146,9 @@ def optimism(k, m, trials=300, seed=0):
 o1, o10, o100 = optimism(1, 100), optimism(10, 100), optimism(100, 100)
 assert abs(o1) < 0.01, f"one model has no selection bias: got {o1:.4f}"
 assert o1 < o10 < o100, f"more models, more optimism: {o1:.4f}, {o10:.4f}, {o100:.4f}"
-for k in (10, 100):
-    o = optimism(k, 100)
+for k, o in ((10, o10), (100, o100)):
     assert o <= math.sqrt(math.log(k) / 200), f"k={k}: optimism {o:.4f} should be under the bound {math.sqrt(math.log(k) / 200):.4f}"
-assert optimism(100, 400) < optimism(100, 100), "a bigger test set should shrink the optimism"
+assert optimism(100, 200) < o100, "a bigger test set should shrink the optimism"
 `),
     hints: ['Each model\'s measured accuracy is the fraction of `m` coin flips (heads with probability 0.7) that come up heads.'],
   },

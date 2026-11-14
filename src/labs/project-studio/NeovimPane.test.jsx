@@ -2,7 +2,8 @@
 import React, { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { expect, it, vi } from 'vitest';
-vi.mock('@monaco-editor/react', () => ({ default: ({ value }) => <textarea readOnly value={value} /> }));
+// EditorPane gives Monaco its text as `defaultValue` (see the comment there on why not `value`).
+vi.mock('@monaco-editor/react', () => ({ default: ({ defaultValue }) => <textarea readOnly value={defaultValue} /> }));
 vi.mock('../../utils/monacoThemes.js', () => ({ setupOpenCalcMonaco: vi.fn() }));
 vi.mock('@xterm/xterm', () => ({ Terminal: class { cols = 80; rows = 24; loadAddon() {} open() {} onData() { return { dispose() {} }; } onResize() { return { dispose() {} }; } dispose() {} reset() {} write() {} focus() {} clear() {} } }));
 vi.mock('@xterm/addon-fit', () => ({ FitAddon: class { fit() {} } }));

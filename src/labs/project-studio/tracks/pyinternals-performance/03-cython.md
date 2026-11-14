@@ -4,6 +4,7 @@ track: Making Python Fast: Profiling to Production
 trackOrder: 14
 runtime: cpp
 console: true
+reference: optional
 ---
 
 NumPy vectorisation works when your algorithm can be expressed as array operations. But some algorithms are inherently iterative — graph traversal, dynamic programming, adaptive simulations — and no broadcasting trick will help. For these, **Cython** lets you write Python-like code and compile it to C, adding static types where the profiler shows it matters.

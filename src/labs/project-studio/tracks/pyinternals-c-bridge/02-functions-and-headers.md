@@ -4,6 +4,7 @@ track: C for Python Programmers
 trackOrder: 12
 runtime: cpp
 console: true
+reference: optional
 ---
 
 In Python, you define a function with `def` and import other modules with `import`. In C, these two concepts — defining reusable code and sharing it across files — involve a deeper mechanism: **declarations**, **definitions**, and the **C preprocessor**. Understanding this model is crucial because it's exactly how CPython itself is organized: hundreds of `.c` files, each compiled separately, linked together into one interpreter.

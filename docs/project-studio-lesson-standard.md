@@ -22,6 +22,8 @@ Project Studio Markdown is parsed by src/labs/project-studio/parseTrack.js. A st
 
 Use the existing hints fence with nudge:, concept: and shape: in that order. A predict fence needs question: and explain:, plus choices and an answer when appropriate. Do not nest backtick fences inside these fences; use tilde fences for example code. See src/labs/project-studio/hints.js and predictions.js for the exact grammar.
 
+A lesson's `project:` frontmatter (lowercase letters, digits and hyphens) names the project folder it works in, so one series can interleave lessons from several projects while each project keeps its own folder. Without it, a `sharedProject` series shares one folder and any other track has its own (`projectKeyFor` in src/labs/project-studio/series.js).
+
 Lesson and step ids store learner progress. Preserve published file paths. A level-two heading is numbered by position (`<lesson>-step-N`), so inserting one would shift every later step's id. Give an inserted section its own key instead, `## Title {#key}`: it gets the id `<lesson>-key` and takes no number, so the steps after it keep theirs. Appending a section at the end of a lesson needs no key.
 
 ## Review and release

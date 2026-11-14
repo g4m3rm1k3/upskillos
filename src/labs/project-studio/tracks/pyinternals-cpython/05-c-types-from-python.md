@@ -4,6 +4,7 @@ track: Python Internals — Inside CPython
 trackOrder: 14
 runtime: cpp
 console: true
+reference: optional
 ---
 
 You've seen how CPython itself is built from C structs and C functions. Now you'll go the other direction: calling C code *from Python* without writing a full extension module. The `ctypes` standard library module lets you load compiled shared libraries (`.so` on Linux, `.dll` on Windows, `.dylib` on macOS) and call their functions directly. It's used extensively in the Python ecosystem — `ctypes` is how `pygame`, `Pillow`, and many other libraries call into C without Cython or CFFI.

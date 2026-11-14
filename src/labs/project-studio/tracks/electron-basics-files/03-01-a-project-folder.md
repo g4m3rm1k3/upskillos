@@ -3,6 +3,7 @@ title: 3.1 — A Project Folder, and Not One Inch Beyond It
 track: MiniDesk — Files
 trackOrder: 60.02
 runtime: none
+reference: optional
 ---
 
 An editor opens a folder and reads and writes files in it. That is also the most dangerous thing the app does: if the page can send any path, a bug (or a malicious script) can read `C:\Users\you\.ssh` or overwrite something important. So the main process owns the filesystem, and every path it receives is **resolved against the project folder and refused if it lands outside**.

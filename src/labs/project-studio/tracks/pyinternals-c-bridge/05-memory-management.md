@@ -4,6 +4,7 @@ track: C for Python Programmers
 trackOrder: 15
 runtime: cpp
 console: true
+reference: optional
 ---
 
 Python never asks you to allocate or free memory — you create objects and they disappear when nothing refers to them anymore. This feels magical, but CPython is doing explicit `malloc` and `free` calls underneath every object creation and destruction. Python's garbage collector (reference counting + cycle detection) automates what C makes you do by hand.

@@ -22,7 +22,7 @@ import { TRACKS, TRACK_KEYS, trackTitle, getSupportFiles } from './trackLoader.j
 import { createProvidedFiles, isPracticeFile } from './providedFiles.js';
 import FileTree from './FileTree.jsx';
 import StudioPanes from './StudioPanes.jsx';
-import { studioSeries, nextSeriesLesson } from './series.js';
+import { studioSeries, nextSeriesLesson, projectKeyFor } from './series.js';
 import { useDrafts, draftSupportFiles } from './drafts.js';
 import { usePrivateLessons, privateSupportFiles } from './privateLessons.js';
 import { SCRAP, scrapSupportFiles } from './scrapLoader.js';
@@ -65,12 +65,12 @@ export default function ProjectStudio() {
   const [trackKey, setTrackKey] = useState(() => (BASE_TRACKS[progress.position.trackKey]
     ? progress.position.trackKey
     : SERIES.find(item => item.recommended)?.chapters[0]?.key ?? TRACK_KEYS[0] ?? null));
-  // A series whose chapters build one project shares one folder; other tracks keep their own.
-  const projectKey = allSeries.find(item => item.sharedProject && item.chapters.some(chapter => chapter.key === trackKey))?.key ?? trackKey;
-  const fs = useProjectFs(projectKey);
   const lessons = useMemo(() => withTypedDiffTargets(trackKey ? tracks[trackKey] ?? [] : []), [trackKey, tracks]);
   const [lessonId, setLessonId] = useState(() => progress.position.lessonId ?? lessons[0]?.id ?? null);
   const lesson = useMemo(() => lessons.find((l) => l.id === lessonId) ?? lessons[0], [lessons, lessonId]);
+  // Which folder this lesson works in: its own `project:`, its series' shared folder, or its track's.
+  const projectKey = projectKeyFor(allSeries, trackKey, lesson);
+  const fs = useProjectFs(projectKey);
   const [stepIndex, setStepIndex] = useState(() => Math.max(0, progress.position.stepIndex ?? 0));
   const step = lesson?.steps?.[Math.min(stepIndex, (lesson?.steps?.length ?? 1) - 1)] ?? null;
 
@@ -93,7 +93,7 @@ export default function ProjectStudio() {
   // silently overwrites whatever changed on disk underneath it.
   const loadedRef = useRef({});
   const projectIdentityRef = useRef(null);
-  projectIdentityRef.current = `${trackKey}:${fs.root}`;
+  projectIdentityRef.current = `${projectKey}:${fs.root}`;
 
   const [output, setOutput] = useState([]);
   const [running, setRunning] = useState(false);
@@ -127,7 +127,7 @@ export default function ProjectStudio() {
     setBuffers({});
     setCheckStates({});
     loadedRef.current = {};
-  }, [fs.root, trackKey]);
+  }, [fs.root, trackKey, projectKey]);
 
   // ── open / edit / save ───────────────────────────────────────────────────
   const openFile = useCallback(async (rel) => {

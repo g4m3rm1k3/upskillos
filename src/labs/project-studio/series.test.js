@@ -40,3 +40,22 @@ it('groups the ml-* tracks into the Machine Learning series, in chapter order',(
  expect(nextSeriesLesson(ml,TRACKS,'ml-software',TRACKS['ml-software'].at(-1).id)).toEqual({trackKey:'ml-data',lesson:TRACKS['ml-data'][0]});
  expect(ml.planned).toContain('transformers');
 });
+
+it('chooses a lesson\'s folder: its own project first, then its series\' shared folder, then its track', async () => {
+  const { projectKeyFor } = await import('./series.js');
+  const series = [{ key: 'shared-series', sharedProject: true, chapters: [{ key: 'shared-ch1' }] }];
+  expect(projectKeyFor(series, 'shared-ch1', { meta: { project: 'swe-kit' } })).toBe('swe-kit');
+  expect(projectKeyFor(series, 'shared-ch1', { meta: {} })).toBe('shared-series');
+  expect(projectKeyFor(series, 'lone-track', { meta: {} })).toBe('lone-track');
+  expect(projectKeyFor(series, 'lone-track', undefined)).toBe('lone-track');
+  // Two lessons in one chapter can work in two different projects.
+  expect(projectKeyFor(series, 'shared-ch1', { meta: { project: 'swe-blockfall' } })).toBe('swe-blockfall');
+});
+
+it('accepts a project: key with a folder key\'s form and rejects anything else', async () => {
+  const { parseLesson } = await import('./parseTrack.js');
+  const lesson = (project) => `---\ntitle: T\nproject: ${project}\n---\n\n## Step\n\nText.\n`;
+  expect(parseLesson(lesson('swe-kit'), 't/01').meta.project).toBe('swe-kit');
+  expect(() => parseLesson(lesson('Swe Kit'), 't/01')).toThrow(/project:/);
+  expect(() => parseLesson(lesson('../kit'), 't/01')).toThrow(/project:/);
+});

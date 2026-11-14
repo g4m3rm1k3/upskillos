@@ -4,6 +4,7 @@ runtime: none
 experiments: The bug types found
 teaches: optional properties, nullish coalescing
 uses: typing existing code, type aliases, union types
+reference: optional
 ---
 
 ### The story so far

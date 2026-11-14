@@ -4,6 +4,7 @@ track: Python Internals — Inside CPython
 trackOrder: 12
 runtime: cpp
 console: true
+reference: optional
 ---
 
 You've probably heard that Python threads don't make CPU-heavy code faster — and might have wondered why Python even has threads at all. The answer is the **Global Interpreter Lock (GIL)**: a mutex inside CPython that ensures only one thread executes Python bytecode at a time. This lesson shows you exactly what the GIL is, what it protects, when CPython releases it, and how to work around it for CPU-bound work.

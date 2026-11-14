@@ -4,6 +4,7 @@ track: C for Python Programmers
 trackOrder: 13
 runtime: cpp
 console: true
+reference: optional
 ---
 
 Here is the truth Python has been hiding from you: **every variable in Python is already a pointer**. When you write `x = [1, 2, 3]`, Python allocates a list object on the heap and stores its **memory address** in `x`. When you write `y = x`, you copy the address — both `x` and `y` point to the same list. You've been using pointers all along; Python just never showed you the addresses.
