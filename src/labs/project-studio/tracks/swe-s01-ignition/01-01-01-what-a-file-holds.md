@@ -159,6 +159,14 @@ text = data.decode("utf-8")
 print("characters:", len(text))
 ```
 
+Save it, then run it in the terminal (still in the `kit` folder) to check your prediction:
+
+```
+.venv/bin/python count.py samples/hello.txt
+```
+
+(`.venv\Scripts\python` on Windows, as before.) It prints `bytes: 7`, `lines: 1` and `characters: 6`: one file, two true sizes, because the bytes and the characters are counted at different layers.
+
 ```check
 run "cd kit; .venv/Scripts/python count.py samples/hello.txt" stdout="characters: 6"
 ```
@@ -176,7 +184,7 @@ answer: bytes: 6 and lines: 1, then an error
 explain: The program runs top to bottom. Reading and counting bytes works for any file, so the first two lines print. The decode line comes next and fails, so Python stops with an error before printing the character count.
 ```
 
-Run it and read the last line of the error:
+Run it, `.venv/bin/python count.py samples/latin1.txt`, and read the last line of the error:
 
 ```
 UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe9 in position 1: invalid continuation byte
@@ -219,6 +227,15 @@ except UnicodeDecodeError:
 else:
     print("characters:", len(text))
 ```
+
+Save it and run it on both samples again:
+
+```
+.venv/bin/python count.py samples/latin1.txt
+.venv/bin/python count.py samples/hello.txt
+```
+
+`latin1.txt` now prints `bytes: 6`, `lines: 1` and `characters: not UTF-8 text`, with no traceback; `hello.txt` still prints `characters: 6`.
 
 Catching only `UnicodeDecodeError` matters. A bare `except:` would also hide a mistyped variable name or a missing file, and `count` would report "not UTF-8 text" for problems that have nothing to do with encodings.
 

@@ -67,7 +67,7 @@ export default {
       {
         type: 'theorem',
         title: 'Both forms of aᶜ',
-        body: 'a_c = \\frac{v^2}{r} = \\omega^2 r \\qquad \\text{(use v form when speed is known; \\omega form when angular velocity is known)}',
+        body: 'a_c = \\frac{v^2}{r} = \\omega^2 r \\qquad \\text{(use } v \\text{ form when speed is known; } \\omega \\text{ form when angular velocity is known)}',
       },
       {
         type: 'insight',

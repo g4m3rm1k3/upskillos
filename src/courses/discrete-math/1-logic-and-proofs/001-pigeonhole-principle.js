@@ -203,7 +203,7 @@ export default {
       { expression: 'k > n \\;\\text{items in}\\; n \\;\\text{containers} \\implies \\exists \\text{ container with} \\geq 2 \\text{ items}', annotation: '**State the goal.** We want to prove that at least one container has ≥ 2 items, given k items in n containers with k > n.' },
       { expression: '\\text{Assume: every container holds} \\leq 1 \\text{ item.}', annotation: '**Assume the negation.** Suppose for contradiction that our conclusion is false: every container holds at most 1 item.' },
       { expression: '\\text{Total items} \\leq n \\times 1 = n', annotation: '**Count the maximum.** If every container holds at most 1 item, and there are n containers, the maximum total number of items across all containers is n × 1 = n.' },
-      { expression: 'k \\leq n \\quad \\text{AND} \\quad k > n \\quad \\Rightarrow \\quad \\lightning \\text{ contradiction}', annotation: '**Reach the contradiction.** We placed k items in total, and k > n by hypothesis. So k ≤ n and k > n simultaneously.' },
+      { expression: 'k \\leq n \\quad \\text{AND} \\quad k > n \\quad \\Rightarrow \\quad \\bot \\text{ contradiction}', annotation: '**Reach the contradiction.** We placed k items in total, and k > n by hypothesis. So k ≤ n and k > n simultaneously.' },
       { expression: '\\therefore \\text{ at least one container holds} \\geq 2 \\text{ items.} \\quad \\blacksquare', annotation: '**Conclude.** Our assumption was false. Therefore at least one container must hold ≥ 2 items.' },
 
       { expression: '\\textbf{Proof 2: Generalized Pigeonhole Principle, by Contradiction}', annotation: 'We prove: if k items go into n containers, at least one holds ≥ ⌈k/n⌉ items — the same technique, generalized beyond "≥ 2."' },
@@ -211,7 +211,7 @@ export default {
       { expression: '\\text{Assume: every container holds} \\leq m - 1 = \\left\\lceil \\frac{k}{n} \\right\\rceil - 1 \\text{ items.}', annotation: '**Assume the negation.** Suppose for contradiction that every container holds ≤ m − 1 items.' },
       { expression: '\\text{Total items} \\leq n \\cdot (m - 1) = n\\left(\\left\\lceil \\frac{k}{n} \\right\\rceil - 1\\right)', annotation: '**Count the maximum.** With n containers, each holding at most m − 1 items, the total is at most n(m − 1).' },
       { expression: 'n\\left(\\left\\lceil \\frac{k}{n} \\right\\rceil - 1\\right) < n \\cdot \\frac{k}{n} = k', annotation: '**Apply the ceiling property.** By definition of ceiling, ⌈k/n⌉ < k/n + 1, so ⌈k/n⌉ − 1 < k/n. Therefore n(⌈k/n⌉ − 1) < n·(k/n) = k.' },
-      { expression: '\\text{Total} < k \\quad \\text{AND} \\quad \\text{Total} = k \\quad \\Rightarrow \\quad \\lightning', annotation: '**Reach the contradiction.** The total is strictly less than k — but we placed exactly k items.' },
+      { expression: '\\text{Total} < k \\quad \\text{AND} \\quad \\text{Total} = k \\quad \\Rightarrow \\quad \\bot', annotation: '**Reach the contradiction.** The total is strictly less than k — but we placed exactly k items.' },
       { expression: '\\therefore \\text{ at least one container holds} \\geq \\left\\lceil \\frac{k}{n} \\right\\rceil \\text{ items.} \\quad \\blacksquare', annotation: '**Conclude.** The assumption is false. At least one container holds ≥ ⌈k/n⌉ items.' },
 
       { expression: '\\textbf{Application: Two Londoners Share the Same Hair Count}', annotation: 'A complete worked application using the generalized principle just proved.' },

@@ -49,7 +49,7 @@ export default {
         type: 'warning',
         title: 'Height vs slope — the most common graph-reading mistake',
         body:
-          '\\text{High position on an x–t graph ≠ high velocity.}\\\\\\text{Velocity comes from SLOPE, not from how high the curve sits.}\\\\\\text{An object can be at high x with zero velocity (at rest up high).}\\\\\\text{Similarly on v–t: high velocity ≠ high acceleration.}',
+          '\\text{High position on an x–t graph is not high velocity.}\\\\\\text{Velocity comes from SLOPE, not from how high the curve sits.}\\\\\\text{An object can be at high x with zero velocity (at rest up high).}\\\\\\text{Similarly on v–t: high velocity is not high acceleration.}',
       },
     ],
     visualizations: [
@@ -272,7 +272,7 @@ export default {
       id: 'p0-005-ex4',
       title: 'Identifying motion from graph shape',
       problem:
-        '\\text{An x–t graph is a parabola that peaks at } t = 3\\,\\text{s \\text{ and returns to zero at } t = 6\\,\\text{s. Describe the motion: direction, turning point, and sign of acceleration.}',
+        '\\text{An x–t graph is a parabola that peaks at } t = 3\\,\\text{s and returns to zero at } t = 6\\,\\text{s. Describe the motion: direction, turning point, and sign of acceleration.}',
       steps: [
         {
           expression: '\\text{Parabola with peak: the slope goes from positive (before peak) to zero (at peak) to negative (after peak)}',

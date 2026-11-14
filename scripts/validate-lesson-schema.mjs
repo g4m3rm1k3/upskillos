@@ -17,9 +17,14 @@
 //   node scripts/validate-lesson-schema.mjs <file> [file...] # validate specific files (PR diff) — used by CI
 
 import { readdirSync, statSync } from 'fs'
+import { register } from 'module'
 import { resolve, dirname, relative } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { lessonToState } from '../src/components/lesson-builder/builderUtils.js'
+
+// Lessons that import diagrams (`import url from '../diagrams/x.svg?url'`) failed to
+// import in plain Node ("Unknown file extension .svg"), so they were never validated.
+register('./lib/asset-import-hooks.mjs', import.meta.url)
 import { serializeLesson } from '../src/components/lesson-builder/lessonSerializer.js'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))

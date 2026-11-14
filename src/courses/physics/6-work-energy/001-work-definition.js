@@ -92,7 +92,7 @@ export default {
         type: 'mnemonic',
         title: 'Sign of work',
         body:
-          '\\(W > 0\\): force aids displacement — energy added to object.\\\\\\(W = 0\\): force perpendicular — steers but doesn\'t speed up or slow down.\\\\\\(W < 0\\): force opposes displacement — energy removed (e.g. friction, braking).',
+          '\\(W > 0\\): force aids displacement — energy added to object.\n\n\\(W = 0\\): force perpendicular — steers but doesn\'t speed up or slow down.\n\n\\(W < 0\\): force opposes displacement — energy removed (e.g. friction, braking).',
       },
       {
         type: 'insight',

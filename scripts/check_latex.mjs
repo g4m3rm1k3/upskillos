@@ -12,9 +12,14 @@
 //   node scripts/check_latex.mjs --files <file> [file...]  # specific files (PR diff)
 
 import { readdirSync, statSync } from 'fs'
+import { register } from 'module'
 import { resolve, dirname, relative } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 import { checkLessonLatex } from '../src/components/math/checkLessonLatex.js'
+
+// Lessons that import diagrams (`import url from '../diagrams/x.svg?url'`) failed to
+// import in plain Node ("Unknown file extension .svg"), so their LaTeX was never checked.
+register('./lib/asset-import-hooks.mjs', import.meta.url)
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
@@ -34,7 +39,8 @@ function findLessonFiles(courseFilter) {
       const chapterPath = resolve(courseDir, chapterDir)
       if (!isDir(chapterPath)) continue
       for (const fileName of readdirSync(chapterPath)) {
-        if (fileName.endsWith('.js')) files.push(resolve(chapterPath, fileName))
+        // Test files (e.g. a viz folder's *.test.js) aren't lessons, and import vitest.
+        if (fileName.endsWith('.js') && !fileName.endsWith('.test.js')) files.push(resolve(chapterPath, fileName))
       }
     }
   }

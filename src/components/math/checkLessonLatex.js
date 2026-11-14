@@ -13,6 +13,9 @@ const RAW_TEX_KEYS = new Set(['tex', 'expression', 'math'])
 const KATEX_OPTIONS = { throwOnError: true, strict: false, trust: false }
 
 function checkRawTex(tex, path, errors) {
+  // A raw value with no LaTeX command ("#100 = 10", a CNC macro line) is code or
+  // plain text; KatexBlock shows it as text when KaTeX can't parse it.
+  if (!/\\[a-zA-Z]/.test(tex)) return
   try {
     katex.renderToString(tex, KATEX_OPTIONS)
   } catch (error) {

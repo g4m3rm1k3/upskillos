@@ -818,7 +818,7 @@ export default {
       title:
         "Galileo's Falling Ball: Velocity and Acceleration from First Principles",
       problem:
-        "Galileo showed that objects fall with position $y(t) = \\frac{1}{2}g t^2$ (measured downward from rest), where $g \\approx 9.8$ m/s\\textsuperscript{2}. Use the limit definition to find velocity $v(t) = y'(t)$, then find acceleration $a(t) = v'(t)$. Evaluate velocity at $t = 3$ s.",
+        "Galileo showed that objects fall with position $y(t) = \\frac{1}{2}g t^2$ (measured downward from rest), where $g \\approx 9.8$ m/s$^2$. Use the limit definition to find velocity $v(t) = y'(t)$, then find acceleration $a(t) = v'(t)$. Evaluate velocity at $t = 3$ s.",
       visualizationId: "ProjectileMotion",
       steps: [
         {
@@ -1138,7 +1138,7 @@ export default {
       id: "ch2-000-ex12",
       title: "Rate of Cooling — Newton's Law Word Problem",
       problem:
-        "A casserole at 400\\textdegree{}F cools after removal from the oven. Its temperature model is $T(t) = 400 - 150t + 20t^2$ (degrees F, $t$ in hours, $0 \\leq t \\leq 4$). Find $T'(t)$ from first principles. Evaluate at $t = 1$ hr and find when cooling is fastest.",
+        "A casserole at 400°F cools after removal from the oven. Its temperature model is $T(t) = 400 - 150t + 20t^2$ (degrees F, $t$ in hours, $0 \\leq t \\leq 4$). Find $T'(t)$ from first principles. Evaluate at $t = 1$ hr and find when cooling is fastest.",
       steps: [
         {
           expression: "T'(t) = \\lim_{h \\to 0} \\frac{T(t+h) - T(t)}{h}",

@@ -298,7 +298,7 @@ std::map<std::string, std::string> parseConfig(const std::string& text) {
         "Write a log parser: given lines like `[2024-03-15 14:23:01] ERROR user.service: connection timeout`, extract timestamp, level, service, and message using capture groups. Return a struct `LogEntry{string timestamp, level, service, message}`. Test with 5 sample lines.",
       hint: `Pattern: \`\\[(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\\] (\\w+) ([\\w.]+): (.+)\`. Groups 1-4 are timestamp, level, service, message.`,
       walkthrough: [
-        'regex logRx(R"(\\[(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\\] (\\w+) ([\\w.]+): (.+))");',
+        '`regex logRx(R"(\\[(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2})\\] (\\w+) ([\\w.]+): (.+))");`',
         "smatch m; if (regex_search(line, m, logRx))",
         "return {m[1], m[2], m[3], m[4]};",
         "Test with ERROR, INFO, WARN lines",

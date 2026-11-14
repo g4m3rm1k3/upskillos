@@ -772,20 +772,20 @@ This is the hallmark of an **indeterminate form**: a limit where direct substitu
 
 The key word is **never equal to $c$**. The limit describes what the function *approaches*, not what it *equals* at $c$. The value $f(c)$ is irrelevant — or $f$ might not even be defined at $c$.
 
-**Direct substitution** works when $f$ is continuous at $c$ (no jumps or holes): then $\lim_{x\to c} f(x) = f(c)$. But it fails when:
-1. $f(c)$ is undefined (like $\frac{\sin x}{x}$ at $x = 0$)
-2. $f(c)$ exists but $\lim_{x \to c} f(x) \neq f(c)$ (a removable discontinuity)
+**Direct substitution** works when $f$ is continuous at $c$ (no jumps or holes): then $\\lim_{x\\to c} f(x) = f(c)$. But it fails when:
+1. $f(c)$ is undefined (like $\\frac{\\sin x}{x}$ at $x = 0$)
+2. $f(c)$ exists but $\\lim_{x \\to c} f(x) \\neq f(c)$ (a removable discontinuity)
 
-**Why is $\frac{0}{0}$ indeterminate?**
+**Why is $\\frac{0}{0}$ indeterminate?**
 
-$\dfrac{0}{0}$ has no arithmetic meaning — division by zero is undefined. But as a *limit*, the numerator and denominator both approach zero simultaneously. Their *ratio* could approach anything: 1, 3, 0, $\infty$, or not exist at all. The form $\frac{0}{0}$ tells you direct substitution failed — it says nothing about the actual limit value.
+$\\dfrac{0}{0}$ has no arithmetic meaning — division by zero is undefined. But as a *limit*, the numerator and denominator both approach zero simultaneously. Their *ratio* could approach anything: 1, 3, 0, $\\infty$, or not exist at all. The form $\\frac{0}{0}$ tells you direct substitution failed — it says nothing about the actual limit value.
 
 For example:
-- $\lim_{x \to 0} \dfrac{x}{x} = 1$ ($0/0$ form, limit is 1)
-- $\lim_{x \to 0} \dfrac{x^2}{x} = 0$ ($0/0$ form, limit is 0)
-- $\lim_{x \to 0} \dfrac{x}{x^2}$ does not exist ($0/0$ form, blows up)
+- $\\lim_{x \\to 0} \\dfrac{x}{x} = 1$ ($0/0$ form, limit is 1)
+- $\\lim_{x \\to 0} \\dfrac{x^2}{x} = 0$ ($0/0$ form, limit is 0)
+- $\\lim_{x \\to 0} \\dfrac{x}{x^2}$ does not exist ($0/0$ form, blows up)
 
-Same form, completely different answers. This is why $\frac{0}{0}$ is "indeterminate" — it does not determine the limit.`,
+Same form, completely different answers. This is why $\\frac{0}{0}$ is "indeterminate" — it does not determine the limit.`,
       },
       {
         label: 'Act II',

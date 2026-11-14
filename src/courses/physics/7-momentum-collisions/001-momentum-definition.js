@@ -91,7 +91,7 @@ export default {
         type: 'insight',
         title: 'KE vs momentum: which is larger for equal masses?',
         body:
-          'Equal mass \\(m\\), different speeds \\(v_1 < v_2\\):\\\\\\(p_1/p_2 = v_1/v_2\\) (momentum ratio = speed ratio).\\\\\\(KE_1/KE_2 = v_1^2/v_2^2\\) (energy ratio = speed ratio squared).\\\\Energy is more sensitive to speed. A 2× speed increase doubles momentum but quadruples KE.',
+          'Equal mass \\(m\\), different speeds \\(v_1 < v_2\\):\n\n\\(p_1/p_2 = v_1/v_2\\) (momentum ratio = speed ratio).\n\n\\(KE_1/KE_2 = v_1^2/v_2^2\\) (energy ratio = speed ratio squared).\n\nEnergy is more sensitive to speed. A 2× speed increase doubles momentum but quadruples KE.',
       },
       {
         type: 'theorem',

@@ -148,7 +148,7 @@ export default {
       title: 'Error in the Volume of a Sphere',
       problem: "\\text{A sphere's radius is measured as } r = 10 \\text{ m with error } \\pm 0.05 \\text{ m. Estimate the error in the volume.}",
       steps: [
-        { expression: '', annotation: '\\text{REGISTRY (The Players):} \\\\ \\bullet \\ r \\text{ (Radius): the size we intended to measure} \\\\ \\bullet \\ dr \\text{ (Radius Error): how much our measurement might be wrong (\\pm 0.05 m)} \\\\ \\bullet \\ dV \\text{ (Volume Error): how much that mistake grows in the calculated volume}' },
+        { expression: '', annotation: '\\text{REGISTRY (The Players):} \\\\ \\bullet \\ r \\text{ (Radius): the size we intended to measure} \\\\ \\bullet \\ dr \\text{ (Radius Error): how much our measurement might be wrong (} \\pm 0.05 \\text{ m)} \\\\ \\bullet \\ dV \\text{ (Volume Error): how much that mistake grows in the calculated volume}' },
         { expression: '\\Delta V \\approx \\frac{dV}{dr} \\, dr', annotation: '\\text{MASTER UNIFYING EQUATION: The change in any quantity is approximately its sensitivity times the small error in the input. This is the tangent-line (first-order linear) approximation we use in every example.}' },
         { expression: 'V = \\frac{4}{3}\\pi r^3', annotation: '\\text{MODEL SOURCE: This volume formula comes from geometry. We treat it as exact and only study how error in radius propagates through it.}' },
         { expression: '', annotation: '\\text{EXACT vs MEASURED: } r \\text{ is measured (has error dr); the constants 4/3 and } \\pi \\text{ are exact (no uncertainty).}' },
@@ -159,13 +159,13 @@ export default {
         { expression: '', annotation: '\\text{UNIT DEBUGGER: Surface area (m}^2\\text{) × thickness (m) = volume (m}^3\\text{). The units are consistent — this is a good logic check.}' },
         { expression: 'r = 10, \\quad dr = \\pm 0.05', annotation: '\\text{Measured radius and its maximum possible error.}' },
         { expression: '10^2 = 100', annotation: '\\text{First compute } r^2 = 10 \\times 10 = 100\\text{.}' },
-        { expression: '4 \\times 100 = 400', annotation: '\\text{4 \\times 100 = 400.}' },
-        { expression: '400 \\times 0.05 = 20', annotation: '\\text{400 \\times 0.05 = 20, so } dV = \\pm 20\\pi \\approx \\pm 62.83 \\text{ m}^3 \\text{.}' },
+        { expression: '4 \\times 100 = 400', annotation: '4 \\times 100 = 400.' },
+        { expression: '400 \\times 0.05 = 20', annotation: '400 \\times 0.05 = 20, \\text{ so } dV = \\pm 20\\pi \\approx \\pm 62.83 \\text{ m}^3 \\text{.}' },
         { expression: 'V = \\frac{4}{3}\\pi (10)^3 = \\frac{4000\\pi}{3} \\approx 4188.79 \\text{ m}^3', annotation: '\\text{Nominal (expected) volume using the measured radius with no error.}' },
         { expression: '\\frac{dy}{y} = n \\frac{dx}{x}', annotation: '\\text{GENERAL RELATIVE ERROR LAW: For any power relationship } y \\propto x^n\\text{, the relative error in } y \\text{ is } n \\text{ times the relative error in } x \\text{.}' },
         { expression: '\\frac{|dV|}{V} = 0.015 = 1.5\\%', annotation: '\\text{AMPLIFIER: The relative error is 1.5\\%, which is exactly 3 times the 0.5\\% error in radius. Because volume depends on } r^3\\text{, the exponent 3 literally triples the mistake. The exponent acts as an error amplifier.}' },
         { expression: '', annotation: '\\text{SENSITIVITY SUMMARY: Volume is highly sensitive to radius changes because of the cubic term.}' },
-        { expression: '', annotation: '\\text{VALIDITY: dr/r = 0.5\\% is small, so the linear approximation is reliable (higher-order terms like (dr)^2 are negligible).}' }
+        { expression: '', annotation: '\\text{VALIDITY: dr/r = 0.5\\% is small, so the linear approximation is reliable (higher-order terms like } (dr)^2 \\text{ are negligible).}' }
       ],
       conclusion: "\\text{Using the master law, the volume has an absolute error of approximately } \\pm 62.83 \\text{ m}^3 \\text{ and a relative error of 1.5\\%. The cubic relationship strongly amplifies measurement error.}",
     },
@@ -217,11 +217,11 @@ export default {
         { expression: '', annotation: '\\text{EXACT vs MEASURED: a and b exact; only } \\theta \\text{ is measured.}' },
         { expression: '\\frac{d}{d\\theta}(\\sin \\theta) = \\cos \\theta', annotation: '\\text{SENSITIVITY of area to small changes in angle (valid only when angle is in radians).}' },
         { expression: 'dA = 40 \\cos \\theta \\, d\\theta', annotation: '\\text{Differential formed.}' },
-        { expression: '\\theta = \\frac{\\pi}{6}, \\quad d\\theta = \\pm \\frac{\\pi}{180}', annotation: '\\text{Radian conversion required for calculus (180° = \\pi rad).}' },
+        { expression: '\\theta = \\frac{\\pi}{6}, \\quad d\\theta = \\pm \\frac{\\pi}{180}', annotation: '\\text{Radian conversion required for calculus (} 180^\\circ = \\pi \\text{ rad).}' },
         { expression: '', annotation: '\\text{UNIT DEBUGGER: Angle in radians is dimensionless, so area error keeps square-unit consistency.}' },
-        { expression: '', annotation: '\\text{AMPLIFIER: Sensitivity depends on cot \\theta — error is larger at small angles.}' }
+        { expression: '', annotation: '\\text{AMPLIFIER: Sensitivity depends on } \\cot\\theta \\text{ — error is larger at small angles.}' }
       ],
-      conclusion: "\\text{Using the master law: area = 20 \\pm 0.6. Angle measurement error is amplified or damped depending on the angle size.}",
+      conclusion: "\\text{Using the master law: area = } 20 \\pm 0.6\\text{. Angle measurement error is amplified or damped depending on the angle size.}",
     },
     {
       id: 'ch3-070-ex5',

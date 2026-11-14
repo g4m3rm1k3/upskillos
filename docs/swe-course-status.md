@@ -35,6 +35,7 @@ History and the reasoning behind the decisions: [agent-architecture-course-audit
    - An opening that gives a reason to care (a problem, a surprise), before any definition.
    - A concrete example before each general rule; one new idea per sentence where possible.
    - `predict` fences before results, with `verify:` where the answer is printable.
+   - After every `file=` change, say to save and run it: the exact command (from inside the project folder) and what it prints. A check running it silently is not enough; the learner must see the result (owner feedback on 01-01-01, step 5). If a file the learner might also run is still expected to fail at this point, say so.
    - A diagnostic experiment: a deliberate failure, read from the evidence, then fixed.
    - Alternatives with their costs ("what else, and why not").
    - An independent task (`## Your turn: …`) with **no** file target and a `hints` fence (nudge, concept, shape, answer).
@@ -92,7 +93,7 @@ Python setup that a runway would have covered is taught inline where first neede
 |---|---|
 | 01-01-01 What a file holds | Written 2026-11-14. Code, commands and every stated output verified in a scratch folder (Python 3.13, macOS). Audit: no errors. Not yet: walkthrough test, a run on Windows, the three reviews |
 
-01-01-01 was moved to the one-folder layout on 2026-11-14 (setup step now makes `kit/` and `cd`s into it; checks start with `cd kit;`). Its check commands were run on Windows (Python 3.14) from a course folder and matched the lesson; the parsed lesson resolves to the `swe` folder. Not yet stepped through in the app.
+01-01-01 was moved to the one-folder layout on 2026-11-14 (setup step now makes `kit/` and `cd`s into it; checks start with `cd kit;`). Its check commands were run on Windows (Python 3.14) from a course folder and matched the lesson; the parsed lesson resolves to the `swe` folder. The owner stepped through it in the app: steps 5 and 7 now tell the learner to run the changed `count.py` and what it prints.
 
 **Decided 2026-11-14:** stage 1's Targets lowered in the curriculum (1.4 to R; 1.8, 1.9 and 1.12 to A). Runways removed from the curriculum and the quality standard.
 

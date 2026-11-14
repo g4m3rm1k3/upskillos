@@ -355,7 +355,7 @@ print("Same map, different basis — det and tr preserved:",
       problem: 'Using the matrix $[D]_\\mathcal{B}$ from the previous walkthrough, find the matrix of $D^2$ (differentiate twice) and verify.',
       steps: [
         {
-          label: 'Compute $(\\[D]_\\mathcal{B})^2$',
+          label: 'Compute $([D]_\\mathcal{B})^2$',
           strategy: '$D^2 = D \\circ D$, so $[D^2]_\\mathcal{B} = ([D]_\\mathcal{B})^2$. Composition of transformations = product of their matrices.',
           explanation: '$([D]_\\mathcal{B})^2 = \\begin{bmatrix}0&1&0\\\\0&0&2\\\\0&0&0\\end{bmatrix}^2 = \\begin{bmatrix}0&0&2\\\\0&0&0\\\\0&0&0\\end{bmatrix}$.',
           math: '[D^2]_\\mathcal{B} = \\begin{bmatrix}0&0&2\\\\0&0&0\\\\0&0&0\\end{bmatrix}',

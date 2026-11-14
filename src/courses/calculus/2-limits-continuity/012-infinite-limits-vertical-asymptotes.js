@@ -128,7 +128,7 @@ export default {
       {
         type: 'tip',
         title: 'Vertical Asymptotes vs. Holes at Zeros of Denominators',
-        body: '\\frac{x^2-4}{x-2} = \\frac{(x-2)(x+2)}{x-2} = x+2 \\quad (x \\neq 2) \\\\ \\text{This has a HOLE at } x=2,\\text{ not an asymptote, because the factors cancel.} \\\\ \\frac{x+1}{x-2} \\text{ has a vertical asymptote at } x=2 \\text{ (numerator is 3 ≠ 0 there).}',
+        body: '\\frac{x^2-4}{x-2} = \\frac{(x-2)(x+2)}{x-2} = x+2 \\quad (x \\neq 2) \\\\ \\text{This has a HOLE at } x=2,\\text{ not an asymptote, because the factors cancel.} \\\\ \\frac{x+1}{x-2} \\text{ has a vertical asymptote at } x=2 \\text{ (numerator is } 3 \\neq 0 \\text{ there).}',
       },
     ],
     visualizationId: null,

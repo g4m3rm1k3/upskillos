@@ -149,7 +149,7 @@ export default {
     {
       id: 'ch8-001-ex2',
       title: 'Two springs in series and parallel',
-      problem: '\\text{Springs k₁ = 100 N/m and k₂ = 150 N/m. Find k_eff for (a) series, (b) parallel.}',
+      problem: '\\text{Springs k₁ = 100 N/m and k₂ = 150 N/m. Find } k_{\\text{eff}} \\text{ for (a) series, (b) parallel.}',
       steps: [
         { expression: '(a)\\; \\frac{1}{k_{\\text{eff}}} = \\frac{1}{100} + \\frac{1}{150} = \\frac{3+2}{300} = \\frac{5}{300} \\Rightarrow k_{\\text{eff}} = 60\\,\\text{N/m}', annotation: 'Series: softer than either spring.' },
         { expression: '(b)\\; k_{\\text{eff}} = 100 + 150 = 250\\,\\text{N/m}', annotation: 'Parallel: stiffer than either spring.' },

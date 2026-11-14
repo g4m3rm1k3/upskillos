@@ -16,7 +16,7 @@
  * LaTeX expression. Stops when all braces are closed and the next character is
  * NOT a math-continuation character (_ ^ { \).  Returns the end index.
  */
-export function scanBareMath(src, start) {
+export function scanBareMath(src, start, openBraces = 0) {
   // \begin{env}...\end{env} is a multi-token LaTeX environment (cases,
   // aligned, array, matrix, ...) — the general bare-command scan below only
   // ever consumes one \command{...} unit, so without this it would wrap just
@@ -24,9 +24,20 @@ export function scanBareMath(src, start) {
   // unrendered text. Jump straight to the matching \end{env} instead.
   const envMatch = /^\\begin\{([a-zA-Z*]+)\}/.exec(src.slice(start))
   if (envMatch) {
+    // Count nested environments of the same name (an array inside an array).
+    const beginToken = `\\begin{${envMatch[1]}}`
     const endToken = `\\end{${envMatch[1]}}`
-    const endIndex = src.indexOf(endToken, start)
-    if (endIndex !== -1) return endIndex + endToken.length
+    let depth = 0
+    let j = start
+    while (j < src.length) {
+      if (src.startsWith(beginToken, j)) { depth++; j += beginToken.length; continue }
+      if (src.startsWith(endToken, j)) {
+        j += endToken.length
+        if (--depth === 0) return j
+        continue
+      }
+      j++
+    }
   }
 
   // \left(...\right) must stay balanced across the whole expression — and
@@ -51,9 +62,11 @@ export function scanBareMath(src, start) {
     // unbalanced in the source — fall through to the general scan below
   }
 
+  // openBraces: braces already opened before `start` (the "x_{" in "x_{\min}"),
+  // so the scan runs on until they close too.
   let i = start
-  let depth = 0
-  let hadBraces = false
+  let depth = openBraces
+  let hadBraces = openBraces > 0
 
   while (i < src.length) {
     const c = src[i]
@@ -102,6 +115,79 @@ export function scanBareMath(src, start) {
   return i
 }
 
+/** Index of the first `token` at or after `from` that isn't escaped with a backslash, or -1. */
+function indexOfUnescaped(src, token, from) {
+  let at = src.indexOf(token, from)
+  while (at !== -1 && src[at - 1] === '\\') at = src.indexOf(token, at + 1)
+  return at
+}
+
+/** How many "{" in `text` are still open at its end (escaped \{ and \} don't count). */
+function unclosedBraces(text) {
+  let depth = 0
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\\') { i++; continue }
+    if (text[i] === '{') depth++
+    else if (text[i] === '}' && depth > 0) depth--
+  }
+  return depth
+}
+
+/** True when every "{" in `text` is closed and no "}" closes nothing (escaped \{ \} don't count). */
+function bracesBalanced(text) {
+  let depth = 0
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\\') { i++; continue }
+    if (text[i] === '{') depth++
+    else if (text[i] === '}' && --depth < 0) return false
+  }
+  return depth === 0
+}
+
+/**
+ * A paragraph that is one formula written without delimiters, as many lesson
+ * fields are ("e^{i\theta} = \cos\theta + i\sin\theta", a "work" or "symbol"
+ * field): it has a LaTeX command, balanced braces, no delimiters, and no
+ * ordinary word of three or more letters outside \text{...} and the commands
+ * themselves. Wrapping it whole keeps it one formula; wrapping each command
+ * separately cut it into pieces KaTeX can't parse ("\theta}", "\right]_0^4").
+ */
+export function isWholeFormula(paragraph) {
+  const p = paragraph.trim()
+  if (!/\\[a-zA-Z]{2}/.test(p)) return false
+  // Delimiters inside \text{...} are maths nested in the formula's words, which
+  // KaTeX supports ("\text{... a straight line ($180^\circ$).}"); elsewhere they
+  // mean the paragraph is prose with its own formulas.
+  const outsideTextArgs = p.replace(/\\text\s*\{(?:[^{}]|\{[^{}]*\})*\}/g, ' ')
+  if (/(?<!\\)\$|\\\(|\\\[|`|\x00/.test(outsideTextArgs)) return false
+  // Markdown structure (a list item, heading, quote or table row) is prose layout, not a formula.
+  if (/^[ \t]*(?:[-*+>#|]|\d+[.)])[ \t]/m.test(p) || /\*\*/.test(p)) return false
+  if (!bracesBalanced(p)) return false
+  const outsideText = p
+    .replace(/\\begin\s*\{[a-zA-Z*]+\}(?:\s*\{[^{}]*\})?/g, ' ') // \begin{array}{c|cccc}
+    .replace(/\\(?:text|mathrm|textbf|textit|operatorname|mbox|begin|end)\s*\{(?:[^{}]|\{[^{}]*\})*\}/g, ' ')
+    .replace(/\\[a-zA-Z]+/g, ' ')
+  return !/[a-zA-Z]{3,}/.test(outsideText)
+}
+
+/**
+ * Wraps each whole-formula paragraph of `src` in $...$ ($$ blocks when it has \\ rows),
+ * passing the wrapped formula to `keep`, which returns a placeholder to put in its
+ * place: wrapBareLatex must not look inside it (it would re-split a long one).
+ */
+function wrapWholeFormulas(src, keep) {
+  return src.split(/(\n[ \t]*\n)/).map((part) => {
+    if (!isWholeFormula(part)) return part
+    const lead = /^\s*/.exec(part)[0]
+    const trail = /\s*$/.exec(part)[0]
+    const body = part.trim()
+    // Display ($$) for a formula with \\ rows, or with $ nested in its \text{...}:
+    // an inline $...$ would end at that inner $.
+    const display = body.includes('\\\\') || /(?<!\\)\$/.test(body)
+    return lead + keep(display ? `$$\n${body}\n$$` : `$${body}$`) + trail
+  }).join('')
+}
+
 /**
  * Wrap bare \command expressions that are NOT already inside $, $$, \(, or \[
  * delimiters in $…$.  This fixes prose like "write \frac{a}{b} and cancel"
@@ -123,9 +209,10 @@ export function wrapBareLatex(src) {
         continue
       }
     }
-    // Skip past already-delimited math so we don't double-wrap
-    if (src.startsWith('$$', i)) {
-      const close = src.indexOf('$$', i + 2)
+    // Skip past already-delimited math so we don't double-wrap. An escaped
+    // dollar inside it ("$\$C$", a price in a formula) doesn't close it.
+    if (src.startsWith('$$', i) && src[i - 1] !== '\\') {
+      const close = indexOfUnescaped(src, '$$', i + 2)
       if (close !== -1) {
         out += src.slice(i, close + 2)
         i = close + 2
@@ -133,7 +220,7 @@ export function wrapBareLatex(src) {
       }
     }
     if (src[i] === '$' && src[i - 1] !== '\\') {
-      const close = src.indexOf('$', i + 1)
+      const close = indexOfUnescaped(src, '$', i + 1)
       if (close !== -1 && close - i < 300) {
         out += src.slice(i, close + 1)
         i = close + 1
@@ -159,8 +246,26 @@ export function wrapBareLatex(src) {
         continue
       }
     }
-    // Bare \command — wrap in $...$
-    if (src[i] === '\\' && i + 1 < src.length && /[a-zA-Z]/.test(src[i + 1])) {
+    // Bare \command — wrap in $...$. Only commands of two or more letters
+    // (\frac, \lambda, \vec): every one-letter command (\d, \t, \r, \v, \b, \u,
+    // \H, \S ...) is a LaTeX text accent or symbol, not maths, and in this
+    // content a bare one is nearly always code — a regex (\d{4}, \w+), a C or
+    // Python escape (\t, \r), or a typo (\a_y for \vec{a}_y). Wrapping them made
+    // KaTeX draw "\d{4}" as a dotted "4" or a red parse error; left alone they
+    // show as the literal text the author wrote.
+    if (src[i] === '\\' && /^[a-zA-Z]{2}/.test(src.slice(i + 1, i + 3))) {
+      // A command inside a brace its word opened ("x_{\min}", "e^{i\theta}")
+      // belongs to that word: pull the word's start into the maths, and scan
+      // on until the brace closes. Wrapping only "\min}" split the formula
+      // and left KaTeX an unmatched "}".
+      const word = /[^\s$]*$/.exec(out)[0]
+      const open = unclosedBraces(word)
+      if (open > 0) {
+        const end = scanBareMath(src, i, open)
+        out = out.slice(0, out.length - word.length) + '$' + word + src.slice(i, end) + '$'
+        i = end
+        continue
+      }
       const end = scanBareMath(src, i)
       if (end > i + 1) {
         out += '$' + src.slice(i, end) + '$'
@@ -174,28 +279,35 @@ export function wrapBareLatex(src) {
   return out
 }
 
+// A literal \n in lesson data is a paragraph break, except where it begins a LaTeX
+// command whose name starts with n (\neq, \nabla, \nu ...). Matching only "\n not
+// followed by a lowercase letter" left breaks such as "\nthen" or "\nimport" as text,
+// which wrapBareLatex then wrapped as unknown commands.
+const N_COMMANDS = 'nabla|natural|nearrow|neg|neq|ne|newline|nexists|ngeq|ngtr|ni|nleftarrow|nLeftarrow|nleftrightarrow|nleq|nless|nmid|not|notin|nparallel|nprec|nrightarrow|nRightarrow|nsim|nsubseteq|nsucc|nsupseteq|ntriangleleft|ntriangleright|nu|nvdash|nVdash|nwarrow|normalsize'
+const ESCAPED_NEWLINE = new RegExp(`\\\\(?!(?:${N_COMMANDS})(?![a-zA-Z]))n`, 'g')
+
 export function preprocess(text) {
   if (!text) return ''
-  // Normalize escaped newlines from lesson data strings before any other processing.
-  // We use (?![a-z]) (lowercase only) to avoid matching \n inside LaTeX commands
-  // like \neq or \nabla, while still converting "...}\n\nThe next sentence" —
-  // a paragraph-break marker glued directly to a capitalized word with no space,
-  // which is overwhelmingly more common in this content than a genuine \n+uppercase
-  // command (e.g. \nVdash). A prior (?![a-zA-Z]) version matched both cases and left
-  // markers like "\nThe"/"\nSubstitute" as literal text, which wrapBareLatex() then
-  // mistook for bare LaTeX commands and broke (see scripts/check_latex.mjs findings).
-  //
-  // Code fences (```...```) are split out and reassembled so this replace never
-  // touches \n escape sequences inside Python/JS string literals in code blocks.
+  // Code fences (```...```) and inline code spans (`...` on one line) are set aside
+  // first and put back last, so no step below ever touches code: not the \n
+  // conversion (`b"\n"`), not \[ \] or \( \) (a regex such as `\[(\d{4})\]`), and
+  // not bare-command or $ handling (`$primary: #3b82f6` in a Sass block).
   const CODE_FENCE = /^```[\s\S]*?^```/gm
+  const INLINE_CODE = /`[^`\n]+`/g
   const codeParts = []
-  const stripped = text.replace(CODE_FENCE, (match) => {
+  const keep = (match) => {
     codeParts.push(match)
     return `\x00CODE${codeParts.length - 1}\x00`
-  })
-  const normalized = stripped
-    .replace(/\\n(?![a-z])/g, '\n\n')
-    .replace(/\x00CODE(\d+)\x00/g, (_, i) => codeParts[Number(i)])
+  }
+  const stripped = text.replace(CODE_FENCE, keep).replace(INLINE_CODE, keep)
+  // Whole-formula paragraphs are set aside too, already wrapped, so wrapBareLatex
+  // and the line-layout rules below can't re-split them.
+  const formulas = []
+  const keepFormula = (math) => {
+    formulas.push(fixMath(math))
+    return `\x00MATH${formulas.length - 1}\x00`
+  }
+  const normalized = wrapWholeFormulas(stripped.replace(ESCAPED_NEWLINE, '\n\n'), keepFormula)
   return (
     wrapBareLatex(normalized)
       // \[…\] → $$…$$ (block / display math). Matched as ONE pair (not two
@@ -250,13 +362,36 @@ export function preprocess(text) {
       // leading content so each fence sits on its own line.
       .replace(/^(\s*)\$\$([^\s$\n])/gm, (_, lead, first) => `${lead}$$\n${first}`)
       .replace(/([^$\n])\$\$(\s*)$/gm, (_, last, trail) => `${last}\n$$${trail}`)
+      .replace(MATH_SEGMENT, fixMath)
+      .replace(/\x00MATH(\d+)\x00/g, (_, i) => formulas[Number(i)])
+      .replace(/\x00CODE(\d+)\x00/g, (_, i) => codeParts[Number(i)])
   )
 }
 
-/** Extract every $$...$$ and $...$ delimited math segment from already-preprocessed text. */
+const MATH_SEGMENT = /(?<!\\)\$\$[\s\S]+?(?<!\\)\$\$|(?<!\\)\$[^$\n]+?(?<!\\)\$/g
+const ENTITY = { lt: '<', gt: '>', amp: '&' }
+
+// Repairs inside one delimited formula:
+// - HTML entities ("$C_b &lt; 0.5$"): the page decodes them in prose, but KaTeX
+//   gets the formula's raw text and can't parse "&lt;".
+// - A bare % ("\text{80% efficiency}"): in TeX it starts a comment that swallows
+//   the rest of the formula; lesson text always means a percent sign.
+function fixMath(math) {
+  return math
+    .replace(/&(lt|gt|amp);/g, (_, name) => ENTITY[name])
+    .replace(/(?<!\\)%/g, '\\%')
+}
+
+/**
+ * Extract every $$...$$ and $...$ delimited math segment from already-preprocessed text.
+ * An escaped dollar (\$) is a literal dollar sign in Markdown, as remark-math treats it
+ * on the page, so it neither opens nor closes a segment here ("you win \$10").
+ */
 export function extractMathSegments(processedText) {
+  // Code is never parsed as maths on the page ("$primary: #3b82f6" in a Sass block).
+  processedText = processedText.replace(/^```[\s\S]*?^```/gm, ' ').replace(/`[^`\n]+`/g, ' ')
   const segments = []
-  const pattern = /\$\$([\s\S]+?)\$\$|\$([^$\n]+?)\$/g
+  const pattern = /(?<!\\)\$\$([\s\S]+?)(?<!\\)\$\$|(?<!\\)\$([^$\n]+?)(?<!\\)\$/g
   let match
   while ((match = pattern.exec(processedText)) !== null) {
     segments.push(match[1] ?? match[2])

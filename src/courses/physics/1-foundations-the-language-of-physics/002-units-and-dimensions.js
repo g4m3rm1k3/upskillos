@@ -213,7 +213,7 @@ export default {
         type: 'insight',
         title: 'The dimension-check shortcut',
         body:
-          `\\text{In } x = v_0 t + \\tfrac{1}{2}at^2:\\\\[v_0 t] = \\frac{\\text{m}}{\\text{s}} \\cdot \\text{s} = \\text{m} \\quad\\checkmark\\\\[\\tfrac{1}{2}at^2] = \\frac{\\text{m}}{\\text{s}^2} \\cdot \\text{s}^2 = \\text{m} \\quad\\checkmark\\\\\\text{Both terms are [m] — they can be added. The equation is dimensionally valid.}`,
+          `\\text{In } x = v_0 t + \\tfrac{1}{2}at^2:\\\\ {[v_0 t]} = \\frac{\\text{m}}{\\text{s}} \\cdot \\text{s} = \\text{m} \\quad\\checkmark\\\\ {[\\tfrac{1}{2}at^2]} = \\frac{\\text{m}}{\\text{s}^2} \\cdot \\text{s}^2 = \\text{m} \\quad\\checkmark\\\\\\text{Both terms are [m] — they can be added. The equation is dimensionally valid.}`,
       },
       {
         type: 'definition',

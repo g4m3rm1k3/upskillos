@@ -943,7 +943,7 @@ export default {
             "To find F'(x), we use the limit definition of the derivative directly on F(x).",
           explanation:
             "By definition, the derivative is F'(x) = lim_{h→0} [F(x+h) – F(x)] / h. Substituting the definition of F gives us lim_{h→0} (1/h) [∫_a^{x+h} f(t) dt – ∫_a^x f(t) dt]. This looks messy at first, but we can simplify the expression inside using a basic property of integrals.",
-          math: "F'(x) = \\lim_{h \\to 0} \\frac{1}{h} \\left[ \\int_a^{x+h} f(t)\\,dt - \\int_a^x f(t)\\,dt \right]",
+          math: "F'(x) = \\lim_{h \\to 0} \\frac{1}{h} \\left[ \\int_a^{x+h} f(t)\\,dt - \\int_a^x f(t)\\,dt \\right]",
         },
         {
           label: "Combine the integrals using additivity",
