@@ -68,11 +68,17 @@ function capture(command, args, { cwd, env, timeoutMs = 60000, input } = {}) {
 // `opts.input`: text typed into the program (a `stdin=` option on a run check).
 async function shellRun(cmd, opts = {}) {
   if (process.platform === 'win32' && opts.input != null) {
+    // The input is piped into the command below, and a pipe feeds only the first command of
+    // a `;` sequence. A lesson's leading `cd kit;` (one course folder, a subfolder per project)
+    // would get the input instead of the program, so leading cd commands run first.
+    const lead = /^(\s*(?:cd|Set-Location)\s+[^;'"`|&]+;\s*)+/i.exec(cmd)?.[0]
+    if (lead) return await shellRun(cmd.slice(lead.length), { ...opts, prefix: (opts.prefix ?? '') + lead })
+    const prefix = opts.prefix ?? ''
     // Get-Content on an empty file emits no pipeline object. After removing a
     // sole final newline below, that would turn a blank input line into EOF.
     // An explicit empty string emits PowerShell's one terminating CRLF instead.
     if (opts.input === '\n' || opts.input === '\r\n') {
-      return await shellRun(`'' | ${cmd}`, { ...opts, input: undefined })
+      return await shellRun(`${prefix}'' | ${cmd}`, { ...opts, input: undefined, prefix: undefined })
     }
     // A program started by `powershell -Command` doesn't reliably read PowerShell's own stdin,
     // so pipe the text in from a file, the way a learner would type `Get-Content in.txt | ./calc`.
@@ -87,7 +93,7 @@ async function shellRun(cmd, opts = {}) {
     await fs.writeFile(file, String(opts.input).replace(/\r?\n$/, ''), 'utf8')
     try {
       const quoted = file.replace(/'/g, "''")
-      return await shellRun(`$OutputEncoding = New-Object System.Text.UTF8Encoding $false; Get-Content -Raw -Encoding UTF8 -LiteralPath '${quoted}' | ${cmd}`, { ...opts, input: undefined })
+      return await shellRun(`${prefix}$OutputEncoding = New-Object System.Text.UTF8Encoding $false; Get-Content -Raw -Encoding UTF8 -LiteralPath '${quoted}' | ${cmd}`, { ...opts, input: undefined, prefix: undefined })
     } finally {
       fs.rm(file, { force: true }).catch(() => {})
     }

@@ -102,6 +102,18 @@ describe('run checks', () => {
     expect(r.map((x) => x.detail ?? 'pass')).toEqual(['pass', 'pass', 'pass', 'pass', 'pass']);
   });
 
+  it('gives stdin= to the program, not to a leading cd (one course folder, a subfolder per project)', async () => {
+    // On Windows the input is piped into the command, and a pipe feeds only the first command
+    // of a `;` sequence: `cd sub; node echo.js` used to hand the input to cd and fail.
+    fs.mkdirSync(path.join(root, 'sub'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'sub', 'echo.js'), 'let d = ""; process.stdin.on("data", (c) => { d += c }); process.stdin.on("end", () => console.log("got " + JSON.stringify(d.replace(/\\r\\n/g, "\\n"))));\n');
+    const r = await check(root, [
+      'run "cd sub; node echo.js" stdin="a\\nb\\n" stdout="got \\"a\\\\nb\\\\n\\""',
+      'run "cd sub; node echo.js" stdin="\\n" stdout="got \\"\\\\n\\""',
+    ].join('\n'));
+    expect(r.map((x) => x.detail ?? 'pass')).toEqual(['pass', 'pass']);
+  });
+
   it('checks the exit code and the output', async () => {
     const r = await check(root, [
       'run "node hello.js" stdout="Hello from Node"',
