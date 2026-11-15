@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 866,
+    "lessons": 867,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10153,6 +10153,17 @@
       "maturity": "in-development",
       "firstStep": "A row is ten bits",
       "firstIndependentTask": "Your turn: lock the piece in place",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-03-03-fixed-width",
+      "track": "swe-s01-ignition",
+      "title": "Fixed Width: Negative Numbers, Overflow and Byte Order",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A file of numbers",
+      "firstIndependentTask": "Your turn: numbers into bytes",
       "signals": [],
       "errors": []
     },

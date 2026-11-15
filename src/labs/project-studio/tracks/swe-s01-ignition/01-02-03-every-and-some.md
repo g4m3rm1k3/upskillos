@@ -436,7 +436,7 @@ document.addEventListener("keydown", (event) => {
 draw();
 ```
 
-Save and reload; the game plays exactly as before. Prove the rewrite as 01-02-02 did, over every case. A move is fully described by its offsets, so try every offset from 3 rows up to 22 down and 4 columns left to 13 right, which covers every position on and around the board, and count disagreements between the old `every` form and the new `canMove`. Paste this into the console:
+Save and reload; the game plays exactly as before. Prove the rewrite as 01-02-02 did, over every case. A move is fully described by its offsets, so try every offset from 3 rows up to 22 down and 4 columns left to 13 right, which covers every position on and around the board, and count disagreements between the old `every` form and the new `canMove`. Paste this into the console. (The first time you paste into the console, Chrome and Firefox refuse and ask you to type `allow pasting` first: a guard against people being tricked into pasting code they don't understand. Read what you paste.)
 
 ```
 (() => { let differ = 0; for (let r = -3; r < 23; r++) for (let c = -4; c < 14; c++) { const old = moved(piece, r, c).every((cell) => isFree(cell.row, cell.col)); if (old !== canMove(piece, r, c)) differ++; } return differ; })()
