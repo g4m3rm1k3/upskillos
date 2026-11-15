@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 888,
+    "lessons": 889,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10395,6 +10395,17 @@
       "maturity": "in-development",
       "firstStep": "Work on the wrong branch",
       "firstIndependentTask": "Your turn: a conflict in Blockfall",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-08-04-git-as-an-investigation-tool",
+      "track": "swe-s01-ignition",
+      "title": "\"Git as an Investigation Tool: Bisect, Blame, Hooks and Secrets\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A bug report",
+      "firstIndependentTask": "Your turn: a hook that refuses keys",
       "signals": [],
       "errors": []
     },
