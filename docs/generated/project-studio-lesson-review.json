@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 883,
+    "lessons": 884,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10340,6 +10340,17 @@
       "maturity": "in-development",
       "firstStep": "Four kinds of documentation",
       "firstIndependentTask": "Your turn: capital letters",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-07-02-reading-a-standard",
+      "track": "swe-s01-ignition",
+      "title": "Reading a Standard: CSV from RFC 4180",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A file that commas can't split",
+      "firstIndependentTask": "Your turn: one column, as a command",
       "signals": [],
       "errors": []
     },
