@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 894,
+    "lessons": 895,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10461,6 +10461,17 @@
       "maturity": "in-development",
       "firstStep": "Reading a traceback",
       "firstIndependentTask": "Your turn: three more tools",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-10-02-debugging-as-science",
+      "track": "swe-s01-ignition",
+      "title": "\"Debugging as Science: Reproduce, Hypothesise, Test, Narrow\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A bug report",
+      "firstIndependentTask": "Your turn: the Rows counter",
       "signals": [],
       "errors": []
     },
