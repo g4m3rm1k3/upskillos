@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 870,
+    "lessons": 871,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10197,6 +10197,17 @@
       "maturity": "in-development",
       "firstStep": "A copy is one level deep",
       "firstIndependentTask": "Your turn: undo more than once",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-04-04-invariants",
+      "track": "swe-s01-ignition",
+      "title": "Invariants: Rules the State Must Keep",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Rules nobody wrote down",
+      "firstIndependentTask": "Your turn: squares nobody can change",
       "signals": [],
       "errors": []
     },
