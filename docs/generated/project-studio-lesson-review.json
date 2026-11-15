@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 858,
+    "lessons": 866,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10065,6 +10065,94 @@
       "maturity": "in-development",
       "firstStep": "A tool that won't join a pipeline",
       "firstIndependentTask": "Your turn: a --json flag",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-01-03-what-correct-means",
+      "track": "swe-s01-ignition",
+      "title": "What \"Correct\" Means: Specifications, Algorithms and Counterexamples",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "How many words?",
+      "firstIndependentTask": "Your turn: what counts as a line",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-01-04-three-models-of-a-program",
+      "track": "swe-s01-ignition",
+      "title": "Three Models of a Program: Function, State Machine, Process",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Pieces don't add up",
+      "firstIndependentTask": "Your turn: the longest line",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-02-01-conditions-are-statements",
+      "track": "swe-s01-ignition",
+      "title": "Conditions Are Statements: Truth Tables, Short-Circuits and Truthiness",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A condition nobody can read",
+      "firstIndependentTask": "Your turn: an --any group",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-02-02-rewriting-conditions-safely",
+      "track": "swe-s01-ignition",
+      "title": "Rewriting Conditions Safely: De Morgan, Implication and Exhaustive Checks",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A rule with three inputs",
+      "firstIndependentTask": "Your turn: flatten an alerting rule",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-02-03-every-and-some",
+      "track": "swe-s01-ignition",
+      "title": "Every and Some: Quantifiers, Sets and the First Blockfall Board",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A second project: Blockfall",
+      "firstIndependentTask": "Your turn: show when the piece has landed",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-02-04-normal-forms-and-satisfiability",
+      "track": "swe-s01-ignition",
+      "title": "Normal Forms and Satisfiability: Can This Query Ever Match?",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A query that matches nothing",
+      "firstIndependentTask": "Your turn: a fast can_match",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-03-01-place-value",
+      "track": "swe-s01-ignition",
+      "title": "Place Value: Reading a File's Bytes in Hexadecimal",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Digits are worth their place",
+      "firstIndependentTask": "Your turn: conversion by repeated division",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-03-02-bits-as-switches",
+      "track": "swe-s01-ignition",
+      "title": "Bits as Switches: Masks, Flags, Parity and a Board Made of Numbers",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A row is ten bits",
+      "firstIndependentTask": "Your turn: lock the piece in place",
       "signals": [],
       "errors": []
     },
