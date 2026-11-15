@@ -100,8 +100,11 @@ const SERIES = [
     label: 'Software Engineering for the Age of AI',
     prefix: 'swe-',
     sharedProject: true,
-    chapters: [['swe-s01-ignition', '01 · Ignition: First Principles and First Controls']],
-    planned: 'For programmers comfortable in at least one language. Computer science and software engineering from the bottom up, taught through several projects that grow side by side (Kit, Blockfall, Ledger, a C# web framework and more), so you can design systems and steer whoever builds them. Stage 1 is being piloted; later stages follow the curriculum in docs/software-engineering-curriculum.md. Reviews and learner walkthroughs remain open.',
+    chapters: [
+      ['swe-s01-ignition', '01 · Ignition: First Principles and First Controls'],
+      ['swe-s02-deciding', '02 · Deciding: Options, Data and Specifications'],
+    ],
+    planned: 'For programmers comfortable in at least one language. Computer science and software engineering from the bottom up, taught through several projects that grow side by side (Kit, Blockfall, Ledger, a C# web framework and more), so you can design systems and steer whoever builds them. Stage 1 is written and stage 2 is in progress; later stages follow the curriculum in docs/software-engineering-curriculum.md. Reviews and learner walkthroughs remain open.',
   },
   {
     // Plan, chapter map and status: docs/terminal-series-plan.md.

@@ -16,7 +16,7 @@ const SERIES_KEYS = new Set(['forge', 'applied-ml', 'cpp-mastery', 'ml-productio
 
 export function learningProfile(key) {
   // Software Engineering course: docs/swe-course-status.md.
-  if (key === 'swe' || key.startsWith('swe-')) return { level: 'bridge', maturity: 'in-development', audience: 'For programmers comfortable in at least one language: variables, types, loops, functions, lists and dictionaries are assumed, in any language. Short runways translate them into each new language a project needs. Each lesson opens its own project folder (Kit, Blockfall, Ledger and others) on Desktop. Stage 1 is a pilot; reviews and learner walkthroughs remain open.' };
+  if (key === 'swe' || key.startsWith('swe-')) return { level: 'bridge', maturity: 'in-development', audience: 'For programmers comfortable in at least one language: variables, types, loops, functions, lists and dictionaries are assumed, in any language. A new language or tool is taught where a lesson first needs it. Every project (Kit, Blockfall, Ledger and others) lives in one course folder, each in its own subfolder with its own Git history. Stage 1 is written; reviews and learner walkthroughs remain open.' };
   if (key === 'pyinternals' || key.startsWith('pyinternals-')) return { level: 'advanced', maturity: 'review-required', audience: 'For Python programmers who want to see underneath Python. Needs a C/C++ compiler (gcc/g++) and Python. Follow the chapters in order; C basics come first. Lesson quality review is pending.' };
   if (['winforms', 'winforms-start', 'winforms-forms', 'winforms-workflow', 'winforms-react'].includes(key)) return {
     level: ['winforms', 'winforms-start'].includes(key) ? 'beginner' : 'bridge',
