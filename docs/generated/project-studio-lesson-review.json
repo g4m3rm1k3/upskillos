@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 901,
+    "lessons": 902,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10538,6 +10538,17 @@
       "maturity": "in-development",
       "firstStep": "Slice 1, test first",
       "firstIndependentTask": "Your turn: slice 2, holding",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-12-03-guard-rails",
+      "track": "swe-s01-ignition",
+      "title": "\"Guard Rails: What a Collaborator Can Reach, and What Needs a Yes\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "What it can reach",
+      "firstIndependentTask": "Your turn: check every push",
       "signals": [],
       "errors": []
     },
