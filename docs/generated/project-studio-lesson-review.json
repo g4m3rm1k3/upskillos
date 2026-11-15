@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 881,
+    "lessons": 882,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10318,6 +10318,17 @@
       "maturity": "in-development",
       "firstStep": "What pip did",
       "firstIndependentTask": "Your turn: the name you typed",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-06-06-scripts-and-safety",
+      "track": "swe-s01-ignition",
+      "title": "Scripts and Safety",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "One command for every check",
+      "firstIndependentTask": "Your turn: the same script in your shell",
       "signals": [],
       "errors": []
     },
