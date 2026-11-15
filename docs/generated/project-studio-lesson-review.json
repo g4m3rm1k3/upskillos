@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 876,
+    "lessons": 877,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10263,6 +10263,17 @@
       "maturity": "in-development",
       "firstStep": "A ghost one row too deep",
       "firstIndependentTask": "Your turn: count the pieces",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-06-01-finding-your-way",
+      "track": "swe-s01-ignition",
+      "title": "Finding Your Way: Folders, Paths, Permissions and Help",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Where am I?",
+      "firstIndependentTask": "Your turn: help for Kit's tools",
       "signals": [],
       "errors": []
     },
