@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 898,
+    "lessons": 899,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10505,6 +10505,17 @@
       "maturity": "in-development",
       "firstStep": "An instruction is more text",
       "firstIndependentTask": "Your turn: keep the instructions",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-11-03-models-that-act",
+      "track": "swe-s01-ignition",
+      "title": "\"Models That Act: Tools, Agent Loops, Retrieval and Their Costs\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Tools: the model writes, the program runs",
+      "firstIndependentTask": "Your turn: keep the agent inside kit",
       "signals": [],
       "errors": []
     },
