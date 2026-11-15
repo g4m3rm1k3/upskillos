@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 895,
+    "lessons": 896,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10472,6 +10472,17 @@
       "maturity": "in-development",
       "firstStep": "A bug report",
       "firstIndependentTask": "Your turn: the Rows counter",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-10-03-tools-for-failures",
+      "track": "swe-s01-ignition",
+      "title": "\"Tools for Failures: Loggers, Debuggers, and Bugs That Won't Reproduce\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A print to find out",
+      "firstIndependentTask": "Your turn: count logs what it reads",
       "signals": [],
       "errors": []
     },
