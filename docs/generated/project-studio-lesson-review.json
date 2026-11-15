@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 877,
+    "lessons": 878,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10274,6 +10274,17 @@
       "maturity": "in-development",
       "firstStep": "Where am I?",
       "firstIndependentTask": "Your turn: help for Kit's tools",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-06-02-streams-and-processes",
+      "track": "swe-s01-ignition",
+      "title": "Streams and Processes: Pipes, Redirects and the Environment",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Three streams",
+      "firstIndependentTask": "Your turn: an output file for filter",
       "signals": [],
       "errors": []
     },
