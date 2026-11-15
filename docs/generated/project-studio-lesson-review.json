@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 890,
+    "lessons": 891,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10417,6 +10417,17 @@
       "maturity": "in-development",
       "firstStep": "A claim that can fail",
       "firstIndependentTask": "Your turn: csvtool's tests",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-09-02-knowing-the-right-answer",
+      "track": "swe-s01-ignition",
+      "title": "\"Knowing the Right Answer: Oracles, Edges and Regression Tests\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A check that can't fail",
+      "firstIndependentTask": "Your turn: an oracle for to_base",
       "signals": [],
       "errors": []
     },
