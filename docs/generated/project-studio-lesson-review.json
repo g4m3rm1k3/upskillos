@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 896,
+    "lessons": 897,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10483,6 +10483,17 @@
       "maturity": "in-development",
       "firstStep": "A print to find out",
       "firstIndependentTask": "Your turn: count logs what it reads",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-11-01-how-a-language-model-writes",
+      "track": "swe-s01-ignition",
+      "title": "\"How a Language Model Writes: Tokens, Prediction and Fluent Mistakes\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A text every Python has",
+      "firstIndependentTask": "Your turn: how much does it copy?",
       "signals": [],
       "errors": []
     },
