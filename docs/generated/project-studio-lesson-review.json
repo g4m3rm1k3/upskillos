@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 880,
+    "lessons": 881,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10307,6 +10307,17 @@
       "maturity": "in-development",
       "firstStep": "A program that reads your code",
       "firstIndependentTask": "Your turn: a clean report",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-06-05-packages-and-environments",
+      "track": "swe-s01-ignition",
+      "title": "Packages and Environments",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "What pip did",
+      "firstIndependentTask": "Your turn: the name you typed",
       "signals": [],
       "errors": []
     },
