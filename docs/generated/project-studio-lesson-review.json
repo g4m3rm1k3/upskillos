@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 879,
+    "lessons": 880,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10296,6 +10296,17 @@
       "maturity": "in-development",
       "firstStep": "Searches that words can't say",
       "firstIndependentTask": "Your turn: real addresses",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-06-04-tools-around-the-code",
+      "track": "swe-s01-ignition",
+      "title": "Tools Around the Code: Linters, Formatters and Running Checks",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A program that reads your code",
+      "firstIndependentTask": "Your turn: a clean report",
       "signals": [],
       "errors": []
     },
