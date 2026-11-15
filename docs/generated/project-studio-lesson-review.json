@@ -1,8 +1,8 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 902,
-    "tracks": 144,
+    "lessons": 903,
+    "tracks": 145,
     "errors": {},
     "signals": {
       "authored check limits not detected": 615,
@@ -10549,6 +10549,17 @@
       "maturity": "in-development",
       "firstStep": "What it can reach",
       "firstIndependentTask": "Your turn: check every push",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s02-deciding/02-01-01-kinds-of-solution",
+      "track": "swe-s02-deciding",
+      "title": "\"Kinds of Solution: Does This Need to Be Code?\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A need, not a program",
+      "firstIndependentTask": "Your turn: lay out the options",
       "signals": [],
       "errors": []
     },
