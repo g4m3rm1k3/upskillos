@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 878,
+    "lessons": 879,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10285,6 +10285,17 @@
       "maturity": "in-development",
       "firstStep": "Three streams",
       "firstIndependentTask": "Your turn: an output file for filter",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-06-03-text-tools",
+      "track": "swe-s01-ignition",
+      "title": "Text Tools: Searching with Regular Expressions",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Searches that words can't say",
+      "firstIndependentTask": "Your turn: real addresses",
       "signals": [],
       "errors": []
     },
