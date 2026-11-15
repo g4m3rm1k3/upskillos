@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 867,
+    "lessons": 868,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10164,6 +10164,17 @@
       "maturity": "in-development",
       "firstStep": "A file of numbers",
       "firstIndependentTask": "Your turn: numbers into bytes",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-04-01-names-and-objects",
+      "track": "swe-s01-ignition",
+      "title": "Names and Objects: What Assignment Really Does",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A board that fills twenty squares",
+      "firstIndependentTask": "Your turn: grids that don't share",
       "signals": [],
       "errors": []
     },
