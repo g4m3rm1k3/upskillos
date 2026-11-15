@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 868,
+    "lessons": 869,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10175,6 +10175,17 @@
       "maturity": "in-development",
       "firstStep": "A board that fills twenty squares",
       "firstIndependentTask": "Your turn: grids that don't share",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-04-02-changing-things",
+      "track": "swe-s01-ignition",
+      "title": "Changing Things: Mutation, Rebinding and Pure Functions",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Two kinds of objects",
+      "firstIndependentTask": "Your turn: a hard drop",
       "signals": [],
       "errors": []
     },
