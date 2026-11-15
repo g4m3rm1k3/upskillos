@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 882,
+    "lessons": 883,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10329,6 +10329,17 @@
       "maturity": "in-development",
       "firstStep": "One command for every check",
       "firstIndependentTask": "Your turn: the same script in your shell",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-07-01-reading-documentation",
+      "track": "swe-s01-ignition",
+      "title": "Reading Documentation",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Four kinds of documentation",
+      "firstIndependentTask": "Your turn: capital letters",
       "signals": [],
       "errors": []
     },
