@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 893,
+    "lessons": 894,
     "tracks": 144,
     "errors": {},
     "signals": {
@@ -10450,6 +10450,17 @@
       "maturity": "in-development",
       "firstStep": "A test page that starts a game",
       "firstIndependentTask": "Your turn: rotation, test first",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s01-ignition/01-10-01-errors-that-help",
+      "track": "swe-s01-ignition",
+      "title": "\"Errors That Help: Tracebacks, Kinds of Error, and Messages for People\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "Reading a traceback",
+      "firstIndependentTask": "Your turn: three more tools",
       "signals": [],
       "errors": []
     },
