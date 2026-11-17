@@ -22,8 +22,20 @@ export async function runCases(call, cases) {
   const results = await call(cases.map(c => c.args))
   return cases.map((c, i) => {
     const r = results[i] ?? { ok: false, error: 'no answer' }
-    const passed = r.ok && sameValue(r.value, c.expect)
-    return { label: c.label, args: c.args, expect: c.expect, ...r, passed }
+    const passed = r.ok && (c.unordered ? sameItems(r.value, c.expect) : sameValue(r.value, c.expect))
+    return { label: c.label, why: c.why, args: c.args, expect: c.expect, ...r, passed }
+  })
+}
+
+// Arrays with the same items in any order (a case marked "unordered": true).
+export function sameItems(a, b) {
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false
+  const left = [...b]
+  return a.every(x => {
+    const i = left.findIndex(y => sameValue(x, y))
+    if (i < 0) return false
+    left.splice(i, 1)
+    return true
   })
 }
 

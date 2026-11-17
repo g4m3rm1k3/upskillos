@@ -31,12 +31,15 @@ Logic Suite, Sim Lab, the RL labs and others) when a level needs a deeper explan
 4. **Old code comes back.** The ship grows. Code from an early level meets bigger loads later
    (10 crates become 50,000), so old ideas get practised because the ship needs them, not
    because a quiz asks.
-5. **Tests are the ship's diagnostics.** A level is passed when the ship survives scenarios
+5. **Every rule comes from a visible problem.** A step only asks for code after the ship shows
+   what goes wrong without it (a gauge, a log line, something on the ship). Every check says why
+   its answer is right.
+6. **Tests are the ship's diagnostics.** A level is passed when the ship survives scenarios
    you have not seen, not when your code matches an answer.
-6. **The ship AI hands you code, and you review it.** Sometimes it is right; sometimes it has a
+7. **The ship AI hands you code, and you review it.** Sometimes it is right; sometimes it has a
    bug, a security hole or a slow algorithm. Install bad code and something breaks. This trains
    the skill of judging code you didn't write.
-7. **Nothing is wasted.** Every system you build stays in the ship and gets used again.
+8. **Nothing is wasted.** Every system you build stays in the ship and gets used again.
 
 ## 3. Saving progress and short sessions
 
@@ -180,6 +183,9 @@ come back, and continue where they left off, and the lab's tests pass.
 | Lab shell (`src/labs/live-machine/`): editor, live reload in a worker, ship view, inspector, ship log, console, star map, captain's log, export/import save | built 2026-11-05 |
 | Levels as JSON (`src/labs/live-machine/levels/`, authoring guide in its README.md); tests check every level | built 2026-11-05 |
 | Level S0-1 Lights (functions, return, objects, comparisons, if, strings) | built and played through in a browser 2026-11-05 |
-| Level S0-2 Power budget, S0-3 Doors (new worlds needed) | next |
+| Lights revised after first play-test: ship check locked until every step is done; the Bridge rule now comes from a Course gauge; every check has a "why" | done 2026-11-05 |
+| Level S0-2 Power budget (arrays, loops, `&&`, `!`, `includes`, priority by loop order; reuses `lightOn`) | built and played through 2026-11-05 |
+| Level S0-3 Doors (strings as states, `\|\|`, rule order, first state machine) | built and played through 2026-11-05 |
+| Next levels | to plan: rest of Season 0 (e.g. objects as records, functions that call functions), then Season 1 |
 | Saves in IndexedDB (v0.1 uses localStorage: code is small; move when the database arrives in Season 3) | later |
 | Rewind (ring buffer of world states) | later |

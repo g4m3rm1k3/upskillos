@@ -17,7 +17,7 @@ Every lesson matches [07-01-tokens.md](../src/labs/project-studio/tracks/spreads
 
 ## How to write a sprint
 
-1. **Build the sprint's final code first**, in a copy of the last kept walk project (`scratchpad/sheet-s<NN>`), with its tests passing, and measure every number the lessons will quote.
+1. **Build the sprint's final code first**, in a copy of the last kept walk project (`bootcamp-sheet\dev-<NN>`, see *Where the code is built*), with its tests passing, and measure every number the lessons will quote.
 2. **Write the lessons from that code**, step by step. A scratchpad generator that builds each step's file snapshot from the final file, and asserts the last snapshot equals it, keeps blocks consistent.
 3. **Walkthrough entries** in `tracks/spreadsheet-build.walkthrough.js`: every step's wrong answers (that must fail named checks), every Your turn's right answer. Wrong answers never push.
 4. **Checks while writing:** `node scripts/check-bootcamp-teaching.mjs --from <NN>-01 --until <NN>-08` must report nothing missing.
@@ -26,9 +26,21 @@ Every lesson matches [07-01-tokens.md](../src/labs/project-studio/tracks/spreads
 
 Never run git on this repository. Lessons teach git inside the learner's project only.
 
-## Kept walk projects
+## Where the code is built: on the owner's machine
 
-The walk's finished projects live in the session scratchpad, which doesn't survive between sessions. A new session regenerates one by walking from the start, or from the last sprint whose project it has: `SHEET_KEEP=<folder>` saves one.
+From 2026-11-14, every sprint's code is built in **`C:\Users\g4m3r\Documents\bootcamp-sheet\`**, outside this repository, so the owner has a copy and can look at it and give feedback while the lessons are written. Nothing goes in the session scratchpad except throwaway helper scripts.
+
+| Folder | What it holds |
+|---|---|
+| `bootcamp-sheet\sprint-NN` | the walked project at the end of Sprint NN (`SHEET_KEEP=C:/Users/g4m3r/Documents/bootcamp-sheet/sprint-NN`); the walk deletes and rewrites this folder, so never use it for anything else |
+| `bootcamp-sheet\dev-NN` | Sprint NN's finished code, built first (step 1 above), copied from the last `sprint-` folder; the lessons are written from it |
+| `bootcamp-sheet\tools` | the lesson generators and walkthrough helpers for each sprint, kept so they survive between sessions |
+
+Each project folder has its own git repository (the learner's), with its GitHub stand-in beside it (`sprint-NN.github.git`). That's the learner's git, not this repository's.
+
+Before 2026-11-14 the kept projects lived in the scratchpad, and they were lost. On 2026-11-14 **Sprint 11's project was rebuilt** into `bootcamp-sheet\sprint-11` by a full walk from the start (97 walkthrough tests passed, 6,151 s, about 1 h 43 min). A full walk is that slow, so always start from the latest `sprint-NN` folder with `SHEET_START`/`SHEET_FROM`. When running one in the background, don't pipe its output through `Select-Object -Last`: that hides all progress until it ends.
+
+Next session: copy `sprint-11` to `dev-12` and build Sprint 12 there.
 
 ## Safety: one heavy process at a time
 

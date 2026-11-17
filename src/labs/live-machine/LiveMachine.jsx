@@ -33,6 +33,17 @@ function Rich({ text }) {
   })
 }
 
+// Values as the learner would write them: objects one key per line, arrays one item per line.
+const inline = v => (v && typeof v === 'object' && !Array.isArray(v)
+  ? `{ ${Object.entries(v).map(([k, x]) => `${k}: ${show(x)}`).join(', ')} }`
+  : show(v))
+function pretty(v) {
+  const NL = '\n'
+  if (Array.isArray(v)) return v.length ? ['[', v.map(x => `  ${inline(x)}`).join(`,${NL}`), ']'].join(NL) : '[]'
+  if (v && typeof v === 'object') return ['{', ...Object.entries(v).map(([k, x]) => `  ${k}: ${show(x)},`), '}'].join(NL)
+  return show(v)
+}
+
 function Stat({ s }) {
   return (
     <div className={`lm-stat tone-${s.tone}`}>
@@ -53,6 +64,7 @@ function CaseList({ results, reveal = true }) {
           {!r.passed && reveal && (
             <span className="lm-case-why">
               {r.ok ? <>got <code>{show(r.value)}</code>, needed <code>{show(r.expect)}</code></> : <>error: {r.error}</>}
+              {r.why && <span className="lm-case-reason">Why: <Rich text={r.why} /></span>}
             </span>
           )}
         </li>
@@ -148,20 +160,30 @@ export default function LiveMachine({ onBack }) {
   useEffect(() => () => clearTimeout(timer.current), [])
 
   // ---- the running world --------------------------------------------------------------------
-  const [w, setW] = useState(() => world.create())
-  const wRef = useRef(w)
+  // Every ship is tagged with its world's name, so a view never draws another world's ship.
+  const newShip = () => ({ ...world.create(), _world: level.world })
+  const [sim, setW] = useState(newShip)
+  const wRef = useRef(sim)
   const [running, setRunning] = useState(true)
   const busy = useRef(false)
   const [selected, setSelected] = useState(view.defaultSelection)
   const [lastInputs, setLastInputs] = useState([])
 
-  useEffect(() => { const fresh = world.create(); wRef.current = fresh; setW(fresh) }, [world])
+  // A level with a different world: start its ship in this same render.
+  let w = sim
+  if (sim._world !== level.world) {
+    w = newShip()
+    wRef.current = w
+    setW(w)
+    setLastInputs([])
+  }
 
   const tick = useCallback(async () => {
     if (busy.current) return
     busy.current = true
     try {
       const cur = wRef.current
+      if (WORLDS[cur._world] !== world) return
       const inputs = world.inputs(cur)
       let results = null
       if (liveOk.current && !hung.current) {
@@ -200,7 +222,7 @@ export default function LiveMachine({ onBack }) {
   const moreHint = () => update(cur => ({ ...cur, hintsShown: { ...cur.hintsShown, [step.id]: Math.min(step.hints.length, (cur.hintsShown?.[step.id] ?? 0) + 1) } }))
 
   const runCheck = async () => {
-    if (!liveOk.current) return
+    if (!liveOk.current || !allStepsDone) return
     setCheck({ running: true, results: [] })
     const results = await runCases(call, level.check.cases)
     setCheck({ running: false, results })
@@ -257,7 +279,7 @@ export default function LiveMachine({ onBack }) {
   // ---- inspector ---------------------------------------------------------------------------
   const selIndex = view.indexOf(w, selected)
   const selInput = lastInputs[selIndex]
-  const selRoom = w.rooms?.[selIndex]
+  const selAnswer = view.answerOf(w, selected)
   const [tab, setTab] = useState('inspect')
   const stats = useMemo(() => world.stats(w), [w, world])
 
@@ -374,8 +396,8 @@ export default function LiveMachine({ onBack }) {
           <section className={`lm-card lm-check${allStepsDone ? ' is-ready' : ''}`}>
             <div className="lm-kicker">Ship check</div>
             <p><Rich text={level.check.text} /></p>
-            <button className="lm-btn primary wide" onClick={runCheck} disabled={!liveOk.current || check?.running}>
-              {check?.running ? 'Running scenarios…' : ls.complete ? 'Run ship check again' : 'Run ship check'}
+            <button className="lm-btn primary wide" onClick={runCheck} disabled={!allStepsDone || !liveOk.current || check?.running}>
+              {!allStepsDone ? '🔒 Finish every step to unlock' : check?.running ? 'Running scenarios…' : ls.complete ? 'Run ship check again' : 'Run ship check'}
             </button>
             {check?.results?.length > 0 && <CaseList results={check.results} />}
           </section>
@@ -393,7 +415,7 @@ export default function LiveMachine({ onBack }) {
             <div className="lm-transport">
               <button className="lm-btn small" onClick={() => setRunning(r => !r)}>{running ? '❚❚ Pause' : '▶ Run'}</button>
               <button className="lm-btn small ghost" onClick={() => { setRunning(false); void tick() }} disabled={running}>Step ›</button>
-              <button className="lm-btn small ghost" onClick={() => { const f = world.create(); wRef.current = f; setW(f) }}>Restart ship</button>
+              <button className="lm-btn small ghost" onClick={() => { const f = newShip(); wRef.current = f; setW(f) }}>Restart ship</button>
               <span className="lm-tick">tick {w.tick}</span>
             </div>
           </div>
@@ -410,20 +432,24 @@ export default function LiveMachine({ onBack }) {
                   {selInput ? (
                     <>
                       <div className="lm-inspect-call">
-                        <span className="lm-fn">{level.entry}</span>(<span className="lm-arg">{view.argName}</span>)
+                        <span className="lm-fn">{level.entry}</span>(<span className="lm-arg">{view.argNames.join(', ')}</span>)
                         <span className="lm-arrow">→</span>
-                        <span className={`lm-ret ${selRoom?.error ? 'err' : selRoom?.answer === true ? 't' : 'f'}`}>
-                          {selRoom?.error ? `error: ${selRoom.error}` : selRoom?.answer === undefined ? 'not called' : show(selRoom.answer)}
+                        <span className={`lm-ret ${selAnswer.error ? 'err' : selAnswer.answer === true ? 't' : 'f'}`}>
+                          {selAnswer.error ? `error: ${selAnswer.error}` : selAnswer.answer === undefined ? 'not called' : show(selAnswer.answer)}
                         </span>
                       </div>
                       <div className="lm-inspect-grid">
                         <div>
-                          <div className="lm-kicker">{view.argName}: what your function was given</div>
-                          <pre className="lm-obj">{'{\n' + Object.entries(selInput[0]).map(([k, v]) => `  ${k}: ${show(v)},`).join('\n') + '\n}'}</pre>
+                          {selInput.map((arg, k) => (
+                            <div key={k} className="lm-inspect-arg">
+                              <div className="lm-kicker">{view.argNames[k]}: what your function was given</div>
+                              <pre className="lm-obj">{pretty(arg)}</pre>
+                            </div>
+                          ))}
                         </div>
                         <div>
                           <div className="lm-kicker">the ship did</div>
-                          <p className="lm-did">{view.did(w, selIndex)}</p>
+                          <p className="lm-did">{view.did(w, selected)}</p>
                           <p className="lm-tip">{view.selectTip} Pause and use <b>Step</b> to watch one tick at a time.</p>
                         </div>
                       </div>
@@ -463,7 +489,7 @@ export default function LiveMachine({ onBack }) {
               theme="vs-dark"
               onChange={onCode}
               onMount={(editor, monaco) => { editorRef.current = editor; monacoRef.current = monaco }}
-              options={{ fontSize: 15, minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbersMinChars: 3, padding: { top: 14 }, fontLigatures: true, renderLineHighlight: 'gutter', tabSize: 2 }}
+              options={{ fontSize: 15, wordWrap: 'on', wrappingIndent: 'indent', minimap: { enabled: false }, scrollBeyondLastLine: false, lineNumbersMinChars: 3, padding: { top: 14 }, fontLigatures: true, renderLineHighlight: 'gutter', tabSize: 2 }}
             />
           </div>
           <div className={`lm-code-foot${live.state === 'error' ? ' is-err' : ''}`}>

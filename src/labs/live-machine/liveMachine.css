@@ -311,3 +311,33 @@
   .lm-mission { grid-row: 1 / span 2; }
   .lm-stats .lm-stat:nth-child(n + 3) { display: none; }
 }
+
+/* ---- reasons, doors, breaches ---- */
+.lm-case-reason { grid-column: 2; display: block; color: #c4b5fd; font-size: 12px; margin-top: 2px; }
+.lm-inspect-arg + .lm-inspect-arg { margin-top: 10px; }
+.lm-room-plain .lm-room-floor { fill: #1a2338; }
+.lm-room-plain .lm-room-name { fill: #94a3b8; }
+.lm-room.is-breach .lm-room-floor { fill: #3b0d12; animation: lm-alarm 0.9s ease-in-out infinite; }
+.lm-room.is-breach .lm-room-edge { stroke: var(--red); stroke-width: 3; stroke-dasharray: none; }
+.lm-breach path { fill: none; stroke: #fca5a5; stroke-width: 2.5; }
+.lm-breach text { font: 800 12px var(--mono); letter-spacing: 0.14em; fill: #fecaca; }
+.lm-door { cursor: pointer; }
+.lm-door-frame { fill: #020617; stroke: #334155; }
+.lm-door rect:not(.lm-door-frame) { transition: fill 0.25s; }
+.lm-door.is-open rect:not(.lm-door-frame) { fill: #34d399; }
+.lm-door.is-closed rect:not(.lm-door-frame) { fill: #94a3b8; }
+.lm-door.is-locked rect:not(.lm-door-frame) { fill: #f87171; }
+.lm-door.is-sel .lm-door-frame { stroke: var(--cyan); stroke-width: 2.5; }
+.lm-door.is-err .lm-door-frame { stroke: var(--red); }
+.lm-door-lock { font-size: 12px; }
+.lm-door-label { font: 700 11px var(--mono); letter-spacing: 0.06em; pointer-events: none; }
+.lm-door-label.is-open { fill: #6ee7b7; }
+.lm-door-label.is-closed { fill: #94a3b8; }
+.lm-door-label.is-locked, .lm-door-label.is-err { fill: #fca5a5; }
+.lm-crew.is-waiting circle { stroke: #fbbf24; stroke-width: 3; animation: lm-alarm 1.2s ease-in-out infinite; }
+
+/* A long line in the editor makes the browser scroll ancestors to show the cursor. `clip`
+   (unlike `hidden`) can't be scrolled at all, so the lab never shifts sideways. */
+.lm-root, .lm-main, .lm-code, .lm-center, .lm-viewport { overflow: clip; }
+.lm-main { grid-template-columns: minmax(300px, 350px) minmax(0, 1fr) minmax(380px, 34%); }
+.lm-mission { overflow-x: clip; overflow-y: auto; }

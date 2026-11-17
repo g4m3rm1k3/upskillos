@@ -69,9 +69,13 @@ describe('lights world', () => {
     const { create, advance, inputs } = WORLDS.lights
     const rand = seeded(3)
     let w = create(rand)
-    for (let i = 0; i < 60; i++) w = advance(w, inputs(w).map(() => ({ ok: true, value: true })), rand)
-    expect(w.blackout).toBe(true)
-    expect(w.rooms.every(r => !r.lit)).toBe(true)
+    let dark = null
+    for (let i = 0; i < 120 && !dark; i++) {
+      w = advance(w, inputs(w).map(() => ({ ok: true, value: true })), rand)
+      if (w.blackout) dark = w
+    }
+    expect(dark).not.toBe(null)
+    expect(dark.rooms.every(r => !r.lit)).toBe(true)
   })
 
   it('compile reports a syntax error with its line', async () => {

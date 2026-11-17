@@ -42,8 +42,8 @@
       "goal": {
         "text": "Every room is lit.",
         "cases": [
-          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": true },
-          { "label": "Busy Galley", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
+          { "label": "Empty Cargo bay", "why": "Nobody is there and nothing is wrong, so the light only wastes power.", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": true },
+          { "label": "Busy Galley", "why": "Three people are in it, so they need to see.", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
         ]
       },
       "hints": [
@@ -70,9 +70,9 @@
       "goal": {
         "text": "Rooms with crew are lit; empty rooms are dark.",
         "cases": [
-          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
-          { "label": "One person in Med bay", "args": [{ "name": "Med bay", "crew": 1, "emergency": false }], "expect": true },
-          { "label": "Busy Galley", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
+          { "label": "Empty Cargo bay", "why": "Nobody is there and nothing is wrong, so the light only wastes power.", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
+          { "label": "One person in Med bay", "why": "One person is enough: `crew > 0`.", "args": [{ "name": "Med bay", "crew": 1, "emergency": false }], "expect": true },
+          { "label": "Busy Galley", "why": "Three people are in it, so they need to see.", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
         ]
       },
       "hints": [
@@ -104,9 +104,9 @@
       "goal": {
         "text": "Emergency rooms are always lit; otherwise rooms with crew are lit.",
         "cases": [
-          { "label": "Alarm in empty Engine room", "args": [{ "name": "Engine", "crew": 0, "emergency": true }], "expect": true },
-          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
-          { "label": "Busy Galley", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
+          { "label": "Alarm in empty Engine room", "why": "An alarm needs light before the crew arrive, even if the room is empty.", "args": [{ "name": "Engine", "crew": 0, "emergency": true }], "expect": true },
+          { "label": "Empty Cargo bay", "why": "Nobody is there and nothing is wrong, so the light only wastes power.", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
+          { "label": "Busy Galley", "why": "Three people are in it, so they need to see.", "args": [{ "name": "Galley", "crew": 3, "emergency": false }], "expect": true }
         ]
       },
       "hints": [
@@ -117,11 +117,11 @@
     },
     {
       "id": "bridge",
-      "title": "The Bridge never goes dark",
+      "title": "Keep the ship on course",
       "text": [
-        "Captain's order: the Bridge holds the navigation displays, so its light stays on even when nobody is there.",
-        "Room names are **strings**: text in quotes. `===` asks whether two values are exactly the same. For strings, that includes capital letters.",
-        "Add a second special case for the Bridge."
+        "Watch the **Course** gauge at the top. Whenever the Bridge is empty, your code switches its light off, and the gauge falls. The ship's log says why: the navigation console is wired to the Bridge's lighting circuit. No light, no navigation, and the ship drifts.",
+        "So the Bridge needs its light on even when nobody is there. That's a rule about one particular room, so check the room's **name**.",
+        "Room names are **strings**: text in quotes. `===` asks whether two values are exactly the same. For strings, that includes capital letters. Add a special case for the Bridge, next to the emergency one."
       ],
       "code": [
         "  if (room.name === \"Bridge\") {",
@@ -135,12 +135,12 @@
         "explain": "Strings are compared character by character, and `b` is not the same character as `B`. The ship spells it `\"Bridge\"`, so match it exactly."
       },
       "goal": {
-        "text": "The Bridge is always lit, plus everything from before.",
+        "text": "The Bridge is always lit, so the Course gauge recovers, plus everything from before.",
         "cases": [
-          { "label": "Empty Bridge", "args": [{ "name": "Bridge", "crew": 0, "emergency": false }], "expect": true },
-          { "label": "Alarm in empty Engine room", "args": [{ "name": "Engine", "crew": 0, "emergency": true }], "expect": true },
-          { "label": "Empty Cargo bay", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
-          { "label": "One person in Med bay", "args": [{ "name": "Med bay", "crew": 1, "emergency": false }], "expect": true }
+          { "label": "Empty Bridge", "why": "The nav console runs on the Bridge's light. Dark Bridge, ship drifts.", "args": [{ "name": "Bridge", "crew": 0, "emergency": false }], "expect": true },
+          { "label": "Alarm in empty Engine room", "why": "An alarm needs light before the crew arrive, even if the room is empty.", "args": [{ "name": "Engine", "crew": 0, "emergency": true }], "expect": true },
+          { "label": "Empty Cargo bay", "why": "Nobody is there and nothing is wrong, so the light only wastes power.", "args": [{ "name": "Cargo", "crew": 0, "emergency": false }], "expect": false },
+          { "label": "One person in Med bay", "why": "One person is enough: `crew > 0`.", "args": [{ "name": "Med bay", "crew": 1, "emergency": false }], "expect": true }
         ]
       },
       "hints": [
@@ -153,14 +153,14 @@
   "check": {
     "text": "The ship runs scenarios you haven't seen. Every room must get the right answer.",
     "cases": [
-      { "label": "Quarters, nobody home", "args": [{ "name": "Quarters", "crew": 0, "emergency": false }], "expect": false },
-      { "label": "Quarters, two sleeping", "args": [{ "name": "Quarters", "crew": 2, "emergency": false }], "expect": true },
-      { "label": "Bridge with an alarm", "args": [{ "name": "Bridge", "crew": 0, "emergency": true }], "expect": true },
-      { "label": "Bridge, pilot on duty", "args": [{ "name": "Bridge", "crew": 1, "emergency": false }], "expect": true },
-      { "label": "Engine fire, engineer present", "args": [{ "name": "Engine", "crew": 1, "emergency": true }], "expect": true },
-      { "label": "Galley after dinner", "args": [{ "name": "Galley", "crew": 0, "emergency": false }], "expect": false },
-      { "label": "Med bay, whole crew", "args": [{ "name": "Med bay", "crew": 5, "emergency": false }], "expect": true },
-      { "label": "Cargo alarm, empty", "args": [{ "name": "Cargo", "crew": 0, "emergency": true }], "expect": true }
+      { "label": "Quarters, nobody home", "why": "Empty, no alarm, not the Bridge: nothing needs light.", "args": [{ "name": "Quarters", "crew": 0, "emergency": false }], "expect": false },
+      { "label": "Quarters, two sleeping", "why": "There are people in the room. (The ship can't tell asleep from awake.)", "args": [{ "name": "Quarters", "crew": 2, "emergency": false }], "expect": true },
+      { "label": "Bridge with an alarm", "why": "Both special rules say yes. Either one is enough.", "args": [{ "name": "Bridge", "crew": 0, "emergency": true }], "expect": true },
+      { "label": "Bridge, pilot on duty", "why": "It's the Bridge, and someone's there too.", "args": [{ "name": "Bridge", "crew": 1, "emergency": false }], "expect": true },
+      { "label": "Engine fire, engineer present", "why": "An alarm, and crew: lit.", "args": [{ "name": "Engine", "crew": 1, "emergency": true }], "expect": true },
+      { "label": "Galley after dinner", "why": "Everyone has left and nothing is wrong.", "args": [{ "name": "Galley", "crew": 0, "emergency": false }], "expect": false },
+      { "label": "Med bay, whole crew", "why": "Five people in the room.", "args": [{ "name": "Med bay", "crew": 5, "emergency": false }], "expect": true },
+      { "label": "Cargo alarm, empty", "why": "Not a Cargo rule: this is the emergency rule. Any room with an alarm gets light.", "args": [{ "name": "Cargo", "crew": 0, "emergency": true }], "expect": true }
     ]
   },
   "solution": [

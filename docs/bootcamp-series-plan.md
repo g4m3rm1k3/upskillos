@@ -16,7 +16,14 @@
 10. The owner's standing concern: **it must teach, not dump code and concepts.** *Making sure it teaches* says how that's checked.
 11. The owner set the shape of every section: **learn it, experiment with it, then see how it's applied in the real world.** Styling is a styling section first (learn CSS, experiment in a playground), and only then applied to the app. The same goes for every subject. See *Learn, experiment, apply* below.
 
-Waiting for the owner's approval of this version. No new lessons are written yet.
+12. On 2026-11-14 the owner **confirmed C# on the server**: Python is easy to pick up alone, and C#'s types and structure force correct habits, which is what a software engineering role needs. Building a Python runtime and a custom matrix (MATLAB-like) runtime into the product is part of what makes the bootcamp stand out.
+13. On 2026-11-14 the owner added three subjects:
+    - **charts without code**: users build D3 charts from a range by choosing, not programming (Sprint 17a);
+    - **web scraping**: a table filled from a web page, on a schedule (Sprint 51a);
+    - **publishing**: users turn sheets, charts and forms into web pages laid out their own way (Sprint 59a).
+14. The owner asked for **a scripting API that an AI assistant can write code against**, as Excel has macros: the user asks in plain English, the assistant writes a script against the typed API, and the user previews and approves it before it runs. Sprint 30 designs the API for that; Sprint 33 adds a macro recorder; Sprint 58a builds the assistant.
+
+**Approved, and being written:** Sprints 0–11 are written and walked. The plan order is the writing order.
 
 This plan extends [spreadsheet-build-curriculum-improved.md](spreadsheet-build-curriculum-improved.md), which still holds:
 
@@ -184,7 +191,7 @@ The teaching check looks for each of these, and the read-through (gate 4) judges
 
 ## The curriculum
 
-Sprints 0–7 are written: 42 lessons in `src/labs/project-studio/tracks/spreadsheet-build/`. Their file names are learners' progress keys and never change. The plan order is the writing order. Lesson counts are estimates: about 5 per sprint plus the challenge and solution, roughly 450 lessons in all.
+Sprints 0–11 are written: 92 lessons in `src/labs/project-studio/tracks/spreadsheet-build/`. Their file names are learners' progress keys and never change. The plan order is the writing order. Sprints added after the plan was numbered take a letter (17a), and their files sort after the sprint before them (`17a-01-…` follows `17-08-…`), so no other sprint is renumbered. Lesson counts are estimates: about 5 per sprint plus the challenge and solution, roughly 450 lessons in all.
 
 In the tables, **Learn and experiment** is the sprint's subject, taught and played with in its playground. **Apply in the real world** is how it's then put to work on the spreadsheet. **Source** "SP *n*" means the content of the spreadsheet plan's sprint *n*, with anything added listed.
 
@@ -212,6 +219,7 @@ Requirements and agile delivery start here. On the technical side: React, stylin
 | 15 | the command pattern, undo and redo, relative and absolute references, `git bisect` | undo, copy/paste, fill, `$A$1` | SP 12 |
 | 16 | serialisation, versioned file formats, migrations, round-trip tests, async file APIs, a CSV reader as a state machine, streaming a large file | saving workbooks; importing the bakery's messy CSV files | SP 13, extended |
 | 17 | modelling typed data; validation; handling a change request; running a sprint review and a retrospective | typed columns, structured tables (`Orders[Total]`), `XLOOKUP`, data validation, conditional formatting: the bakery's tiered prices | new |
+| 17a | **data visualisation**, in a playground of charts: drawing a bar chart in SVG by hand; scales (linear, band, time), axes and ticks; then D3: selections, data joins (enter, update, exit), transitions; the grammar of graphics (data → encodings → marks), and why a chart described as **data** beats a chart described as code; choosing the right chart; accessible charts (a text alternative, a data table behind every chart, colour that isn't the only signal) | **charts without code**: select a range, pick a chart, and drag columns onto x, y and colour; the builder writes a chart spec (JSON, versioned like the file format from Sprint 16), and a renderer the learner writes turns the spec into D3; charts that redraw when their cells change (the dependency graph from Sprint 8); the bakery's weekly sales chart. Security: a spec is data and never runs as code; labels from cells are shown as text | new |
 
 ### Module 3 — Languages and libraries
 
@@ -247,10 +255,10 @@ Spreadsheets have always been programmable, and the programming has usually been
 
 | # | Learn and experiment | Apply in the real world | Source |
 |---|---|---|---|
-| 30 | designing a public API: an object model (workbook, sheet, range, table, query, events), what to expose and what to keep private, naming, versioning and deprecation, type definitions as documentation; an API is a contract, pinned by tests | **the spreadsheet's scripting API**, with the `.d.ts` file that describes it and contract tests that keep it stable | new |
+| 30 | designing a public API: an object model (workbook, sheet, range, table, query, events), what to expose and what to keep private, naming, versioning and deprecation, type definitions as documentation; an API is a contract, pinned by tests; **an API an AI assistant can use well**: small, consistent, typed, with errors that say what to do, because the type definitions are what the assistant is given | **the spreadsheet's scripting API**, with the `.d.ts` file that describes it and contract tests that keep it stable | new |
 | 31 | building a development environment: embedding Monaco (the editor inside VS Code); language services (completion, hover, errors as you type) for TypeScript, checked against the API's types, and for the formula language, using your own parser; the Language Server Protocol, in outline | **a script editor inside the sheet**: files and tabs, completion that knows the API, inline errors, a console, a Run button | new |
 | 32 | debuggers from the inside: breakpoints, stepping and inspecting variables, **built into the matrix-language interpreter you wrote**; source maps and stack traces, so an error in any language points at the right line | stepping through a matrix-language script line by line, watching its variables; script errors that open the editor at the line | new |
-| 33 | extensions done safely: triggers (on edit, on open, a button, a menu), custom functions written as scripts, a **manifest declaring the permissions** an extension needs, which the user approves (the security checklist again); tests for scripts; packaging and sharing an extension; why macros became one of the most common ways into a company | the bakery's "close the day" script as an extension: a button, declared permissions, and tests. **Module challenge: add a language of your own**, a small Lisp, written and plugged in through the language interface (the sixth parser) | new |
+| 33 | extensions done safely: triggers (on edit, on open, a button, a menu), custom functions written as scripts, a **manifest declaring the permissions** an extension needs, which the user approves (the security checklist again); tests for scripts; packaging and sharing an extension; why macros became one of the most common ways into a company; **a macro recorder**: the user's actions recorded as commands (the command pattern from Sprint 15) and written out as a readable script against the API | the bakery's "close the day" script as an extension: a button, declared permissions, and tests. **Module challenge: add a language of your own**, a small Lisp, written and plugged in through the language interface (the sixth parser) | new |
 
 Languages in the finished product: **formulas**, **TypeScript and JavaScript** (scripts and extensions), **Python** (Pyodide), **the matrix language**, **SQL** (`=QUERY` and the database), and any language added through the plugin interface from Sprint 20, as the module challenge shows. Outside the product, the REST API, the generated SDK and the command-line tool (Sprint 52) expose the same object model, so the sheet can be scripted from any language on any computer.
 
@@ -285,6 +293,7 @@ Real-time, offline, background work, scheduling, integrations and reporting.
 | 49 | state machines, job queues, background services, retries and backoff; email done properly: templates, deliverability, unsubscribe | automations: triggers, conditions in the formula language, actions | new |
 | 50 | services and messages: a message broker (RabbitMQ), event-driven design, at-least-once delivery and idempotent consumers, when to split a service out and when not to (monolith first); REST compared with GraphQL and gRPC | the automations engine moved behind a queue, as its own service; a gRPC endpoint for a partner | new |
 | 51 | a cron parser; time zones and daylight saving; testing time with a fake clock | scheduled automations | new |
+| 51a | **web scraping**, in C#: why the browser can't fetch another site's page (CORS) and the server can; `HttpClient`, headers and status codes; parsing HTML into a tree (AngleSharp) and picking out data with CSS selectors; pages built by JavaScript, and a headless browser (Playwright for .NET) only when it's needed; robots.txt, terms of service, rate limits and the law; pages that change shape, caught by tests against saved copies of the page; an official API first, when there is one | **import from a web page**: the user gives a URL, picks a table on a preview, and the server fills a sheet table from it, refreshed by a scheduled automation (Sprint 51); Haul's carriers' published fuel surcharges. Security: SSRF (a user-given URL that points inside the network), size and time limits, and scraped text treated as untrusted input | new |
 | 52 | API design with OpenAPI, generated SDKs, command-line tools, API keys and scopes, signed webhooks (HMAC), OAuth 2.0 | an API, a TypeScript SDK, a `dotnet tool` command line, "Sign in with GitHub" | new |
 | 53 | aggregation in SQL, caching (an LRU cache by hand, then the framework's), load testing | pivot tables and Haul's weekly report; their sprint review | new |
 | 54 | files: uploads (multipart), validation and size limits, object storage (S3 or Azure Blob, then a local emulator), signed URLs, image thumbnails as a background job | Haul's proof-of-delivery photos, attached to shipments | new |
@@ -299,12 +308,14 @@ Haul asks which shipments will be late. The learner learns how to put machine le
 | 56 | what a model is; least squares by hand, then gradient descent; train/test splits and why training accuracy lies; scikit-learn; presenting evaluation honestly to non-experts | `=TREND`, `=FORECAST`, and models trained on a range with `=PREDICT(model, A2:D2)`, with a held-out score and overfitting warnings | new |
 | 57 | serving models: ONNX, ONNX Runtime in ASP.NET Core, model versioning, logging predictions, drift | Haul's late-shipment model served from the server, with a model registry page | new |
 | 58 | building on language models: keeping keys on the server, streaming, caching, cost limits, structured output, prompt injection, evaluating non-deterministic features | `=AI("summarise", A2)` and `=EXTRACT(...)`; the challenge: plain English in, a formula out, validated by the learner's own parser and type checker | new |
+| 58a | **an AI that writes scripts**: giving a model the API's type definitions and the workbook's shape (never its private data without saying so), asking for a script in TypeScript, Python or the matrix language, type-checking and dry-running what comes back, showing the user a preview of every change before it's made, and running it in the sandbox with the permissions the user approves; evaluating it on a set of tasks with known answers | **"Ask for a macro"**: the user writes "highlight every order over £500 and email me the total", gets a readable script, sees what it will change, approves it, and can save it as an extension (Sprint 33). Security: generated code passes the same checklist as code a person wrote, and prompt injection from cell text can't widen its permissions | new |
 
 ### Module 9 — Accessible, tested user interfaces (client: Fieldday)
 
 | # | Learn and experiment | Apply in the real world | Source |
 |---|---|---|---|
 | 59 | accessibility in depth (labels, focus, screen readers, contrast, axe), mobile-first layout, component tests (Testing Library) and end-to-end tests (Playwright); internationalisation: translated text, locale-aware dates, numbers and currencies | public sign-up forms generated from a table's columns | new |
+| 59a | **publishing**: a page as data (a layout tree of blocks: text, a range, a chart, a form, a filter), a drag-and-drop page builder, live pages compared with static snapshots, rendering on the server so a published page only ever contains what was published, sharing (public, anyone with the link, the workspace), embedding in another site | **sheets as web pages users lay out their own way**: Fieldday's public volunteer dashboard, with the sign-up form, a live chart from Sprint 17a and a filtered table, published at a URL. Security: hidden cells and unpublished ranges never reach the page, by any route; rate limits; a Content Security Policy for published pages | new |
 
 ### Module 10 — Shipping and operating software
 
@@ -349,9 +360,13 @@ Problem sets with tests, timed, solved with the interview method: clarify, examp
 | 78 | **capstone:** delivering for a client you find yourself (a local business, a club, a friend's project, or a supplied brief): requirements, backlog, sprints, delivery, plus one new feature of your own design, deployed; no step-by-step code |
 | 79 | **the job hunt:** a portfolio README; a resume written around evidence; behavioural stories (STAR) drawn from your own retrospectives and change requests; mock technical, design and behavioural interviews; the take-home; reading and negotiating an offer |
 
+## A reference app: Spreadsheet Lab
+
+This repository already has a working spreadsheet, [Spreadsheet Lab](../src/labs/spreadsheet-lab/): formulas with explained values and errors, fill, conditional formatting, charts (`engine/chart.js`, `engine/chartCode.js`), CSV and `.xlsx` files, and code cells in workers, Python among them (`runtime/`). The learner never copies it: they build their own, step by step. It's used when writing the lessons, as a working answer to "what should this feature do and look like", above all for the runtimes (Sprints 18–20), the file formats (16) and the charts (17a).
+
 ## Portfolio: what the learner ends with
 
-1. **The spreadsheet application**, deployed and released, as evidence of every module: a design system, formulas, a matrix language, Python cells, relational tables queried with SQL, Access-style forms and reports, a scripting API with its own editor and debugger, views, permissions, live collaboration, offline sync, automations, user-trained models and language-model functions, an API, an SDK and a command line. Behind it are CI, tests at every level, monitoring and a security write-up.
+1. **The spreadsheet application**, deployed and released, as evidence of every module: a design system, formulas, charts built without code, a matrix language, Python cells, scraped tables, published pages, scripts written by an AI assistant and approved by the user, relational tables queried with SQL, Access-style forms and reports, a scripting API with its own editor and debugger, views, permissions, live collaboration, offline sync, automations, user-trained models and language-model functions, an API, an SDK and a command line. Behind it are CI, tests at every level, monitoring and a security write-up.
 2. **A scripting environment inside the product**: a typed API, an editor with language services, a debugger for your own language, and extensions with permissions.
 3. **A relational database engine of your own**: SQL parser, query engine, B-tree index and write-ahead log, checked query for query against SQLite.
 4. **A published library**, kept identical in TypeScript and C# by a shared conformance suite.
@@ -366,12 +381,14 @@ Problem sets with tests, timed, solved with the interview method: clarify, examp
 |---|---|
 | Turning requirements into working software | 10, 17, 22, 34, 46, 59, 78 |
 | Agile teamwork | every client release; 68 |
-| Front-end skill and styling | 2, 11–14, 59 |
-| Building developer tools and APIs | 30–33, 52 |
+| Front-end skill and styling | 2, 11–14, 17a, 59, 59a |
+| Building developer tools and APIs | 30–33, 52, 58a |
+| Data visualisation | 17a |
+| Integrations and scraping | 51a, 52 |
 | Software design and architecture | 37, 50 |
 | Linux, networking and the cloud | 62, 64 |
 | Back-end skill | 36–42, 49, 52, 54, 55 |
-| Machine learning in a product | 56–58 |
+| Machine learning in a product | 56–58a |
 | Testing without being asked | 6 on; 40 (conformance); 58 (evaluation sets); 59 |
 | Security (and in every module) | 20, 41–43, 45, 52, 58 |
 | Databases beyond basic queries | 22–29, 38, 39, 44, 53 |
@@ -404,7 +421,9 @@ Problem sets with tests, timed, solved with the interview method: clarify, examp
 3. **Pyodide's download size** and caching (Sprint 19), and scikit-learn's size inside it (Sprint 56).
 4. **Playwright's browser download**, once, with the owner's OK.
 5. **Hosting:** a platform with a usable free tier for ASP.NET Core and Postgres in late 2026. Decided in Sprint 63.
-6. **Language-model access:** which provider Sprint 58 teaches with, what a learner's full run costs (it must be pennies), and a local open-weights fallback for learners with no API key.
+6. **D3** (Sprint 17a): the current version and its bundle size, and whether a chart can be checked in the walkthrough from its SVG.
+7. **Scraping in the walkthrough** (Sprint 51a): pages served by a local test server, so no lesson depends on a real site staying the same.
+8. **Language-model access:** which provider Sprints 58 and 58a teach with, what a learner's full run costs (it must be pennies), and a local open-weights fallback for learners with no API key.
 
 ## Decisions made
 
@@ -412,7 +431,9 @@ Problem sets with tests, timed, solved with the interview method: clarify, examp
   - it's a bootcamp, and the spreadsheet is the practice project, not the goal;
   - every subject is learned, then experimented with in a playground, then applied in the real world;
   - use `spreadsheet-build` as that project;
-  - C# / ASP.NET Core on the server;
+  - C# / ASP.NET Core on the server (confirmed 2026-11-14);
+  - charts without code, web scraping, publishing, and an API an AI assistant writes scripts against (2026-11-14);
+  - each sprint's code is built in a folder on the owner's machine, not the scratchpad, so the owner can look at it and give feedback while the lessons are written (2026-11-14);
   - keep the matrix language and Pyodide; MAUI becomes an optional elective;
   - styling taught properly; machine learning for users included.
 - **By the agent:**
@@ -427,5 +448,5 @@ Problem sets with tests, timed, solved with the interview method: clarify, examp
 
 | Sprint | Lessons | Walkthrough |
 |---|---|---|
-| 0–7 | written before this plan (spreadsheet series) | to be re-walked (spike 1) |
-| 7.8 (solution to 7.7) onward | not written | |
+| 0–11 | written (92 lessons) | walked |
+| 12 onward | not written | |

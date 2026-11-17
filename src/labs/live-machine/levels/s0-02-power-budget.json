@@ -1,0 +1,245 @@
+{
+  "id": "lm-s0-02-power-budget",
+  "season": 0,
+  "seasonTitle": "Wake up",
+  "order": 2,
+  "title": "Power budget",
+  "tagline": "The reactor can't light every room. Decide who gets light.",
+  "language": "javascript",
+  "world": "reactor",
+  "file": "ship/power",
+  "entry": "planPower",
+  "briefing": [
+    "The lights work, but the reactor is old. It runs in a cycle: a stretch at **full output** (6 lights), then a **cooling** stretch when it can only carry **3**. Ask for more lights than it can carry and the breaker trips: every light on the ship goes out.",
+    "So the ship no longer asks room by room. Once a tick it calls `planPower(rooms, supply)` with **all** the rooms at once and how many lights it can carry, and lights exactly the rooms whose names you return.",
+    "Your `lightOn` rule from level 1 is still in the file. You'll use it."
+  ],
+  "starter": [
+    "// Your lighting rule from level 1. It still decides whether a room *wants* light.",
+    "function lightOn(room) {",
+    "  if (room.emergency) {",
+    "    return true;",
+    "  }",
+    "  if (room.name === \"Bridge\") {",
+    "    return true;",
+    "  }",
+    "  return room.crew > 0;",
+    "}",
+    "",
+    "// The reactor asks once a tick for the whole plan.",
+    "// rooms:  every room, like [{ name: \"Engine\", crew: 1, emergency: false }, ...]",
+    "// supply: how many lights the reactor can carry right now (6, or 3 while cooling)",
+    "// Return an array with the names of the rooms to light.",
+    "function planPower(rooms, supply) {",
+    "  const plan = [];",
+    "  return plan;",
+    "}",
+    ""
+  ],
+  "steps": [
+    {
+      "id": "every-room",
+      "title": "Ask every room",
+      "text": [
+        "The plan starts as an empty **array**, `[]`, so the whole ship is dark. An array is a list of values in order. `rooms` is an array too: six room objects.",
+        "A `for...of` loop runs its body once for each item in an array: `for (const room of rooms) { ... }` sets `room` to the first room, runs the body, then the second, and so on.",
+        "Inside, ask your old function: if `lightOn(room)` says yes, add the room's name to the plan with `plan.push(room.name)`. `push` adds an item to the end of an array."
+      ],
+      "code": [
+        "  for (const room of rooms) {",
+        "    if (lightOn(room)) {",
+        "      plan.push(room.name);",
+        "    }",
+        "  }"
+      ],
+      "predict": {
+        "question": "`rooms` holds six rooms. How many times does the loop's body run each tick?",
+        "options": ["Once", "Six times", "Until `lightOn` returns `false`", "As many times as `supply`"],
+        "answer": 1,
+        "explain": "A `for...of` loop visits every item, so the body runs six times, once per room. Now let it run until the log says the reactor is cooling, and watch the **Breaker trips** gauge."
+      },
+      "goal": {
+        "text": "Every room that wants light is in the plan (at full power).",
+        "cases": [
+          {"label": "Quiet ship", "why": "lightOn says yes to Engine and Quarters (crew) and the Bridge (always).", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 0, "emergency": false}, {"name": "Quarters", "crew": 2, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 6], "expect": ["Engine", "Quarters", "Bridge"], "unordered": true},
+          {"label": "Empty ship", "why": "Only the Bridge rule applies.", "args": [[{"name": "Engine", "crew": 0, "emergency": false}, {"name": "Cargo", "crew": 0, "emergency": false}, {"name": "Quarters", "crew": 0, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 6], "expect": ["Bridge"], "unordered": true}
+        ]
+      },
+      "hints": [
+        "Start the loop with `for (const room of rooms) {` and end it with `}`, between `const plan = [];` and `return plan;`.",
+        "Inside the loop, use `if (lightOn(room)) { ... }`.",
+        "Inside the `if`, add the name: `plan.push(room.name);`"
+      ]
+    },
+    {
+      "id": "budget",
+      "title": "Stay within the supply",
+      "text": [
+        "When the reactor cools, `supply` drops to 3, but your plan still asks for every room that wants light. Ask for more than `supply` and the breaker trips. That's worse than lighting too few: then nothing is lit.",
+        "`plan.length` is how many names are in the plan so far. Only add a room while `plan.length < supply`.",
+        "You need **both** things to be true: the room wants light, **and** there's supply left. `&&` means *and*: `a && b` is `true` only if both sides are."
+      ],
+      "code": ["    if (lightOn(room) && plan.length < supply) {"],
+      "predict": {
+        "question": "`supply` is 3 and the plan already holds 3 names. What is `plan.length < supply`?",
+        "options": ["`true`", "`false`"],
+        "answer": 1,
+        "explain": "`3 < 3` is `false`: the plan is full, so no more names go in. If you wrote `<=` instead, a fourth name would get in and trip the breaker."
+      },
+      "goal": {
+        "text": "The plan never asks for more lights than the supply.",
+        "cases": [
+          {"label": "Cooling, busy ship", "why": "Five rooms want light but the supply is 3: the first three in the list get it.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 2, "emergency": false}, {"name": "Quarters", "crew": 1, "emergency": false}, {"name": "Galley", "crew": 1, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 3], "expect": ["Engine", "Cargo", "Quarters"], "unordered": true},
+          {"label": "Quiet ship, full power", "why": "Plenty of supply: same as before.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 0, "emergency": false}, {"name": "Quarters", "crew": 2, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 6], "expect": ["Engine", "Quarters", "Bridge"], "unordered": true}
+        ]
+      },
+      "hints": [
+        "The change is in the `if` line inside the loop.",
+        "Join the two conditions with `&&`.",
+        "`if (lightOn(room) && plan.length < supply) {`"
+      ]
+    },
+    {
+      "id": "alarms-first",
+      "title": "Emergencies first",
+      "text": [
+        "The breaker holds now. But watch a cooling cycle with an alarm in the Med bay or on the Bridge (the **Dark alarms** gauge): the rooms at the *start* of the list use up the supply, and an alarm near the end stays dark.",
+        "The order of the loop decides who gets light. So loop **twice**: the first loop adds only the emergency rooms; the second adds the others that want light.",
+        "`!` means *not*: it turns `true` into `false` and back. `!room.emergency` is true for a room *without* an emergency."
+      ],
+      "code": [
+        "  for (const room of rooms) {",
+        "    if (room.emergency && plan.length < supply) {",
+        "      plan.push(room.name);",
+        "    }",
+        "  }",
+        "  for (const room of rooms) {",
+        "    if (!room.emergency && lightOn(room) && plan.length < supply) {",
+        "      plan.push(room.name);",
+        "    }",
+        "  }"
+      ],
+      "predict": {
+        "question": "In the second loop, what would go wrong without `!room.emergency`?",
+        "options": [
+          "Nothing would change",
+          "Emergency rooms would be added to the plan twice",
+          "Emergency rooms would be skipped"
+        ],
+        "answer": 1,
+        "explain": "`lightOn` says yes to every emergency room, so the second loop would push its name again. A name twice in the plan uses two lights for one room."
+      },
+      "goal": {
+        "text": "Alarm rooms are lit before anything else, and no room is in the plan twice.",
+        "cases": [
+          {"label": "Cooling, alarm at the end of the list", "why": "The Med bay alarm is lit first; the two remaining lights go to the first rooms that want light.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 1, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": true}, {"name": "Bridge", "crew": 0, "emergency": false}], 3], "expect": ["Med bay", "Engine", "Cargo"], "unordered": true},
+          {"label": "Full power, alarm in an empty room", "why": "Plenty of supply: the alarm room, the crewed room and the Bridge. Each name once.", "args": [[{"name": "Engine", "crew": 0, "emergency": true}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 0, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 6], "expect": ["Engine", "Cargo", "Bridge"], "unordered": true}
+        ]
+      },
+      "hints": [
+        "Keep your loop, and add a new loop *above* it that only looks at emergencies.",
+        "The new loop's condition: `room.emergency && plan.length < supply`.",
+        "In the old loop, add `!room.emergency &&` at the start of the condition."
+      ]
+    },
+    {
+      "id": "bridge-second",
+      "title": "Then the Bridge",
+      "text": [
+        "Alarms are safe. But during cooling the Bridge, last in the list, still loses out to the crewed rooms, and the **Course** gauge sinks. Navigation matters more than reading lights.",
+        "Add a middle loop for the Bridge, between the alarms and everyone else. Then the last loop needs to skip *anything already in the plan*, not just emergencies. `plan.includes(name)` is `true` if that name is already in the array.",
+        "Three loops that look nearly alike is a sign. In Season 1 you'll learn to **sort** by priority instead; for now, the order of the loops *is* the priority."
+      ],
+      "code": [
+        "  for (const room of rooms) {",
+        "    if (room.name === \"Bridge\" && !plan.includes(room.name) && plan.length < supply) {",
+        "      plan.push(room.name);",
+        "    }",
+        "  }",
+        "  for (const room of rooms) {",
+        "    if (!plan.includes(room.name) && lightOn(room) && plan.length < supply) {",
+        "      plan.push(room.name);",
+        "    }",
+        "  }"
+      ],
+      "predict": {
+        "question": "Why does the last loop check `!plan.includes(room.name)` instead of `!room.emergency`?",
+        "options": [
+          "It's shorter to type",
+          "It also skips the Bridge, which the middle loop may already have added",
+          "`includes` makes the loop faster"
+        ],
+        "answer": 1,
+        "explain": "`!room.emergency` only skips alarm rooms. The Bridge isn't an alarm room, so it would be added a second time. `!plan.includes(...)` skips *every* room already planned, whatever put it there."
+      },
+      "goal": {
+        "text": "Priority: alarms, then the Bridge, then rooms with crew. Never a name twice.",
+        "cases": [
+          {"label": "Cooling, everyone busy", "why": "Alarm first, then the Bridge, then the first room with crew.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 1, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": true}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 3], "expect": ["Galley", "Bridge", "Engine"], "unordered": true},
+          {"label": "Cooling, alarm on the Bridge", "why": "The alarm already put the Bridge in the plan; it mustn't be added twice.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 0, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": true}], 3], "expect": ["Bridge", "Engine", "Cargo"], "unordered": true}
+        ]
+      },
+      "hints": [
+        "You need three loops: alarms, the Bridge, everyone else.",
+        "The middle loop's condition: `room.name === \"Bridge\" && !plan.includes(room.name) && plan.length < supply`.",
+        "In the last loop, replace `!room.emergency` with `!plan.includes(room.name)`."
+      ]
+    }
+  ],
+  "check": {
+    "text": "The reactor runs full and cooling cycles with alarms you haven't seen. Every plan must light the right rooms, in priority order, within the supply.",
+    "cases": [
+      {"label": "Full power, quiet ship", "why": "Everyone who needs light gets it, plus the Bridge.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 0, "emergency": false}, {"name": "Quarters", "crew": 2, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 6], "expect": ["Engine", "Quarters", "Bridge"], "unordered": true},
+      {"label": "Cooling, crowded ship", "why": "The Bridge first (navigation), then the first two crewed rooms.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 1, "emergency": false}, {"name": "Galley", "crew": 1, "emergency": false}, {"name": "Med bay", "crew": 1, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 3], "expect": ["Bridge", "Engine", "Cargo"], "unordered": true},
+      {"label": "Cooling, alarm at the end of the list", "why": "Alarm, Bridge, then crew.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 0, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": true}, {"name": "Bridge", "crew": 0, "emergency": false}], 3], "expect": ["Med bay", "Bridge", "Engine"], "unordered": true},
+      {"label": "Cooling, two alarms", "why": "Both alarms, then the Bridge. Quarters waits for full power.", "args": [[{"name": "Engine", "crew": 0, "emergency": true}, {"name": "Cargo", "crew": 0, "emergency": false}, {"name": "Quarters", "crew": 2, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": true}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 3], "expect": ["Engine", "Galley", "Bridge"], "unordered": true},
+      {"label": "Cooling, alarm on the Bridge", "why": "The Bridge is in the plan once, not twice.", "args": [[{"name": "Engine", "crew": 0, "emergency": false}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 0, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 1, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": true}], 3], "expect": ["Bridge", "Cargo", "Med bay"], "unordered": true},
+      {"label": "Full power, empty ship", "why": "Only navigation needs light.", "args": [[{"name": "Engine", "crew": 0, "emergency": false}, {"name": "Cargo", "crew": 0, "emergency": false}, {"name": "Quarters", "crew": 0, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 0, "emergency": false}], 6], "expect": ["Bridge"], "unordered": true},
+      {"label": "Full power, everyone everywhere", "why": "Six rooms want light and the supply is six.", "args": [[{"name": "Engine", "crew": 1, "emergency": false}, {"name": "Cargo", "crew": 1, "emergency": false}, {"name": "Quarters", "crew": 1, "emergency": false}, {"name": "Galley", "crew": 1, "emergency": false}, {"name": "Med bay", "crew": 1, "emergency": false}, {"name": "Bridge", "crew": 1, "emergency": false}], 6], "expect": ["Engine", "Cargo", "Quarters", "Galley", "Med bay", "Bridge"], "unordered": true},
+      {"label": "Supply of one, alarm in Cargo", "why": "One light: the alarm wins, even over the Bridge.", "args": [[{"name": "Engine", "crew": 0, "emergency": false}, {"name": "Cargo", "crew": 0, "emergency": true}, {"name": "Quarters", "crew": 0, "emergency": false}, {"name": "Galley", "crew": 0, "emergency": false}, {"name": "Med bay", "crew": 0, "emergency": false}, {"name": "Bridge", "crew": 1, "emergency": false}], 1], "expect": ["Cargo"], "unordered": true}
+    ]
+  },
+  "solution": [
+    "// Your lighting rule from level 1. It still decides whether a room *wants* light.",
+    "function lightOn(room) {",
+    "  if (room.emergency) {",
+    "    return true;",
+    "  }",
+    "  if (room.name === \"Bridge\") {",
+    "    return true;",
+    "  }",
+    "  return room.crew > 0;",
+    "}",
+    "",
+    "function planPower(rooms, supply) {",
+    "  const plan = [];",
+    "  for (const room of rooms) {",
+    "    if (room.emergency && plan.length < supply) {",
+    "      plan.push(room.name);",
+    "    }",
+    "  }",
+    "  for (const room of rooms) {",
+    "    if (room.name === \"Bridge\" && !plan.includes(room.name) && plan.length < supply) {",
+    "      plan.push(room.name);",
+    "    }",
+    "  }",
+    "  for (const room of rooms) {",
+    "    if (!plan.includes(room.name) && lightOn(room) && plan.length < supply) {",
+    "      plan.push(room.name);",
+    "    }",
+    "  }",
+    "  return plan;",
+    "}"
+  ],
+  "concepts": [
+    "arrays",
+    "for...of loops",
+    "push and length",
+    "&& (and)",
+    "! (not)",
+    "includes",
+    "calling your own functions",
+    "priority by order"
+  ],
+  "deeper": []
+}

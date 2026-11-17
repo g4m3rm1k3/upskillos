@@ -1,0 +1,187 @@
+{
+  "id": "lm-s0-03-doors",
+  "season": 0,
+  "seasonTitle": "Wake up",
+  "order": 3,
+  "title": "Doors",
+  "tagline": "Every door is shut. Teach the doors when to open, close and lock.",
+  "language": "javascript",
+  "world": "doors",
+  "file": "ship/doors",
+  "entry": "nextDoorState",
+  "briefing": [
+    "Every room on the Meridian has one door onto the central corridor. To change rooms, a crew member walks out through one door and in through another, and spends a moment in each doorway.",
+    "Right now every door stays shut, so nobody can go anywhere. The ship calls `nextDoorState(door)` for every door, twice a second, and sets the door to whatever you return: `\"open\"`, `\"closed\"` or `\"locked\"`.",
+    "A door isn't a yes/no like a light. It has three **states**, and what it should do next depends on what it is now."
+  ],
+  "starter": [
+    "// The ship calls this for every door, twice a second.",
+    "// `door` looks like:",
+    "//   { room: \"Cargo\", state: \"closed\", waiting: 1, inDoorway: 0, breach: false }",
+    "// state:     what the door is now: \"open\", \"closed\" or \"locked\"",
+    "// waiting:   how many crew are standing at the door, wanting to go through",
+    "// inDoorway: how many crew are in the doorway right now",
+    "// breach:    true if the room has a hull breach",
+    "// Return what the door should be next: \"open\", \"closed\" or \"locked\".",
+    "",
+    "function nextDoorState(door) {",
+    "  return \"closed\";",
+    "}",
+    ""
+  ],
+  "steps": [
+    {
+      "id": "let-through",
+      "title": "Let people through",
+      "text": [
+        "Look at the ship: crew with a pulsing yellow ring are stuck at a door, and the **Crew waiting** gauge keeps climbing.",
+        "Open a door when someone is waiting at it, and close it otherwise. You return the state as a **string**, and it has to be spelled exactly the way the ship spells it."
+      ],
+      "code": ["  if (door.waiting > 0) {", "    return \"open\";", "  }", "  return \"closed\";"],
+      "predict": {
+        "question": "Your function returns `\"Open\"`, with a capital O. What does the ship do?",
+        "options": [
+          "Opens the door anyway",
+          "Reports an error: it only knows `\"open\"`, `\"closed\"` and `\"locked\"`",
+          "Locks the door"
+        ],
+        "answer": 1,
+        "explain": "Strings are compared exactly (remember `\"bridge\" === \"Bridge\"` from Lights). The ship doesn't guess what you meant: an unknown state is an error, and the door stays as it was."
+      },
+      "goal": {
+        "text": "Doors open for anyone waiting and close when nobody is.",
+        "cases": [
+          {"label": "Haddad at the Cargo door", "why": "Someone is waiting, so open up.", "args": [{"room": "Cargo", "state": "closed", "waiting": 1, "inDoorway": 0, "breach": false}], "expect": "open"},
+          {"label": "Nobody around", "why": "Nobody needs the door: keep it closed.", "args": [{"room": "Cargo", "state": "closed", "waiting": 0, "inDoorway": 0, "breach": false}], "expect": "closed"},
+          {"label": "Two at the Galley door", "why": "Two waiting is still \"more than zero\".", "args": [{"room": "Galley", "state": "closed", "waiting": 2, "inDoorway": 0, "breach": false}], "expect": "open"}
+        ]
+      },
+      "hints": [
+        "It's the same shape as `lightOn`, but returning strings instead of `true`/`false`.",
+        "`if (door.waiting > 0) { return \"open\"; }`",
+        "After the `if`, return `\"closed\"`."
+      ]
+    },
+    {
+      "id": "doorway",
+      "title": "Never close on someone",
+      "text": [
+        "People can move now, but watch the log and the **Closed on crew** gauge. The moment someone steps into the doorway they're no longer *waiting*, so your code closes the door, on them.",
+        "Keep the door open while someone is waiting **or** someone is in the doorway. `||` means *or*: `a || b` is `true` if either side is."
+      ],
+      "code": ["  if (door.waiting > 0 || door.inDoorway > 0) {"],
+      "predict": {
+        "question": "`door.waiting` is `0` and `door.inDoorway` is `1`. What is `door.waiting > 0 || door.inDoorway > 0`?",
+        "options": ["`true`", "`false`"],
+        "answer": 0,
+        "explain": "`false || true` is `true`: one side is enough. (`&&`, which you used in the power plan, needs both.)"
+      },
+      "goal": {
+        "text": "Doors stay open while anyone is waiting or in the doorway.",
+        "cases": [
+          {"label": "Lin in the Med bay doorway", "why": "Closing now would hit Lin.", "args": [{"room": "Med bay", "state": "open", "waiting": 0, "inDoorway": 1, "breach": false}], "expect": "open"},
+          {"label": "Nobody around", "why": "Still close doors nobody is using.", "args": [{"room": "Cargo", "state": "open", "waiting": 0, "inDoorway": 0, "breach": false}], "expect": "closed"},
+          {"label": "Haddad at the Cargo door", "why": "Waiting still opens it.", "args": [{"room": "Cargo", "state": "closed", "waiting": 1, "inDoorway": 0, "breach": false}], "expect": "open"}
+        ]
+      },
+      "hints": [
+        "Only the condition of your `if` changes.",
+        "You want: waiting is more than zero, *or* inDoorway is more than zero.",
+        "`if (door.waiting > 0 || door.inDoorway > 0) {`"
+      ]
+    },
+    {
+      "id": "breach",
+      "title": "Seal the breach",
+      "text": [
+        "Wait for a **hull breach** (the room flashes red and the log shouts). Someone always goes to check on it, your door opens for them, right onto the breach. Air rushes out (the **Air** and **Breach calls** gauges) and they're nearly pulled into space.",
+        "A breached room's door must be `\"locked\"`, no matter who is waiting. Like the emergency rule in Lights, the most important rule goes **first**."
+      ],
+      "code": ["  if (door.breach) {", "    return \"locked\";", "  }"],
+      "predict": {
+        "question": "With the breach check at the top, Haddad is waiting at a breached door. What does the door do?",
+        "options": ["Opens for Haddad", "Locks", "Closes now, then opens next tick"],
+        "answer": 1,
+        "explain": "The first `return` that runs decides. The breach check runs first and returns `\"locked\"`, so the waiting check is never reached."
+      },
+      "goal": {
+        "text": "Breached rooms are locked off, whoever is waiting.",
+        "cases": [
+          {"label": "Breach, Haddad waiting", "why": "A breach beats everyone waiting.", "args": [{"room": "Cargo", "state": "closed", "waiting": 1, "inDoorway": 0, "breach": true}], "expect": "locked"},
+          {"label": "Breach, nobody around", "why": "Locked, not just closed: nobody may open it.", "args": [{"room": "Cargo", "state": "closed", "waiting": 0, "inDoorway": 0, "breach": true}], "expect": "locked"},
+          {"label": "No breach, someone waiting", "why": "Normal rules still apply.", "args": [{"room": "Cargo", "state": "closed", "waiting": 1, "inDoorway": 0, "breach": false}], "expect": "open"}
+        ]
+      },
+      "hints": [
+        "`door.breach` is already `true` or `false`.",
+        "It returns `\"locked\"`.",
+        "Put it on the first lines of the function, before the waiting check."
+      ]
+    },
+    {
+      "id": "state-machine",
+      "title": "Locked, then closed, then open",
+      "text": [
+        "When a breach is repaired the room is safe again. But watch the **Seals torn** gauge: the person waiting outside makes your code open the door *straight from* `\"locked\"`, and that tears the door's pressure seal.",
+        "Ship rule: a locked door must spend a moment `\"closed\"` before it may open. This is your first **state machine**: what a door does next depends on what it is *now*, `door.state`.",
+        "Add the rule right after the breach check."
+      ],
+      "code": ["  if (door.state === \"locked\") {", "    return \"closed\";", "  }"],
+      "predict": {
+        "question": "The breach is over and Okafor is waiting at the locked door. With all four rules, what happens over the next two ticks?",
+        "options": ["locked → open", "locked → closed → open", "locked → closed → locked"],
+        "answer": 1,
+        "explain": "Tick 1: no breach, the state is `\"locked\"`, so it becomes `\"closed\"`. Tick 2: the state is `\"closed\"` and Okafor is waiting, so it becomes `\"open\"`. Each tick looks only at the current state and moves one step."
+      },
+      "goal": {
+        "text": "A locked door goes to closed before it can open.",
+        "cases": [
+          {"label": "Breach repaired, Okafor waiting", "why": "Locked must pass through closed first.", "args": [{"room": "Engine", "state": "locked", "waiting": 1, "inDoorway": 0, "breach": false}], "expect": "closed"},
+          {"label": "Next tick: closed, Okafor waiting", "why": "Now it may open.", "args": [{"room": "Engine", "state": "closed", "waiting": 1, "inDoorway": 0, "breach": false}], "expect": "open"},
+          {"label": "Still breached", "why": "The breach rule still comes first.", "args": [{"room": "Cargo", "state": "locked", "waiting": 1, "inDoorway": 0, "breach": true}], "expect": "locked"}
+        ]
+      },
+      "hints": [
+        "Compare `door.state` with the string `\"locked\"`.",
+        "If it is locked (and there's no breach), return `\"closed\"`.",
+        "Put it below the breach check, above the waiting check."
+      ]
+    }
+  ],
+  "check": {
+    "text": "Doors all over the ship, in every situation. Each must choose the right next state.",
+    "cases": [
+      {"label": "Cargo door, Haddad waiting", "why": "Someone needs to get through.", "args": [{"room": "Cargo", "state": "closed", "waiting": 1, "inDoorway": 0, "breach": false}], "expect": "open"},
+      {"label": "Galley door, nobody around", "why": "Close doors nobody is using.", "args": [{"room": "Galley", "state": "open", "waiting": 0, "inDoorway": 0, "breach": false}], "expect": "closed"},
+      {"label": "Med bay, Lin mid-doorway", "why": "Never close on someone in the doorway.", "args": [{"room": "Med bay", "state": "open", "waiting": 0, "inDoorway": 1, "breach": false}], "expect": "open"},
+      {"label": "Engine breach, Okafor waiting", "why": "A breach beats everyone waiting.", "args": [{"room": "Engine", "state": "closed", "waiting": 1, "inDoorway": 0, "breach": true}], "expect": "locked"},
+      {"label": "Quarters breach, door wide open", "why": "Seal it at once.", "args": [{"room": "Quarters", "state": "open", "waiting": 0, "inDoorway": 0, "breach": true}], "expect": "locked"},
+      {"label": "Bridge, breach repaired, pilot waiting", "why": "Locked must pass through closed first.", "args": [{"room": "Bridge", "state": "locked", "waiting": 1, "inDoorway": 0, "breach": false}], "expect": "closed"},
+      {"label": "Bridge, breach repaired, nobody around", "why": "Locked to closed either way.", "args": [{"room": "Bridge", "state": "locked", "waiting": 0, "inDoorway": 0, "breach": false}], "expect": "closed"},
+      {"label": "Cargo still breached, two waiting", "why": "Stays locked until the breach is fixed.", "args": [{"room": "Cargo", "state": "locked", "waiting": 2, "inDoorway": 0, "breach": true}], "expect": "locked"},
+      {"label": "Galley, two waiting", "why": "More than zero waiting: open.", "args": [{"room": "Galley", "state": "closed", "waiting": 2, "inDoorway": 0, "breach": false}], "expect": "open"}
+    ]
+  },
+  "solution": [
+    "function nextDoorState(door) {",
+    "  if (door.breach) {",
+    "    return \"locked\";",
+    "  }",
+    "  if (door.state === \"locked\") {",
+    "    return \"closed\";",
+    "  }",
+    "  if (door.waiting > 0 || door.inDoorway > 0) {",
+    "    return \"open\";",
+    "  }",
+    "  return \"closed\";",
+    "}"
+  ],
+  "concepts": [
+    "strings as states",
+    "|| (or)",
+    "rule order",
+    "state machines",
+    "the current state decides the next"
+  ],
+  "deeper": []
+}

@@ -1,8 +1,8 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 924,
-    "tracks": 145,
+    "lessons": 925,
+    "tracks": 146,
     "errors": {},
     "signals": {
       "authored check limits not detected": 615,
@@ -10791,6 +10791,17 @@
       "maturity": "in-development",
       "firstStep": "One moment, two dates",
       "firstIndependentTask": "Your turn: lakh and crore",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s03-structure/03-01-01-what-an-abstraction-hides",
+      "track": "swe-s03-structure",
+      "title": "\"What an Abstraction Hides: Ledger's Books\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "What the reports know",
+      "firstIndependentTask": "Your turn: total.py through the books",
       "signals": [],
       "errors": []
     },
