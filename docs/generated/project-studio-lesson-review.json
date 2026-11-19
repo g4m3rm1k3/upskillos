@@ -1,7 +1,7 @@
 {
   "scope": "Direct track Markdown lessons; support files excluded. Signals require human review and never certify mastery.",
   "summary": {
-    "lessons": 926,
+    "lessons": 927,
     "tracks": 146,
     "errors": {},
     "signals": {
@@ -10813,6 +10813,17 @@
       "maturity": "in-development",
       "firstStep": "Framework, and what it leaves out",
       "firstIndependentTask": "Your turn: Response's contract",
+      "signals": [],
+      "errors": []
+    },
+    {
+      "id": "swe-s03-structure/03-02-01-coupling-and-cohesion",
+      "track": "swe-s03-structure",
+      "title": "\"Coupling and Cohesion: Measuring a God File\"",
+      "level": "bridge",
+      "maturity": "in-development",
+      "firstStep": "A class nobody can test",
+      "firstIndependentTask": "Your turn: a page detail in the rules",
       "signals": [],
       "errors": []
     },
